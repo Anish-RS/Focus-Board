@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Sticky To-Do Board</title>
+<meta name="description" content="A cork board of sticky notes with weekly recurring routines and daily tasks that carry over when unfinished." />
+
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#2B2620" />
+<link rel="icon" href="favicon.png" type="image/png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Sticky Board" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="stb-root" id="stb-root">
+  <header class="stb-header">
+    <div>
+      <h1 class="stb-title">Today's board</h1>
+      <p class="stb-date" id="stb-date"></p>
+    </div>
+    <div class="stb-header-actions">
+      <button class="stb-install-btn" id="stb-install-btn" style="display:none;" type="button"></button>
+      <button class="stb-add-btn stb-add-btn--doc" id="stb-add-doc-btn" type="button"></button>
+      <button class="stb-add-btn" id="stb-add-btn" type="button"></button>
+    </div>
+  </header>
+
+  <div id="stb-ios-tip"></div>
+
+  <div class="stb-main">
+    <div class="stb-board" id="stb-board"></div>
+    <aside class="stb-clipboard" id="stb-clipboard"></aside>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

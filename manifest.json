@@ -1,0 +1,16 @@
+{
+  "name": "Sticky To-Do Board",
+  "short_name": "Sticky Board",
+  "description": "A cork board of sticky notes: weekly recurring routines plus daily tasks that carry over when left unfinished.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#B98A54",
+  "theme_color": "#2B2620",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
