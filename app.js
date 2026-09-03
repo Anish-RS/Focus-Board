@@ -156,6 +156,8 @@
   var activeDragId = null;
   var copiedId = null;
   var copiedTimeout = null;
+  var exportedId = null;
+  var exportedTimeout = null;
   var showSummary = false;
   var draftItems = {}; // noteId -> in-progress "add task" text, kept in memory only
 
@@ -255,6 +257,7 @@
   function deleteNote(id) {
     if (openDayPickerId === id) openDayPickerId = null;
     if (copiedId === id) copiedId = null;
+    if (exportedId === id) exportedId = null;
     delete draftItems[id];
     commitNotes(state.notes.filter(function (n) { return n.id !== id; }));
   }
@@ -343,6 +346,7 @@
 
   function deleteDocument(id) {
     if (copiedId === id) copiedId = null;
+    if (exportedId === id) exportedId = null;
     commitDocs(state.documents.filter(function (d) { return d.id !== id; }));
   }
 
@@ -522,6 +526,14 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      // Visible confirmation: clicking gives no browser feedback of its own, so without this
+      // the file saves silently to Downloads and looks like nothing happened.
+      exportedId = id;
+      render();
+      clearTimeout(exportedTimeout);
+      exportedTimeout = setTimeout(function () {
+        if (exportedId === id) { exportedId = null; render(); }
+      }, 1800);
     } catch (e) {
       console.error("Could not export file", e);
     }
@@ -534,9 +546,15 @@
     var base = sanitizeFilename(found.item.title || (found.kind === "doc" ? "running notes" : "sticky note"));
     var filename = base + ".html";
     var dataUrl = "data:text/html;charset=utf-8," + encodeURIComponent(html);
+    var entry = "text/html:" + filename + ":" + dataUrl;
+    // Two ways to set the same non-standard Chrome entry, since engine support for each varies.
+    try { e.dataTransfer.setData("DownloadURL", entry); } catch (err) {}
     try {
-      e.dataTransfer.setData("DownloadURL", "text/html:" + filename + ":" + dataUrl);
+      if (e.dataTransfer.items && e.dataTransfer.items.add) e.dataTransfer.items.add("DownloadURL", entry);
+    } catch (err) {}
+    try {
       e.dataTransfer.effectAllowed = "copy";
+      e.dataTransfer.dropEffect = "copy";
     } catch (err) {}
   }
 
@@ -546,6 +564,7 @@
     var recurring = note.days.length > 0;
     var isPickerOpen = openDayPickerId === note.id;
     var isCopied = copiedId === note.id;
+    var isExported = exportedId === note.id;
     var isDragging = activeDragId === note.id;
     var style = "background:" + pal.bg + "; left:" + note.x + "px; top:" + note.y + "px; transform:rotate(" + note.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + ";";
 
@@ -594,7 +613,7 @@
       '<div class="stb-note' + (isDragging ? " is-dragging" : "") + '" data-card-id="' + note.id + '" style="' + style + '">' +
       '<span class="stb-pin" style="background:' + pal.ink + ';"></span>' +
       '<div class="stb-note-actions">' +
-      '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + note.id + '" aria-label="Save as a file" title="Drag onto your desktop to save this note as a file, or click to download it">' + ICON.download(12) + "</button>" +
+      '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + note.id + '" aria-label="Save as a file" title="Drag onto your desktop to save this note as a file, or click to download it">' + (isExported ? ICON.check(12) : ICON.download(12)) + "</button>" +
       '<button class="stb-note-copy" style="color:' + pal.ink + ';" data-action="copy-card" data-card-id="' + note.id + '" aria-label="Copy note text" title="Copy note text to paste into another app">' + (isCopied ? ICON.check(13) : ICON.copy(13)) + "</button>" +
       '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + note.id + '" aria-label="Remove note">' + ICON.x(13) + "</button>" +
       "</div>" +
@@ -613,6 +632,7 @@
   function docHTML(doc) {
     var pal = PALETTE[doc.color];
     var isCopied = copiedId === doc.id;
+    var isExported = exportedId === doc.id;
     var isDragging = activeDragId === doc.id;
     var style = "background:" + pal.bg + "; left:" + doc.x + "px; top:" + doc.y + "px; transform:rotate(" + doc.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + ";";
 
@@ -625,7 +645,7 @@
       '<div class="stb-doc' + (isDragging ? " is-dragging" : "") + '" data-card-id="' + doc.id + '" style="' + style + '">' +
       '<span class="stb-pin" style="background:' + pal.ink + ';"></span>' +
       '<div class="stb-note-actions">' +
-      '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + doc.id + '" aria-label="Save as a file" title="Drag onto your desktop to save this as a file, or click to download it">' + ICON.download(12) + "</button>" +
+      '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + doc.id + '" aria-label="Save as a file" title="Drag onto your desktop to save this as a file, or click to download it">' + (isExported ? ICON.check(12) : ICON.download(12)) + "</button>" +
       '<button class="stb-note-copy" style="color:' + pal.ink + ';" data-action="copy-card" data-card-id="' + doc.id + '" aria-label="Copy note text" title="Copy text to paste into another app">' + (isCopied ? ICON.check(13) : ICON.copy(13)) + "</button>" +
       '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + doc.id + '" aria-label="Remove document">' + ICON.x(13) + "</button>" +
       "</div>" +
