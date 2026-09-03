@@ -193,7 +193,13 @@ body {
   padding: 2px;
 }
 .stb-note-delete { color: #2B2620; }
-.stb-note-export { cursor: grab; }
+.stb-note-export {
+  cursor: grab;
+  -webkit-user-drag: element;
+  -khtml-user-drag: element;
+  padding: 5px;
+  margin: -3px;
+}
 .stb-note-copy:hover, .stb-note-delete:hover, .stb-note-export:hover { opacity: 0.9; }
 .stb-note-title {
   display: block;
