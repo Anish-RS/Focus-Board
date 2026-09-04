@@ -16,6 +16,19 @@
       var carriedDot = it.carried
         ? '<span class="stb-carried-dot" style="background:' + pal.ink + ';" title="Carried over from yesterday, still pending"></span>'
         : "";
+      var itemReminderBtn =
+        '<button class="stb-item-reminder' + (it.reminderTime ? " has-reminder" : "") + '" style="color:' + pal.ink + ';" data-action="toggle-item-reminder" data-card-id="' + note.id + '" data-item-id="' + it.id + '" title="' + (it.reminderTime ? "Reminder at " + it.reminderTime + " -- click to change" : "Set a time to be reminded about this task") + '" aria-label="Set a reminder for this task">' + ICON.bell(10) + "</button>";
+      var itemReminderRow = "";
+      if (STB.openItemReminderId === it.id) {
+        itemReminderRow =
+          '<div class="stb-item-reminder-row">' +
+          '<input type="time" class="stb-reminder-input" data-role="item-reminder-time" data-card-id="' + note.id + '" data-item-id="' + it.id + '" value="' + (it.reminderTime || "") + '" style="color:' + pal.ink + ';" />' +
+          (it.reminderTime
+            ? '<button class="stb-reminder-clear" data-action="clear-item-reminder" data-card-id="' + note.id + '" data-item-id="' + it.id + '" style="color:' + pal.ink + ';" title="Remove reminder" aria-label="Remove reminder">' + ICON.x(11) + "</button>"
+            : "") +
+          '<button class="stb-day-done" data-action="toggle-item-reminder" data-card-id="' + note.id + '" data-item-id="' + it.id + '" style="color:' + pal.ink + ";border-color:" + pal.ink + ';">Done</button>' +
+          "</div>";
+      }
       return (
         '<div class="stb-item">' +
         '<button class="stb-checkbox' + (it.done ? " is-done" : "") + '" style="' + cbStyle + '" data-action="toggle-item" data-card-id="' + note.id + '" data-item-id="' + it.id + '" aria-label="' + (it.done ? "Mark task not done" : "Mark task done") + '">' +
@@ -23,8 +36,10 @@
         "</button>" +
         carriedDot +
         '<input class="stb-item-input" data-role="item-text" data-card-id="' + note.id + '" data-item-id="' + it.id + '" value="' + STB.escapeAttr(it.text) + '" placeholder="Type a task" style="color:' + pal.ink + "; text-decoration:" + (it.done ? "line-through" : "none") + "; opacity:" + (it.done ? 0.55 : 1) + ';" />' +
+        itemReminderBtn +
         '<button class="stb-item-delete" style="color:' + pal.ink + ';" data-action="delete-item" data-card-id="' + note.id + '" data-item-id="' + it.id + '" aria-label="Delete task">' + ICON.x(11) + "</button>" +
-        "</div>"
+        "</div>" +
+        itemReminderRow
       );
     }).join("");
 
