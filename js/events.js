@@ -79,6 +79,7 @@
       if (action === "toggle-item") { STB.toggleItem(cardId, btn.getAttribute("data-item-id")); return; }
       if (action === "delete-item") { STB.deleteItem(cardId, btn.getAttribute("data-item-id")); return; }
       if (action === "toggle-picker") { STB.togglePicker(cardId); return; }
+      if (action === "toggle-reminder-picker") { STB.toggleReminderPicker(cardId); return; }
       if (action === "set-color") {
         var idx = parseInt(btn.getAttribute("data-color-index"), 10);
         var foundColor = STB.findCard(cardId);
