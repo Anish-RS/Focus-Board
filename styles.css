@@ -422,7 +422,7 @@ body {
 }
 .stb-note-title:focus { outline: none; border-bottom: 1px dashed currentColor; }
 .stb-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-.stb-item { display: flex; align-items: center; gap: 6px; }
+.stb-item { display: flex; align-items: flex-start; gap: 6px; }
 .stb-checkbox {
   flex: none;
   width: 17px;
@@ -435,6 +435,7 @@ body {
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  margin-top: 1px;
 }
 .stb-carried-dot {
   flex: none;
@@ -451,6 +452,13 @@ body {
   font-family: 'Work Sans', sans-serif;
   font-size: 14px;
   cursor: text;
+  resize: none;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.35;
+  padding: 0;
+  margin: 0;
 }
 .stb-item-input:focus { outline: none; }
 .stb-item-delete {
