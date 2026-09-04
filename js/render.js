@@ -35,7 +35,7 @@
         (it.done ? ICON.check(11, "#FBF8F1") : "") +
         "</button>" +
         carriedDot +
-        '<input class="stb-item-input" data-role="item-text" data-card-id="' + note.id + '" data-item-id="' + it.id + '" value="' + STB.escapeAttr(it.text) + '" placeholder="Type a task" style="color:' + pal.ink + "; text-decoration:" + (it.done ? "line-through" : "none") + "; opacity:" + (it.done ? 0.55 : 1) + ';" />' +
+        '<textarea class="stb-item-input" data-role="item-text" data-card-id="' + note.id + '" data-item-id="' + it.id + '" placeholder="Type a task" rows="1" style="color:' + pal.ink + "; text-decoration:" + (it.done ? "line-through" : "none") + "; opacity:" + (it.done ? 0.55 : 1) + ';">' + STB.escapeAttr(it.text) + "</textarea>" +
         itemReminderBtn +
         '<button class="stb-item-delete" style="color:' + pal.ink + ';" data-action="delete-item" data-card-id="' + note.id + '" data-item-id="' + it.id + '" aria-label="Delete task">' + ICON.x(11) + "</button>" +
         "</div>" +
@@ -157,6 +157,14 @@
     );
   }
 
+  function autosizeItemTextareas(container) {
+    var areas = container.querySelectorAll(".stb-item-input");
+    for (var i = 0; i < areas.length; i++) {
+      areas[i].style.height = "auto";
+      areas[i].style.height = areas[i].scrollHeight + "px";
+    }
+  }
+
   function renderBoard() {
     var board = document.getElementById("stb-board");
     var visible = STB.getVisibleNotes();
@@ -174,6 +182,7 @@
       }).join("");
       board.innerHTML = noteMarkup + docMarkup;
     }
+    autosizeItemTextareas(board);
   }
 
   function renderAside() {
@@ -252,6 +261,7 @@
     var found = STB.findCard(id);
     if (!found) { STB.closePopout(id); return; }
     entry.container.innerHTML = found.kind === "doc" ? docHTML(found.item, { hideActions: true }) : noteHTML(found.item, { hideActions: true });
+    autosizeItemTextareas(entry.container);
   }
 
   function renderAllPopouts() {
