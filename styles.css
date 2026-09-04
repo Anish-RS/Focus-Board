@@ -322,6 +322,12 @@ body {
   touch-action: none;
   box-sizing: border-box;
   background-image: repeating-linear-gradient(to bottom, transparent 0px, transparent 25px, rgba(0,0,0,0.06) 26px);
+  display: flex;
+  flex-direction: column;
+}
+.stb-doc.is-resizing {
+  cursor: default;
+  user-select: none;
 }
 .stb-doc.is-dragging {
   cursor: grabbing;
@@ -330,10 +336,10 @@ body {
 }
 .stb-doc-text {
   display: block;
-  width: 228px;
-  min-width: 150px;
+  width: 100%;
+  flex: 1 1 auto;
   min-height: 150px;
-  resize: both;
+  resize: none;
   overflow: hidden;
   border: none;
   background: transparent;
@@ -353,6 +359,22 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.stb-doc-resize-handle {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 4px;
+  box-sizing: border-box;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0.45;
+}
+.stb-doc-resize-handle:hover { opacity: 0.9; }
 .stb-pin {
   position: absolute;
   top: 6px;
