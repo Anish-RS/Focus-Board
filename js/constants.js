@@ -16,6 +16,8 @@
   STB.RING_C = 2 * Math.PI * STB.RING_R;
   STB.NOTE_W = 210;
   STB.NOTE_H_ESTIMATE = 190;
+  STB.TWO_LINE_HEIGHT = 40; // ~2 lines at 14px font, 1.35 line-height
+  STB.MAX_NOTE_WIDTH = 420; // a note auto-widens to fit tasks in 2 lines, up to this cap
   STB.DOC_W = 260;
   STB.DOC_H_ESTIMATE = 260;
   STB.MIN_CANVAS_W = 700; // used only to decide how many grid columns fit -- narrow
