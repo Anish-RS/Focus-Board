@@ -58,7 +58,7 @@
         days: Array.isArray(n.days) ? n.days : [],
         reminderTime: n.reminderTime || null,
         items: (n.items || []).map(function (it) {
-          return Object.assign({}, it, { carried: !!it.carried });
+          return Object.assign({}, it, { carried: !!it.carried, reminderTime: it.reminderTime || null });
         }),
       });
     });
