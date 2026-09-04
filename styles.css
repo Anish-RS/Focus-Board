@@ -462,6 +462,23 @@ body {
   padding: 2px;
 }
 .stb-item-delete:hover { opacity: 0.85; }
+.stb-item-reminder {
+  flex: none;
+  background: none;
+  border: none;
+  opacity: 0.3;
+  cursor: pointer;
+  padding: 2px;
+}
+.stb-item-reminder:hover { opacity: 0.8; }
+.stb-item-reminder.has-reminder { opacity: 0.9; }
+.stb-item-reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 4px 25px;
+  margin-top: -2px;
+}
 .stb-additem-input {
   width: 100%;
   background: transparent;
