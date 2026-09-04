@@ -101,6 +101,8 @@
         else STB.updateTitle(cardId, el.value, true);
       } else if (role === "item-text") {
         STB.updateItemText(cardId, el.getAttribute("data-item-id"), el.value, true);
+        el.style.height = "auto";
+        el.style.height = el.scrollHeight + "px";
       } else if (role === "add-item") {
         STB.draftItems[cardId] = el.value;
       } else if (role === "doc-text") {
@@ -119,6 +121,11 @@
     });
 
     container.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" && e.target.getAttribute("data-role") === "item-text") {
+        e.preventDefault();
+        e.target.blur();
+        return;
+      }
       if (e.key === "Enter" && e.target.getAttribute("data-role") === "add-item") {
         var noteId = e.target.getAttribute("data-card-id");
         var val = e.target.value.trim();
