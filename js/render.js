@@ -144,23 +144,6 @@
 
   function renderBoard() {
     var board = document.getElementById("stb-board");
-    var allCards =
-      STB.getVisibleNotes().concat(
-        STB.state.documents.filter(function (d) {
-          return !d.archived;
-        })
-      );
-    
-    var maxX = 0;
-    var maxY = 0;
-    
-    allCards.forEach(function (card) {
-      maxX = Math.max(maxX, card.x);
-      maxY = Math.max(maxY, card.y);
-    });
-    
-    board.style.minWidth = (maxX + 800) + "px";
-    board.style.minHeight = (maxY + 800) + "px";
     var visible = STB.getVisibleNotes();
     var docs = STB.state.documents.filter(function (d) { return !d.archived; });
     if (visible.length === 0 && docs.length === 0) {
