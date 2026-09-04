@@ -87,7 +87,7 @@
     if (perm === "granted") {
       btn.innerHTML = STB.ICON.bell(15) + " Reminders on";
       btn.disabled = true;
-      btn.title = "Reminders will show as notifications";
+      btn.title = "Notifications are allowed. Set the actual time on each note using its own bell icon.";
     } else if (perm === "denied") {
       btn.innerHTML = STB.ICON.bell(15) + " Reminders blocked";
       btn.disabled = true;
@@ -95,7 +95,7 @@
     } else {
       btn.innerHTML = STB.ICON.bell(15) + " Enable reminders";
       btn.disabled = false;
-      btn.title = "Get a notification when a note's scheduled time arrives";
+      btn.title = "Step 1 of 2: allow notifications here, then set a time on each note using its own bell icon";
       btn.onclick = function () {
         STB.requestNotificationPermission().then(function () { STB.renderReminderButton(); });
       };
