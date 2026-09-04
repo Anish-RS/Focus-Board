@@ -1,9 +1,18 @@
-const CACHE = "sticky-board-v2";
+const CACHE = "sticky-board-v5";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
-  "./app.js",
+  "./js/constants.js",
+  "./js/helpers.js",
+  "./js/state.js",
+  "./js/render.js",
+  "./js/popout.js",
+  "./js/events.js",
+  "./js/reminders.js",
+  "./js/config-loader.js",
+  "./js/sync.js",
+  "./js/app.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
