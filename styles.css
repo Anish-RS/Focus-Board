@@ -313,7 +313,7 @@ body {
 
 .stb-doc {
   position: absolute;
-  width: 260px;
+  min-width: 260px;
   min-height: 230px;
   border-radius: 3px;
   padding: 18px 16px 14px 16px;
@@ -330,9 +330,10 @@ body {
 }
 .stb-doc-text {
   display: block;
-  width: 100%;
+  width: 228px;
+  min-width: 150px;
   min-height: 150px;
-  resize: vertical;
+  resize: both;
   border: none;
   background: transparent;
   font-family: 'Work Sans', sans-serif;
@@ -453,12 +454,13 @@ body {
   font-size: 14px;
   cursor: text;
   resize: none;
-  overflow: hidden;
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.35;
   padding: 0;
   margin: 0;
+  max-height: 40px;
+  overflow-y: auto;
 }
 .stb-item-input:focus { outline: none; }
 .stb-item-delete {
