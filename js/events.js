@@ -40,6 +40,47 @@
     window.addEventListener("pointerup", handleUp);
   }
 
+  var DOC_MIN_WIDTH = 200;
+  var DOC_MIN_HEIGHT = 180;
+
+  // Works on both mouse and touch, unlike the browser's native CSS `resize`
+  // handle, which most mobile browsers simply don't support dragging at all.
+  function startResize(e, handleEl) {
+    var docId = handleEl.getAttribute("data-resize-id");
+    var docEl = handleEl.closest(".stb-doc");
+    if (!docEl) return;
+    var found = STB.findCard(docId);
+    if (!found || found.kind !== "doc") return;
+    var doc = found.item;
+    e.preventDefault();
+    e.stopPropagation();
+
+    var startRect = docEl.getBoundingClientRect();
+    var startX = e.clientX;
+    var startY = e.clientY;
+    var startWidth = startRect.width;
+    var startHeight = startRect.height;
+
+    docEl.classList.add("is-resizing");
+
+    function handleMove(ev) {
+      var newWidth = Math.max(DOC_MIN_WIDTH, startWidth + (ev.clientX - startX));
+      var newHeight = Math.max(DOC_MIN_HEIGHT, startHeight + (ev.clientY - startY));
+      docEl.style.width = newWidth + "px";
+      docEl.style.height = newHeight + "px";
+      doc.width = newWidth;
+      doc.height = newHeight;
+    }
+    function handleUp() {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", handleUp);
+      docEl.classList.remove("is-resizing");
+      STB.setDocSize(docId, doc.width, doc.height);
+    }
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", handleUp);
+  }
+
   function clampCardsToBoard() {
     var changed = false;
     STB.state.notes.forEach(function (n) {
@@ -137,14 +178,15 @@
       }
     });
 
-    if (enableReposition) {
-      container.addEventListener("pointerdown", function (e) {
-        if (e.target.closest("input, button, textarea, select")) return;
-        var cardEl = e.target.closest(".stb-note, .stb-doc");
-        if (!cardEl) return;
-        startDrag(e, cardEl);
-      });
-    }
+    container.addEventListener("pointerdown", function (e) {
+      var resizeHandle = e.target.closest("[data-resize-id]");
+      if (resizeHandle) { startResize(e, resizeHandle); return; }
+      if (!enableReposition) return;
+      if (e.target.closest("input, button, textarea, select")) return;
+      var cardEl = e.target.closest(".stb-note, .stb-doc");
+      if (!cardEl) return;
+      startDrag(e, cardEl);
+    });
   }
 
   STB.startDrag = startDrag;
