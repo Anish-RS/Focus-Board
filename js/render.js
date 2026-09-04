@@ -9,7 +9,7 @@
     var isPickerOpen = STB.openDayPickerId === note.id;
     var isCopied = STB.copiedId === note.id;
     var isDragging = STB.activeDragId === note.id;
-    var style = "background:" + pal.bg + "; left:" + note.x + "px; top:" + note.y + "px; transform:rotate(" + note.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + ";";
+    var style = "background:" + pal.bg + "; left:" + note.x + "px; top:" + note.y + "px; transform:rotate(" + note.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + (note.width ? "; width:" + note.width + "px;" : "") + ";";
 
     var itemsHTML = note.items.map(function (it) {
       var cbStyle = it.done ? "background:" + pal.ink + ";border-color:" + pal.ink + ";" : "border-color:" + pal.ink + ";";
@@ -157,11 +157,60 @@
     );
   }
 
-  function autosizeItemTextareas(container) {
-    var areas = container.querySelectorAll(".stb-item-input");
-    for (var i = 0; i < areas.length; i++) {
-      areas[i].style.height = "auto";
-      areas[i].style.height = areas[i].scrollHeight + "px";
+  // For one specific note element: try to keep every task within 2 lines by
+  // widening the note itself (instead of growing the task's height or adding
+  // a scrollbar). Always re-measures from the default width first, so a note
+  // that had widened for a long task shrinks back down again if that task is
+  // later shortened or deleted.
+  function fitNoteToContent(noteEl, note) {
+    var textareas = noteEl.querySelectorAll(".stb-item-input");
+    if (textareas.length === 0) {
+      if (note.width) { note.width = null; STB.saveState(); }
+      noteEl.style.width = "";
+      return;
+    }
+
+    function measure() {
+      var max = 0;
+      for (var i = 0; i < textareas.length; i++) {
+        textareas[i].style.height = "auto";
+        if (textareas[i].scrollHeight > max) max = textareas[i].scrollHeight;
+      }
+      return max;
+    }
+
+    var width = STB.NOTE_W;
+    noteEl.style.width = width + "px";
+    var tallest = measure();
+    var iterations = 0;
+    while (tallest > STB.TWO_LINE_HEIGHT && width < STB.MAX_NOTE_WIDTH && iterations < 20) {
+      width = Math.min(STB.MAX_NOTE_WIDTH, width + 20);
+      noteEl.style.width = width + "px";
+      tallest = measure();
+      iterations++;
+    }
+
+    // Final safety clamp: even at max width, never let a single task exceed
+    // 2 lines' worth of visible height (no scrollbar -- excess just stays
+    // out of view rather than growing the note indefinitely).
+    for (var j = 0; j < textareas.length; j++) {
+      var h = Math.min(textareas[j].scrollHeight, STB.TWO_LINE_HEIGHT);
+      textareas[j].style.height = h + "px";
+    }
+
+    var newWidth = width === STB.NOTE_W ? null : width;
+    if (newWidth !== (note.width || null)) {
+      note.width = newWidth;
+      STB.saveState();
+    }
+  }
+
+  function fitAllNotes(container) {
+    var noteEls = container.querySelectorAll(".stb-note");
+    for (var i = 0; i < noteEls.length; i++) {
+      var cardId = noteEls[i].getAttribute("data-card-id");
+      var note = STB.state.notes.filter(function (n) { return n.id === cardId; })[0];
+      if (note) fitNoteToContent(noteEls[i], note);
     }
   }
 
@@ -182,7 +231,7 @@
       }).join("");
       board.innerHTML = noteMarkup + docMarkup;
     }
-    autosizeItemTextareas(board);
+    fitAllNotes(board);
   }
 
   function renderAside() {
@@ -261,7 +310,7 @@
     var found = STB.findCard(id);
     if (!found) { STB.closePopout(id); return; }
     entry.container.innerHTML = found.kind === "doc" ? docHTML(found.item, { hideActions: true }) : noteHTML(found.item, { hideActions: true });
-    autosizeItemTextareas(entry.container);
+    fitAllNotes(entry.container);
   }
 
   function renderAllPopouts() {
@@ -275,6 +324,7 @@
     renderAllPopouts();
   }
 
+  STB.fitNoteToContent = fitNoteToContent;
   STB.noteHTML = noteHTML;
   STB.docHTML = docHTML;
   STB.placeholderHTML = placeholderHTML;
