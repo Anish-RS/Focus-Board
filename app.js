@@ -44,6 +44,9 @@
     download: function (size) {
       return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
     },
+    popout: function (size) {
+      return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+    },
   };
 
   function uid() {
@@ -158,6 +161,7 @@
   var copiedTimeout = null;
   var exportedId = null;
   var exportedTimeout = null;
+  var poppedOutWindows = {}; // cardId -> { win, container }
   var showSummary = false;
   var draftItems = {}; // noteId -> in-progress "add task" text, kept in memory only
 
@@ -258,6 +262,7 @@
     if (openDayPickerId === id) openDayPickerId = null;
     if (copiedId === id) copiedId = null;
     if (exportedId === id) exportedId = null;
+    if (poppedOutWindows[id]) { try { poppedOutWindows[id].win.close(); } catch (e) {} delete poppedOutWindows[id]; }
     delete draftItems[id];
     commitNotes(state.notes.filter(function (n) { return n.id !== id; }));
   }
@@ -347,6 +352,7 @@
   function deleteDocument(id) {
     if (copiedId === id) copiedId = null;
     if (exportedId === id) exportedId = null;
+    if (poppedOutWindows[id]) { try { poppedOutWindows[id].win.close(); } catch (e) {} delete poppedOutWindows[id]; }
     commitDocs(state.documents.filter(function (d) { return d.id !== id; }));
   }
 
@@ -510,6 +516,140 @@
     ].join("\n");
   }
 
+  function isPipSupported() {
+    return "documentPictureInPicture" in window;
+  }
+
+  function copyStylesInto(doc) {
+    Array.prototype.forEach.call(document.querySelectorAll('style, link[rel="stylesheet"]'), function (node) {
+      doc.head.appendChild(node.cloneNode(true));
+    });
+    var override = doc.createElement("style");
+    override.textContent =
+      "html,body{margin:0;padding:0;background:#B98A54;box-sizing:border-box;min-height:100%;}" +
+      ".stb-pip-root{min-height:100%;display:flex;align-items:flex-start;justify-content:center;}" +
+      ".stb-pip-root .stb-note,.stb-pip-root .stb-doc{position:static !important;left:auto !important;top:auto !important;transform:none !important;width:100% !important;max-width:270px;box-sizing:border-box;margin:0 !important;}";
+    doc.head.appendChild(override);
+  }
+
+  function renderPopout(id) {
+    var entry = poppedOutWindows[id];
+    if (!entry) return;
+    var found = findCard(id);
+    if (!found) { closePopout(id); return; }
+    entry.container.innerHTML = found.kind === "doc" ? docHTML(found.item, { hideActions: true }) : noteHTML(found.item, { hideActions: true });
+  }
+
+  function renderAllPopouts() {
+    Object.keys(poppedOutWindows).forEach(renderPopout);
+  }
+
+  function unregisterPopout(id) {
+    if (poppedOutWindows[id]) {
+      delete poppedOutWindows[id];
+      render();
+    }
+  }
+
+  function closePopout(id) {
+    var entry = poppedOutWindows[id];
+    if (!entry) return;
+    try { entry.win.close(); } catch (e) {}
+    unregisterPopout(id);
+  }
+
+  function focusPopout(id) {
+    var entry = poppedOutWindows[id];
+    if (!entry) return;
+    try { entry.win.focus(); } catch (e) {}
+  }
+
+  function estimatePopupSize(found) {
+    if (found.kind === "doc") return { w: 320, h: 420 };
+    var itemCount = found.item.items.length;
+    var h = 150 + itemCount * 34 + 70;
+    h = Math.max(220, Math.min(480, h));
+    return { w: 300, h: h };
+  }
+
+  function openPopupWindow(id, found) {
+    var size = estimatePopupSize(found);
+    var openCount = Object.keys(poppedOutWindows).length;
+    var left = Math.max(0, (window.screen.availWidth || 1200) - size.w - 24 - openCount * 28);
+    var top = 70 + openCount * 28;
+    var popup = window.open(
+      "",
+      "stb-popout-" + id,
+      "width=" + size.w + ",height=" + size.h + ",left=" + left + ",top=" + top + ",popup=1"
+    );
+    if (!popup) {
+      alert("Your browser blocked the pop-out window. Please allow pop-ups for this site and try again.");
+      return;
+    }
+    popup.document.title = found.item.title || (found.kind === "doc" ? "Running notes" : "Sticky note");
+    copyStylesInto(popup.document);
+    var container = popup.document.createElement("div");
+    container.className = "stb-root stb-pip-root";
+    popup.document.body.appendChild(container);
+    poppedOutWindows[id] = { win: popup, container: container };
+    attachCardEvents(container, { enableReposition: false });
+    popup.addEventListener("pagehide", function () { unregisterPopout(id); });
+    renderPopout(id);
+    render();
+  }
+
+  async function popOutCard(id) {
+    if (poppedOutWindows[id]) { focusPopout(id); return; }
+    var found = findCard(id);
+    if (!found) return;
+
+    // Only running-notes documents get true always-on-top Picture-in-Picture, since that's
+    // the case that actually needs to float above other apps while you watch/read something.
+    // Browsers only permit one such always-on-top window system-wide at a time.
+    // Regular checklist notes always use plain popup windows instead, which have no such
+    // limit -- you can pop out as many sticky notes at once as you like.
+    if (found.kind === "doc" && isPipSupported()) {
+      try {
+        var pipWin = await window.documentPictureInPicture.requestWindow({ width: 320, height: 420 });
+        copyStylesInto(pipWin.document);
+        var container = pipWin.document.createElement("div");
+        container.className = "stb-root stb-pip-root";
+        pipWin.document.body.appendChild(container);
+        poppedOutWindows[id] = { win: pipWin, container: container };
+        attachCardEvents(container, { enableReposition: false });
+        pipWin.addEventListener("pagehide", function () { unregisterPopout(id); });
+        renderPopout(id);
+        render();
+        return;
+      } catch (e) {
+        console.error("Picture-in-Picture pop-out failed, falling back to a popup window", e);
+      }
+    }
+
+    openPopupWindow(id, found);
+  }
+
+  // Safety net: catch windows closed in ways that don't reliably fire pagehide.
+  setInterval(function () {
+    Object.keys(poppedOutWindows).forEach(function (id) {
+      var entry = poppedOutWindows[id];
+      if (entry && entry.win && entry.win.closed) unregisterPopout(id);
+    });
+  }, 1000);
+
+  function placeholderHTML(item, kind) {
+    var pal = PALETTE[item.color];
+    var w = kind === "doc" ? DOC_W : NOTE_W;
+    var style = "background:" + pal.bg + "; left:" + item.x + "px; top:" + item.y + "px; width:" + w + "px; border:2px dashed " + pal.ink + "; opacity:0.7;";
+    return (
+      '<div class="stb-placeholder" data-action="focus-popout" data-card-id="' + item.id + '" style="' + style + '">' +
+      '<div class="stb-placeholder-title" style="color:' + pal.ink + ';">' + escapeAttr(item.title || (kind === "doc" ? "Untitled document" : "Untitled note")) + "</div>" +
+      '<div class="stb-placeholder-sub" style="color:' + pal.ink + ';">Popped out \u2014 click to bring to front</div>' +
+      '<button class="stb-placeholder-close" style="color:' + pal.ink + ';" data-action="close-popout" data-card-id="' + item.id + '" aria-label="Bring back to board" title="Close the pop-out and bring it back to the board">' + ICON.x(12) + "</button>" +
+      "</div>"
+    );
+  }
+
   function exportCardAsFile(id) {
     var found = findCard(id);
     if (!found) return;
@@ -559,7 +699,8 @@
   }
 
   // ---- rendering ----
-  function noteHTML(note) {
+  function noteHTML(note, opts) {
+    opts = opts || {};
     var pal = PALETTE[note.color];
     var recurring = note.days.length > 0;
     var isPickerOpen = openDayPickerId === note.id;
@@ -609,14 +750,19 @@
 
     var draftVal = draftItems[note.id] || "";
 
+    var actionsHTML = opts.hideActions
+      ? ""
+      : '<div class="stb-note-actions">' +
+        '<button class="stb-note-popout" style="color:' + pal.ink + ';" data-action="pop-out" data-card-id="' + note.id + '" aria-label="Pop out" title="Pop this note out into its own window on your desktop (you can pop out several at once)">' + ICON.popout(12) + "</button>" +
+        '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + note.id + '" aria-label="Save as a file" title="Save this note as an .html file (goes to your Downloads folder)">' + (isExported ? ICON.check(12) : ICON.download(12)) + "</button>" +
+        '<button class="stb-note-copy" style="color:' + pal.ink + ';" data-action="copy-card" data-card-id="' + note.id + '" aria-label="Copy note text" title="Copy note text to paste into another app">' + (isCopied ? ICON.check(13) : ICON.copy(13)) + "</button>" +
+        '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + note.id + '" aria-label="Remove note">' + ICON.x(13) + "</button>" +
+        "</div>";
+
     return (
       '<div class="stb-note' + (isDragging ? " is-dragging" : "") + '" data-card-id="' + note.id + '" style="' + style + '">' +
       '<span class="stb-pin" style="background:' + pal.ink + ';"></span>' +
-      '<div class="stb-note-actions">' +
-      '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + note.id + '" aria-label="Save as a file" title="Drag onto your desktop to save this note as a file, or click to download it">' + (isExported ? ICON.check(12) : ICON.download(12)) + "</button>" +
-      '<button class="stb-note-copy" style="color:' + pal.ink + ';" data-action="copy-card" data-card-id="' + note.id + '" aria-label="Copy note text" title="Copy note text to paste into another app">' + (isCopied ? ICON.check(13) : ICON.copy(13)) + "</button>" +
-      '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + note.id + '" aria-label="Remove note">' + ICON.x(13) + "</button>" +
-      "</div>" +
+      actionsHTML +
       '<input class="stb-note-title" data-role="title" data-card-id="' + note.id + '" value="' + escapeAttr(note.title) + '" placeholder="Untitled note" style="color:' + pal.ink + ';" />' +
       '<div class="stb-items">' + itemsHTML + "</div>" +
       '<input class="stb-additem-input" data-role="add-item" data-card-id="' + note.id + '" value="' + escapeAttr(draftVal) + '" placeholder="Add a task, press Enter" style="color:' + pal.ink + "; border-top-color:" + pal.ink + '33;" />' +
@@ -629,7 +775,8 @@
     );
   }
 
-  function docHTML(doc) {
+  function docHTML(doc, opts) {
+    opts = opts || {};
     var pal = PALETTE[doc.color];
     var isCopied = copiedId === doc.id;
     var isExported = exportedId === doc.id;
@@ -641,14 +788,19 @@
       return '<button class="stb-swatch" style="background:' + p.bg + "; box-shadow:" + shadow + ';" data-action="set-color" data-card-id="' + doc.id + '" data-color-index="' + idx + '" aria-label="Change color to ' + p.name + '"></button>';
     }).join("");
 
+    var actionsHTML = opts.hideActions
+      ? ""
+      : '<div class="stb-note-actions">' +
+        '<button class="stb-note-popout" style="color:' + pal.ink + ';" data-action="pop-out" data-card-id="' + doc.id + '" aria-label="Pop out" title="Pop this out into a window that floats on top of other apps while you study">' + ICON.popout(12) + "</button>" +
+        '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + doc.id + '" aria-label="Save as a file" title="Save this as an .html file (goes to your Downloads folder)">' + (isExported ? ICON.check(12) : ICON.download(12)) + "</button>" +
+        '<button class="stb-note-copy" style="color:' + pal.ink + ';" data-action="copy-card" data-card-id="' + doc.id + '" aria-label="Copy note text" title="Copy text to paste into another app">' + (isCopied ? ICON.check(13) : ICON.copy(13)) + "</button>" +
+        '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + doc.id + '" aria-label="Remove document">' + ICON.x(13) + "</button>" +
+        "</div>";
+
     return (
       '<div class="stb-doc' + (isDragging ? " is-dragging" : "") + '" data-card-id="' + doc.id + '" style="' + style + '">' +
       '<span class="stb-pin" style="background:' + pal.ink + ';"></span>' +
-      '<div class="stb-note-actions">' +
-      '<button class="stb-note-export" style="color:' + pal.ink + ';" draggable="true" data-export-id="' + doc.id + '" aria-label="Save as a file" title="Drag onto your desktop to save this as a file, or click to download it">' + (isExported ? ICON.check(12) : ICON.download(12)) + "</button>" +
-      '<button class="stb-note-copy" style="color:' + pal.ink + ';" data-action="copy-card" data-card-id="' + doc.id + '" aria-label="Copy note text" title="Copy text to paste into another app">' + (isCopied ? ICON.check(13) : ICON.copy(13)) + "</button>" +
-      '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + doc.id + '" aria-label="Remove document">' + ICON.x(13) + "</button>" +
-      "</div>" +
+      actionsHTML +
       '<input class="stb-note-title" data-role="title" data-card-id="' + doc.id + '" value="' + escapeAttr(doc.title) + '" placeholder="Untitled document" style="color:' + pal.ink + ';" />' +
       '<textarea class="stb-doc-text" data-role="doc-text" data-card-id="' + doc.id + '" placeholder="Jot running notes here while you watch or read\u2026" style="color:' + pal.ink + ';">' + escapeAttr(doc.text) + "</textarea>" +
       '<div class="stb-note-footer">' +
@@ -668,7 +820,13 @@
         '<div class="stb-empty"><p>The board\'s empty. Pin a task, or start a running-notes page for something you\'re studying.</p>' +
         '<button data-action="add-note">+ New note</button></div>';
     } else {
-      board.innerHTML = visible.map(noteHTML).join("") + docs.map(docHTML).join("");
+      var noteMarkup = visible.map(function (n) {
+        return poppedOutWindows[n.id] ? placeholderHTML(n, "note") : noteHTML(n);
+      }).join("");
+      var docMarkup = docs.map(function (d) {
+        return poppedOutWindows[d.id] ? placeholderHTML(d, "doc") : docHTML(d);
+      }).join("");
+      board.innerHTML = noteMarkup + docMarkup;
     }
   }
 
@@ -725,6 +883,7 @@
     document.getElementById("stb-date").textContent = formattedDate();
     renderBoard();
     renderAside();
+    renderAllPopouts();
   }
 
   // ---- drag to reposition on the board ----
@@ -788,19 +947,23 @@
   }
 
   // ---- event delegation ----
-  function attachBoardEvents() {
-    var board = document.getElementById("stb-board");
+  function attachCardEvents(container, opts) {
+    opts = opts || {};
+    var enableReposition = opts.enableReposition !== false;
 
-    board.addEventListener("click", function (e) {
+    container.addEventListener("click", function (e) {
       var expBtn = e.target.closest("[data-export-id]");
       if (expBtn) { exportCardAsFile(expBtn.getAttribute("data-export-id")); return; }
 
-      var btn = e.target.closest("button[data-action]");
+      var btn = e.target.closest("[data-action]");
       if (!btn) return;
       var action = btn.getAttribute("data-action");
       var cardId = btn.getAttribute("data-card-id");
       if (action === "add-note") { addNote(); return; }
       if (action === "add-doc") { addDocument(); return; }
+      if (action === "pop-out") { popOutCard(cardId); return; }
+      if (action === "focus-popout") { focusPopout(cardId); return; }
+      if (action === "close-popout") { closePopout(cardId); return; }
       if (action === "delete-card") {
         var foundDel = findCard(cardId);
         if (foundDel && foundDel.kind === "doc") deleteDocument(cardId); else deleteNote(cardId);
@@ -819,7 +982,7 @@
       if (action === "toggle-day") { toggleDay(cardId, parseInt(btn.getAttribute("data-day-index"), 10)); return; }
     });
 
-    board.addEventListener("input", function (e) {
+    container.addEventListener("input", function (e) {
       var el = e.target;
       var role = el.getAttribute("data-role");
       var cardId = el.getAttribute("data-card-id");
@@ -836,7 +999,7 @@
       }
     });
 
-    board.addEventListener("keydown", function (e) {
+    container.addEventListener("keydown", function (e) {
       if (e.key === "Enter" && e.target.getAttribute("data-role") === "add-item") {
         var noteId = e.target.getAttribute("data-card-id");
         var val = e.target.value.trim();
@@ -847,14 +1010,16 @@
       }
     });
 
-    board.addEventListener("pointerdown", function (e) {
-      if (e.target.closest("input, button, textarea, select")) return;
-      var cardEl = e.target.closest(".stb-note, .stb-doc");
-      if (!cardEl) return;
-      startDrag(e, cardEl);
-    });
+    if (enableReposition) {
+      container.addEventListener("pointerdown", function (e) {
+        if (e.target.closest("input, button, textarea, select")) return;
+        var cardEl = e.target.closest(".stb-note, .stb-doc");
+        if (!cardEl) return;
+        startDrag(e, cardEl);
+      });
+    }
 
-    board.addEventListener("dragstart", function (e) {
+    container.addEventListener("dragstart", function (e) {
       var handle = e.target.closest("[data-export-id]");
       if (!handle) return;
       handleExportDragStart(e, handle.getAttribute("data-export-id"));
@@ -921,7 +1086,7 @@
       });
     });
 
-    attachBoardEvents();
+    attachCardEvents(document.getElementById("stb-board"));
     maybeShowIosTip();
     render();
 

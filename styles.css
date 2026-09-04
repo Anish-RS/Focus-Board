@@ -185,7 +185,7 @@ body {
   display: flex;
   gap: 5px;
 }
-.stb-note-copy, .stb-note-delete, .stb-note-export {
+.stb-note-copy, .stb-note-delete, .stb-note-export, .stb-note-popout {
   background: none;
   border: none;
   opacity: 0.4;
@@ -200,7 +200,37 @@ body {
   padding: 5px;
   margin: -3px;
 }
-.stb-note-copy:hover, .stb-note-delete:hover, .stb-note-export:hover { opacity: 0.9; }
+.stb-note-copy:hover, .stb-note-delete:hover, .stb-note-export:hover, .stb-note-popout:hover { opacity: 0.9; }
+
+.stb-placeholder {
+  position: absolute;
+  border-radius: 4px;
+  padding: 14px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.stb-placeholder-title {
+  font-family: 'Caveat', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  padding-right: 16px;
+}
+.stb-placeholder-sub {
+  font-size: 11px;
+  margin-top: 6px;
+  font-family: 'Work Sans', sans-serif;
+}
+.stb-placeholder-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 2px;
+}
+.stb-placeholder-close:hover { opacity: 1; }
 .stb-note-title {
   display: block;
   width: 100%;
