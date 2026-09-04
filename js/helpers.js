@@ -58,7 +58,7 @@
         days: Array.isArray(n.days) ? n.days : [],
         reminderTime: n.reminderTime || null,
         items: (n.items || []).map(function (it) {
-          return Object.assign({}, it, { carried: !!it.carried, reminderTime: it.reminderTime || null });
+          return Object.assign({}, it, { carried: !!it.carried });
         }),
       });
     });
@@ -71,6 +71,8 @@
         text: d.text || "",
         color: typeof d.color === "number" ? d.color : 0,
         archived: !!d.archived,
+        width: d.width || null,
+        height: d.height || null,
       });
     });
   };
