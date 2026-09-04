@@ -5,6 +5,7 @@
   STB.state = null; // { date, notes, documents, streak, history }
   STB.openDayPickerId = null;
   STB.openReminderPickerId = null;
+  STB.openItemReminderId = null;
   STB.activeDragId = null;
   STB.copiedId = null;
   STB.copiedTimeout = null;
@@ -120,6 +121,7 @@
   };
 
   STB.deleteItem = function (noteId, itemId) {
+    if (STB.openItemReminderId === itemId) STB.openItemReminderId = null;
     STB.commitNotes(STB.state.notes.map(function (n) {
       if (n.id !== noteId) return n;
       return Object.assign({}, n, { items: n.items.filter(function (it) { return it.id !== itemId; }) });
@@ -149,6 +151,24 @@
 
   STB.clearReminderTime = function (id) {
     STB.setReminderTime(id, null);
+  };
+
+  STB.toggleItemReminderPicker = function (itemId) {
+    STB.openItemReminderId = STB.openItemReminderId === itemId ? null : itemId;
+    STB.render();
+  };
+
+  STB.setItemReminderTime = function (noteId, itemId, time) {
+    STB.commitNotes(STB.state.notes.map(function (n) {
+      if (n.id !== noteId) return n;
+      return Object.assign({}, n, {
+        items: n.items.map(function (it) { return it.id === itemId ? Object.assign({}, it, { reminderTime: time || null }) : it; }),
+      });
+    }));
+  };
+
+  STB.clearItemReminderTime = function (noteId, itemId) {
+    STB.setItemReminderTime(noteId, itemId, null);
   };
 
   // ---- document (running notes) actions ----
