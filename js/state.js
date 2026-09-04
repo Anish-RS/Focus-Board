@@ -178,6 +178,17 @@
     STB.render();
   };
 
+  // Used by the custom touch/mouse resize handle: the element's size is updated
+  // directly via style during the drag (no re-render needed, same pattern as
+  // repositioning), this just persists the final size once the drag ends.
+  STB.setDocSize = function (id, width, height) {
+    var doc = STB.state.documents.filter(function (d) { return d.id === id; })[0];
+    if (!doc) return;
+    doc.width = width;
+    doc.height = height;
+    STB.saveState();
+  };
+
   STB.addDocument = function () {
     var board = document.getElementById("stb-board");
     var rect = board.getBoundingClientRect();
