@@ -10,6 +10,53 @@
     return typeof window.Notification !== "undefined";
   }
 
+  // ---- alarm sound (synthesized, no audio file to ship or fetch) ----
+  var audioCtx = null;
+
+  // Browsers refuse to start audio unless it happens on the back of a genuine
+  // user gesture (click/tap). Call this from inside a real click handler once
+  // (the reminders button already qualifies) so the AudioContext is "unlocked"
+  // and can be reused later when a reminder fires on its own, with no click.
+  function unlockAudio() {
+    try {
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!audioCtx) audioCtx = new AudioCtx();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    } catch (e) {}
+  }
+
+  function beep(ctx, startTime, freq, duration) {
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.3, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.05);
+  }
+
+  // A simple two-tone alarm-clock-style beep, repeated a few times.
+  function playAlarmSound() {
+    try {
+      if (!audioCtx) unlockAudio();
+      if (!audioCtx) return;
+      var now = audioCtx.currentTime;
+      for (var i = 0; i < 4; i++) {
+        beep(audioCtx, now + i * 0.55, 880, 0.16);
+        beep(audioCtx, now + i * 0.55 + 0.2, 659, 0.16);
+      }
+    } catch (e) {}
+  }
+
+  if (typeof window !== "undefined") {
+    window.addEventListener("pointerdown", unlockAudio, { once: true, passive: true });
+  }
+
   function pad(n) { return n < 10 ? "0" + n : "" + n; }
   function nowHHMM() {
     var d = new Date();
@@ -21,15 +68,50 @@
     return (p2[0] * 60 + p2[1]) - (p1[0] * 60 + p1[1]);
   }
 
-  function showInAppReminder(title, body) {
+  var alarmQueue = [];
+  var currentAlarmNoteId = null;
+
+  function renderAlarmModal(note, title, body) {
     var el = document.createElement("div");
-    el.className = "stb-inapp-reminder";
-    el.innerHTML = "<strong>" + STB.escapeAttr(title) + "</strong><div>" + STB.escapeAttr(body) + "</div>";
+    el.className = "stb-alarm-overlay";
+    el.id = "stb-alarm-overlay";
+    el.innerHTML =
+      '<div class="stb-alarm-card">' +
+      '<div class="stb-alarm-bell">' + STB.ICON.bell(28) + "</div>" +
+      '<h3 class="stb-alarm-title">' + STB.escapeAttr(title) + "</h3>" +
+      '<p class="stb-alarm-body">' + STB.escapeAttr(body) + "</p>" +
+      '<div class="stb-alarm-actions">' +
+      '<button class="stb-alarm-snooze" id="stb-alarm-snooze-btn">Snooze 5 min</button>' +
+      '<button class="stb-alarm-dismiss" id="stb-alarm-dismiss-btn">Dismiss</button>' +
+      "</div>" +
+      "</div>";
     document.body.appendChild(el);
-    setTimeout(function () {
-      el.classList.add("is-leaving");
-      setTimeout(function () { el.remove(); }, 400);
-    }, 8000);
+    document.getElementById("stb-alarm-dismiss-btn").addEventListener("click", function () { dismissAlarm(false); });
+    document.getElementById("stb-alarm-snooze-btn").addEventListener("click", function () { dismissAlarm(true, note); });
+  }
+
+  function dismissAlarm(shouldSnooze, note) {
+    var el = document.getElementById("stb-alarm-overlay");
+    if (el) el.remove();
+    currentAlarmNoteId = null;
+    if (shouldSnooze && note) {
+      setTimeout(function () {
+        alarmQueue.push(note);
+        showNextAlarm();
+      }, 5 * 60 * 1000);
+    }
+    showNextAlarm();
+  }
+
+  function showNextAlarm() {
+    if (currentAlarmNoteId || alarmQueue.length === 0) return;
+    var note = alarmQueue.shift();
+    currentAlarmNoteId = note.id;
+    var title = STB.autoTitleFor("note", note);
+    var openTasks = note.items.filter(function (it) { return it.text.trim() !== "" && !it.done; }).map(function (it) { return it.text; });
+    var body = openTasks.length > 0 ? openTasks.slice(0, 3).join(", ") : "Time to check this note.";
+    playAlarmSound();
+    renderAlarmModal(note, title, body);
   }
 
   function fireReminder(note) {
@@ -37,16 +119,21 @@
     var openTasks = note.items.filter(function (it) { return it.text.trim() !== "" && !it.done; }).map(function (it) { return it.text; });
     var body = openTasks.length > 0 ? openTasks.slice(0, 3).join(", ") : "Time to check this note.";
 
+    // The OS notification still fires too, since that's the only thing that can
+    // reach the user if this tab isn't the one they're currently looking at.
     if (canNotify() && Notification.permission === "granted") {
       try {
         var n = new Notification(title, { body: body, tag: "stb-reminder-" + note.id });
         n.onclick = function () { window.focus(); n.close(); };
-      } catch (e) {
-        showInAppReminder(title, body);
-      }
-    } else {
-      showInAppReminder(title, body);
+      } catch (e) {}
     }
+
+    if (navigator.vibrate) {
+      try { navigator.vibrate([200, 100, 200, 100, 200]); } catch (e) {}
+    }
+
+    alarmQueue.push(note);
+    showNextAlarm();
   }
 
   function checkReminders() {
@@ -103,7 +190,7 @@
         : "Click to turn reminders on";
     
       btn.onclick = function () {
-    
+        unlockAudio();
         localStorage.setItem(
           "remindersEnabled",
           enabled ? "false" : "true"
@@ -120,6 +207,7 @@
       btn.disabled = false;
       btn.title = "Step 1 of 2: allow notifications here, then set a time on each note using its own bell icon";
       btn.onclick = function () {
+        unlockAudio();
         STB.requestNotificationPermission().then(function () { STB.renderReminderButton(); });
       };
     }
