@@ -4,6 +4,7 @@
   // ---- state ----
   STB.state = null; // { date, notes, documents, streak, history }
   STB.openDayPickerId = null;
+  STB.openReminderPickerId = null;
   STB.activeDragId = null;
   STB.copiedId = null;
   STB.copiedTimeout = null;
@@ -134,6 +135,11 @@
 
   STB.togglePicker = function (id) {
     STB.openDayPickerId = STB.openDayPickerId === id ? null : id;
+    STB.render();
+  };
+
+  STB.toggleReminderPicker = function (id) {
+    STB.openReminderPickerId = STB.openReminderPickerId === id ? null : id;
     STB.render();
   };
 
