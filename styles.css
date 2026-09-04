@@ -73,6 +73,16 @@ body {
   cursor: pointer;
 }
 .stb-auth-msg { font-size: 12px; color: #FBF8F1; }
+.stb-auth-link {
+  background: none;
+  border: none;
+  color: #FBF8F1;
+  text-decoration: underline;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+.stb-auth-link:hover { opacity: 0.8; }
 
 .stb-reminder-btn {
   display: flex;
@@ -417,8 +427,16 @@ body {
   justify-content: space-between;
   gap: 8px;
   margin-top: 10px;
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
-.stb-repeat-btn {
+.stb-schedule-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.stb-repeat-btn, .stb-reminder-btn {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -433,7 +451,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
 }
-.stb-repeat-btn:hover { opacity: 1; }
+.stb-repeat-btn:hover, .stb-reminder-btn:hover { opacity: 1; }
 .stb-swatches { display: flex; gap: 5px; }
 .stb-swatch {
   width: 13px;
