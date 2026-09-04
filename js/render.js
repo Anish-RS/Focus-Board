@@ -42,12 +42,19 @@
       pickerHTML =
         '<div class="stb-day-picker">' + chips +
         '<button class="stb-day-done" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-picker" data-card-id="' + note.id + '">Done</button>' +
+        "</div>";
+    }
+
+    var isReminderPickerOpen = STB.openReminderPickerId === note.id;
+    var reminderPickerHTML = "";
+    if (isReminderPickerOpen) {
+      reminderPickerHTML =
         '<div class="stb-reminder-row">' +
         '<input type="time" class="stb-reminder-input" data-role="reminder-time" data-card-id="' + note.id + '" value="' + (note.reminderTime || "") + '" style="color:' + pal.ink + ';" />' +
         (note.reminderTime
           ? '<button class="stb-reminder-clear" data-action="clear-reminder" data-card-id="' + note.id + '" style="color:' + pal.ink + ';" title="Remove reminder" aria-label="Remove reminder">' + ICON.x(11) + "</button>"
           : "") +
-        "</div>" +
+        '<button class="stb-day-done" data-action="toggle-reminder-picker" data-card-id="' + note.id + '" style="color:' + pal.ink + ";border-color:" + pal.ink + ';">Done</button>' +
         "</div>";
     }
 
@@ -74,10 +81,14 @@
       '<div class="stb-items">' + itemsHTML + "</div>" +
       '<input class="stb-additem-input" data-role="add-item" data-card-id="' + note.id + '" value="' + STB.escapeAttr(draftVal) + '" placeholder="Add a task, press Enter" style="color:' + pal.ink + "; border-top-color:" + pal.ink + '33;" />' +
       '<div class="stb-note-footer">' +
-      '<button class="stb-repeat-btn" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-picker" data-card-id="' + note.id + '">' + ICON.repeat(11) + " " + dayLabel + (note.reminderTime ? " " + ICON.bell(10) + " " + note.reminderTime : "") + "</button>" +
+      '<div class="stb-schedule-group">' +
+      '<button class="stb-repeat-btn" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-picker" data-card-id="' + note.id + '">' + ICON.repeat(11) + " " + dayLabel + "</button>" +
+      '<button class="stb-reminder-btn" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-reminder-picker" data-card-id="' + note.id + '" title="' + (note.reminderTime ? "Reminder at " + note.reminderTime + " -- click to change" : "Set a time to be reminded about this note") + '">' + ICON.bell(11) + (note.reminderTime ? " " + note.reminderTime : "") + "</button>" +
+      "</div>" +
       '<div class="stb-swatches">' + swatchesHTML + "</div>" +
       "</div>" +
       pickerHTML +
+      reminderPickerHTML +
       "</div>"
     );
   }
