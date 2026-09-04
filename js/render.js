@@ -114,7 +114,8 @@
     var ICON = STB.ICON;
     var isCopied = STB.copiedId === doc.id;
     var isDragging = STB.activeDragId === doc.id;
-    var style = "background:" + pal.bg + "; left:" + doc.x + "px; top:" + doc.y + "px; transform:rotate(" + doc.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + ";";
+    var sizeStyle = (doc.width ? "width:" + doc.width + "px;" : "") + (doc.height ? "height:" + doc.height + "px;" : "");
+    var style = "background:" + pal.bg + "; left:" + doc.x + "px; top:" + doc.y + "px; transform:rotate(" + doc.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + ";" + sizeStyle;
 
     var swatchesHTML = STB.PALETTE.map(function (p, idx) {
       var shadow = idx === doc.color ? "0 0 0 2px " + p.ink : "none";
@@ -130,6 +131,12 @@
         '<button class="stb-note-delete" data-action="delete-card" data-card-id="' + doc.id + '" aria-label="Remove document">' + ICON.x(13) + "</button>" +
         "</div>";
 
+    var resizeHandle = opts.hideActions
+      ? ""
+      : '<div class="stb-doc-resize-handle" data-resize-id="' + doc.id + '" title="Drag to resize" aria-label="Drag to resize this note">' +
+        '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="' + pal.ink + '" stroke-width="1.5" stroke-linecap="round"><line x1="10" y1="2" x2="2" y2="10"/><line x1="10" y1="6" x2="6" y2="10"/><line x1="10" y1="10" x2="10" y2="10"/></svg>' +
+        "</div>";
+
     return (
       '<div class="stb-doc' + (isDragging ? " is-dragging" : "") + '" data-card-id="' + doc.id + '" style="' + style + '">' +
       '<span class="stb-pin" style="background:' + pal.ink + ';"></span>' +
@@ -140,6 +147,7 @@
       '<span class="stb-doc-label" style="color:' + pal.ink + ';">Running notes</span>' +
       '<div class="stb-swatches">' + swatchesHTML + "</div>" +
       "</div>" +
+      resizeHandle +
       "</div>"
     );
   }
