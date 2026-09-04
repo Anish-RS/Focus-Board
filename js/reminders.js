@@ -2,6 +2,9 @@
   "use strict";
 
   var firedToday = {}; // "noteId:dateString" -> true, so a note only fires once per day
+  function remindersEnabled() {
+    return localStorage.getItem("remindersEnabled") !== "false";
+  }
 
   function canNotify() {
     return typeof window.Notification !== "undefined";
@@ -48,6 +51,7 @@
 
   function checkReminders() {
     if (!STB.state) return;
+    if (!remindersEnabled()) return;
     var today = STB.todayKey();
     var current = nowHHMM();
     STB.getVisibleNotes().forEach(function (note) {
@@ -85,9 +89,28 @@
     var perm = STB.notificationPermission();
     if (perm === "unsupported") { btn.style.display = "none"; return; }
     if (perm === "granted") {
-      btn.innerHTML = STB.ICON.bell(15) + " Reminders on";
-      btn.disabled = true;
-      btn.title = "Notifications are allowed. Set the actual time on each note using its own bell icon.";
+    
+      var enabled = remindersEnabled();
+    
+      btn.innerHTML =
+        STB.ICON.bell(15) +
+        (enabled ? " Reminders on" : " Reminders off");
+    
+      btn.disabled = false;
+    
+      btn.title = enabled
+        ? "Click to turn reminders off"
+        : "Click to turn reminders on";
+    
+      btn.onclick = function () {
+    
+        localStorage.setItem(
+          "remindersEnabled",
+          enabled ? "false" : "true"
+        );
+    
+        STB.renderReminderButton();
+      };
     } else if (perm === "denied") {
       btn.innerHTML = STB.ICON.bell(15) + " Reminders blocked";
       btn.disabled = true;
