@@ -6,6 +6,7 @@
   var pushTimeout = null;
   var applyingRemoteUpdate = false;
   var realtimeChannel = null;
+  var inRecoveryMode = false;
 
   function isConfigured() {
     return !!(
@@ -41,9 +42,28 @@
     var c = getClient();
     stopRealtime();
     currentUser = null;
+    inRecoveryMode = false;
     STB.renderAuthUI();
     if (!c) return Promise.resolve();
     return c.auth.signOut();
+  };
+
+  STB.sendPasswordReset = function (email) {
+    var c = getClient();
+    if (!c) return Promise.reject(new Error("Sync isn't set up yet."));
+    return c.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  };
+
+  STB.updatePassword = function (newPassword) {
+    var c = getClient();
+    if (!c) return Promise.reject(new Error("Sync isn't set up yet."));
+    return c.auth.updateUser({ password: newPassword }).then(function (res) {
+      if (!res.error) {
+        inRecoveryMode = false;
+        STB.renderAuthUI();
+      }
+      return res;
+    });
   };
 
   function stopRealtime() {
@@ -131,10 +151,16 @@
       else STB.renderAuthUI();
     });
     c.auth.onAuthStateChange(function (event, session) {
+      if (event === "PASSWORD_RECOVERY") {
+        inRecoveryMode = true;
+        STB.renderAuthUI();
+        return;
+      }
       if (event === "SIGNED_IN" && session && session.user && (!currentUser || currentUser.id !== session.user.id)) {
         afterSignedIn(session.user);
       } else if (event === "SIGNED_OUT") {
         currentUser = null;
+        inRecoveryMode = false;
         stopRealtime();
         STB.renderAuthUI();
       }
@@ -159,12 +185,48 @@
     });
   }
 
+  function submitForgotPassword() {
+    var email = document.getElementById("stb-auth-email").value.trim();
+    var msg = document.getElementById("stb-auth-msg");
+    if (!email) { msg.textContent = "Enter your email above first, then click \"Forgot password?\" again."; return; }
+    msg.textContent = "Sending reset link\u2026";
+    STB.sendPasswordReset(email).then(function (res) {
+      msg.textContent = res.error ? res.error.message : "Check your email for a password reset link.";
+    }).catch(function (e) {
+      msg.textContent = (e && e.message) || "Something went wrong.";
+    });
+  }
+
+  function submitNewPassword() {
+    var password = document.getElementById("stb-recovery-password").value;
+    var msg = document.getElementById("stb-recovery-msg");
+    if (!password || password.length < 6) { msg.textContent = "Choose a password with at least 6 characters."; return; }
+    msg.textContent = "Saving\u2026";
+    STB.updatePassword(password).then(function (res) {
+      msg.textContent = res.error ? res.error.message : "Password updated.";
+    }).catch(function (e) {
+      msg.textContent = (e && e.message) || "Something went wrong.";
+    });
+  }
+
   STB.renderAuthUI = function () {
     var el = document.getElementById("stb-auth");
     if (!el) return;
 
     if (!STB.isSyncAvailable()) {
-      el.innerHTML = '<span class="stb-auth-guest" title="Add your Supabase project details to js/supabase-config.js to enable accounts and sync">Guest \u00b7 not synced</span>';
+      el.innerHTML = '<span class="stb-auth-guest" title="Add your Supabase project details to enable accounts and sync">Guest \u00b7 not synced</span>';
+      return;
+    }
+
+    if (inRecoveryMode) {
+      el.innerHTML =
+        '<span class="stb-auth-email">Choose a new password</span>' +
+        '<div class="stb-auth-form" style="display:flex;">' +
+        '<input type="password" id="stb-recovery-password" placeholder="New password" autocomplete="new-password" />' +
+        '<button id="stb-recovery-save-btn">Save password</button>' +
+        '<span class="stb-auth-msg" id="stb-recovery-msg"></span>' +
+        "</div>";
+      document.getElementById("stb-recovery-save-btn").addEventListener("click", submitNewPassword);
       return;
     }
 
@@ -184,6 +246,7 @@
       '<input type="password" id="stb-auth-password" placeholder="Password" autocomplete="current-password" />' +
       '<button id="stb-auth-signin-btn">Sign in</button>' +
       '<button id="stb-auth-signup-btn">Create account</button>' +
+      '<button class="stb-auth-link" id="stb-auth-forgot-btn" type="button">Forgot password?</button>' +
       '<span class="stb-auth-msg" id="stb-auth-msg"></span>' +
       "</div>";
     var form = document.getElementById("stb-auth-form");
@@ -193,5 +256,6 @@
     });
     document.getElementById("stb-auth-signin-btn").addEventListener("click", function () { submitAuth("signin"); });
     document.getElementById("stb-auth-signup-btn").addEventListener("click", function () { submitAuth("signup"); });
+    document.getElementById("stb-auth-forgot-btn").addEventListener("click", submitForgotPassword);
   };
 })(window.STB = window.STB || {});
