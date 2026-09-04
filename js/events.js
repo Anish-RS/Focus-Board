@@ -78,6 +78,8 @@
       if (action === "copy-card") { STB.copyCardText(cardId); return; }
       if (action === "toggle-item") { STB.toggleItem(cardId, btn.getAttribute("data-item-id")); return; }
       if (action === "delete-item") { STB.deleteItem(cardId, btn.getAttribute("data-item-id")); return; }
+      if (action === "toggle-item-reminder") { STB.toggleItemReminderPicker(btn.getAttribute("data-item-id")); return; }
+      if (action === "clear-item-reminder") { STB.clearItemReminderTime(cardId, btn.getAttribute("data-item-id")); return; }
       if (action === "toggle-picker") { STB.togglePicker(cardId); return; }
       if (action === "toggle-reminder-picker") { STB.toggleReminderPicker(cardId); return; }
       if (action === "set-color") {
@@ -108,8 +110,11 @@
 
     container.addEventListener("change", function (e) {
       var el = e.target;
-      if (el.getAttribute("data-role") === "reminder-time") {
+      var role = el.getAttribute("data-role");
+      if (role === "reminder-time") {
         STB.setReminderTime(el.getAttribute("data-card-id"), el.value);
+      } else if (role === "item-reminder-time") {
+        STB.setItemReminderTime(el.getAttribute("data-card-id"), el.getAttribute("data-item-id"), el.value);
       }
     });
 
