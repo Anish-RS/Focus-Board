@@ -29,7 +29,16 @@
   STB.signUp = function (email, password) {
     var c = getClient();
     if (!c) return Promise.reject(new Error("Sync isn't set up yet."));
-    return c.auth.signUp({ email: email, password: password });
+    return c.auth.signUp({
+      email: email,
+      password: password,
+      // Without this, Supabase falls back to the dashboard's "Site URL" setting
+      // (which defaults to localhost:3000) for the confirmation link -- explicitly
+      // pointing it at wherever this page is actually loaded keeps it correct
+      // whether that's your Vercel URL or a local dev server, without needing to
+      // remember to update the dashboard every time.
+      options: { emailRedirectTo: window.location.origin },
+    });
   };
 
   STB.signIn = function (email, password) {
