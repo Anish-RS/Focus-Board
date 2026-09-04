@@ -101,8 +101,9 @@
         else STB.updateTitle(cardId, el.value, true);
       } else if (role === "item-text") {
         STB.updateItemText(cardId, el.getAttribute("data-item-id"), el.value, true);
-        el.style.height = "auto";
-        el.style.height = el.scrollHeight + "px";
+        var noteEl = el.closest(".stb-note");
+        var found2 = STB.findCard(cardId);
+        if (noteEl && found2 && found2.kind === "note") STB.fitNoteToContent(noteEl, found2.item);
       } else if (role === "add-item") {
         STB.draftItems[cardId] = el.value;
       } else if (role === "doc-text") {
