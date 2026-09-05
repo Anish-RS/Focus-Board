@@ -57,6 +57,7 @@
       return Object.assign({}, n, {
         days: Array.isArray(n.days) ? n.days : [],
         reminderTime: n.reminderTime || null,
+        zIndex: n.zIndex || null,
         items: (n.items || []).map(function (it) {
           return Object.assign({}, it, { carried: !!it.carried });
         }),
@@ -73,6 +74,7 @@
         archived: !!d.archived,
         width: d.width || null,
         height: d.height || null,
+        zIndex: d.zIndex || null,
       });
     });
   };
@@ -160,7 +162,7 @@
       }
     });
     // Documents are permanent reference pages, not daily tasks: they never roll over or disappear.
-    return { date: today, notes: rolledNotes, documents: data.documents || [], streak: newStreak, history: newHistory };
+    return { date: today, notes: rolledNotes, documents: data.documents || [], streak: newStreak, history: newHistory, nextZIndex: data.nextZIndex || 2 };
   };
 
   STB.normalizeAndRollover = function (data) {
