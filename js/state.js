@@ -18,9 +18,10 @@
     try { raw = localStorage.getItem(STB.STORAGE_KEY); } catch (e) {}
     var data = raw ? JSON.parse(raw) : null;
     if (!data) {
-      data = { date: STB.todayKey(), notes: STB.starterNotes(), documents: [], streak: 0, history: [] };
+      data = { date: STB.todayKey(), notes: STB.starterNotes(), documents: [], streak: 0, history: [], nextZIndex: 2 };
     } else {
       data = STB.normalizeAndRollover(data);
+      if (!data.nextZIndex) data.nextZIndex = 2;
     }
     return data;
   };
@@ -47,6 +48,18 @@
     var doc = STB.state.documents.filter(function (d) { return d.id === id; })[0];
     if (doc) return { kind: "doc", item: doc };
     return null;
+  };
+
+  // Whichever card was most recently touched should stay visually on top --
+  // not just while actively dragging it, but afterward too. Without this,
+  // two overlapping cards fall back to DOM/array order once a drag ends,
+  // which can make a card you just moved to the front suddenly slip behind
+  // another one the moment you let go.
+  STB.bringToFront = function (id) {
+    var found = STB.findCard(id);
+    if (!found) return;
+    STB.state.nextZIndex = (STB.state.nextZIndex || 2) + 1;
+    found.item.zIndex = STB.state.nextZIndex;
   };
 
   // ---- note actions ----
