@@ -9,7 +9,7 @@
     var isPickerOpen = STB.openDayPickerId === note.id;
     var isCopied = STB.copiedId === note.id;
     var isDragging = STB.activeDragId === note.id;
-    var style = "background:" + pal.bg + "; left:" + note.x + "px; top:" + note.y + "px; transform:rotate(" + note.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + (note.width ? "; width:" + note.width + "px;" : "") + ";";
+    var style = "background:" + pal.bg + "; left:" + note.x + "px; top:" + note.y + "px; transform:rotate(" + note.rotation + "deg); z-index:" + (isDragging ? STB.MAX_Z_INDEX : (note.zIndex || 1)) + (note.width ? "; width:" + note.width + "px;" : "") + ";";
 
     var itemsHTML = note.items.map(function (it) {
       var cbStyle = it.done ? "background:" + pal.ink + ";border-color:" + pal.ink + ";" : "border-color:" + pal.ink + ";";
@@ -115,7 +115,7 @@
     var isCopied = STB.copiedId === doc.id;
     var isDragging = STB.activeDragId === doc.id;
     var sizeStyle = (doc.width ? "width:" + doc.width + "px;" : "") + (doc.height ? "height:" + doc.height + "px;" : "");
-    var style = "background:" + pal.bg + "; left:" + doc.x + "px; top:" + doc.y + "px; transform:rotate(" + doc.rotation + "deg); z-index:" + (isDragging ? 50 : 1) + ";" + sizeStyle;
+    var style = "background:" + pal.bg + "; left:" + doc.x + "px; top:" + doc.y + "px; transform:rotate(" + doc.rotation + "deg); z-index:" + (isDragging ? STB.MAX_Z_INDEX : (doc.zIndex || 1)) + ";" + sizeStyle;
 
     var swatchesHTML = STB.PALETTE.map(function (p, idx) {
       var shadow = idx === doc.color ? "0 0 0 2px " + p.ink : "none";
