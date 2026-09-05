@@ -11,10 +11,15 @@
     });
     var override = doc.createElement("style");
     override.textContent =
-      "html,body{margin:0;padding:0;background:#B98A54;box-sizing:border-box;min-height:100%;height:100%;}" +
+      "html,body{margin:0;padding:0;background:#B98A54;box-sizing:border-box;min-height:100%;height:100%;overflow:hidden;}" +
       ".stb-pip-root{min-height:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;}" +
       ".stb-pip-root .stb-note,.stb-pip-root .stb-doc{position:static !important;left:auto !important;top:auto !important;transform:none !important;width:100% !important;box-sizing:border-box;margin:0 !important;}" +
-      ".stb-pip-root .stb-doc{height:100% !important;}";
+      ".stb-pip-root .stb-doc{height:100% !important;}" +
+      "*{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,0.3) transparent;}" +
+      "*::-webkit-scrollbar{width:4px;height:4px;}" +
+      "*::-webkit-scrollbar-button{display:none;height:0;width:0;}" +
+      "*::-webkit-scrollbar-track{background:transparent;}" +
+      "*::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.3);border-radius:2px;}";
     doc.head.appendChild(override);
   }
 
@@ -48,6 +53,12 @@
     return { w: found.item.width || 300, h: h };
   }
 
+  // window.open's width/height describe the OUTER window, chrome included --
+  // the title bar you see at the top of the pop-out eats into that, leaving
+  // less actual content space than requested. This buffer compensates so the
+  // content area itself ends up matching the note's real size.
+  var POPUP_CHROME_HEIGHT = 56;
+
   function openPopupWindow(id, found) {
     var size = estimatePopupSize(found);
     var openCount = Object.keys(STB.poppedOutWindows).length;
@@ -56,7 +67,7 @@
     var popup = window.open(
       "",
       "stb-popout-" + id,
-      "width=" + size.w + ",height=" + size.h + ",left=" + left + ",top=" + top + ",popup=1"
+      "width=" + size.w + ",height=" + (size.h + POPUP_CHROME_HEIGHT) + ",left=" + left + ",top=" + top + ",popup=1"
     );
     if (!popup) {
       alert("Your browser blocked the pop-out window. Please allow pop-ups for this site and try again.");
