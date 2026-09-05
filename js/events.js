@@ -9,13 +9,15 @@
     var item = found.item;
     e.preventDefault();
 
+    STB.bringToFront(cardId);
+
     var cardRect = cardEl.getBoundingClientRect();
     var offsetX = e.clientX - cardRect.left;
     var offsetY = e.clientY - cardRect.top;
 
     STB.activeDragId = cardId;
     cardEl.classList.add("is-dragging");
-    cardEl.style.zIndex = 50;
+    cardEl.style.zIndex = STB.MAX_Z_INDEX;
 
     function handleMove(ev) {
       var rect = board.getBoundingClientRect();
@@ -33,7 +35,7 @@
       window.removeEventListener("pointerup", handleUp);
       STB.activeDragId = null;
       cardEl.classList.remove("is-dragging");
-      cardEl.style.zIndex = 1;
+      cardEl.style.zIndex = item.zIndex || 1;
       STB.saveState();
     }
     window.addEventListener("pointermove", handleMove);
@@ -42,8 +44,6 @@
 
   var DOC_MIN_WIDTH = 200;
   var DOC_MIN_HEIGHT = 180;
-  var DOC_MAX_WIDTH = 480;
-  var DOC_MAX_HEIGHT = 500;
 
   // Works on both mouse and touch, unlike the browser's native CSS `resize`
   // handle, which most mobile browsers simply don't support dragging at all.
@@ -66,8 +66,8 @@
     docEl.classList.add("is-resizing");
 
     function handleMove(ev) {
-      var newWidth = Math.min(DOC_MAX_WIDTH, Math.max(DOC_MIN_WIDTH, startWidth + (ev.clientX - startX)));
-      var newHeight = Math.min(DOC_MAX_HEIGHT, Math.max(DOC_MIN_HEIGHT, startHeight + (ev.clientY - startY)));
+      var newWidth = Math.max(DOC_MIN_WIDTH, startWidth + (ev.clientX - startX));
+      var newHeight = Math.max(DOC_MIN_HEIGHT, startHeight + (ev.clientY - startY));
       docEl.style.width = newWidth + "px";
       docEl.style.height = newHeight + "px";
       doc.width = newWidth;
