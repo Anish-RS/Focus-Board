@@ -11,9 +11,10 @@
     });
     var override = doc.createElement("style");
     override.textContent =
-      "html,body{margin:0;padding:0;background:#B98A54;box-sizing:border-box;min-height:100%;}" +
-      ".stb-pip-root{min-height:100%;display:flex;align-items:flex-start;justify-content:center;}" +
-      ".stb-pip-root .stb-note,.stb-pip-root .stb-doc{position:static !important;left:auto !important;top:auto !important;transform:none !important;width:100% !important;max-width:270px;box-sizing:border-box;margin:0 !important;}";
+      "html,body{margin:0;padding:0;background:#B98A54;box-sizing:border-box;min-height:100%;height:100%;}" +
+      ".stb-pip-root{min-height:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;}" +
+      ".stb-pip-root .stb-note,.stb-pip-root .stb-doc{position:static !important;left:auto !important;top:auto !important;transform:none !important;width:100% !important;box-sizing:border-box;margin:0 !important;}" +
+      ".stb-pip-root .stb-doc{height:100% !important;}";
     doc.head.appendChild(override);
   }
 
@@ -38,11 +39,13 @@
   }
 
   function estimatePopupSize(found) {
-    if (found.kind === "doc") return { w: 320, h: 420 };
+    if (found.kind === "doc") {
+      return { w: found.item.width || 320, h: found.item.height || 420 };
+    }
     var itemCount = found.item.items.length;
     var h = 150 + itemCount * 34 + 70;
     h = Math.max(220, Math.min(480, h));
-    return { w: 300, h: h };
+    return { w: found.item.width || 300, h: h };
   }
 
   function openPopupWindow(id, found) {
@@ -83,7 +86,8 @@
     // limit -- you can pop out as many sticky notes at once as you like.
     if (found.kind === "doc" && isPipSupported()) {
       try {
-        var pipWin = await window.documentPictureInPicture.requestWindow({ width: 320, height: 420 });
+        var pipSize = estimatePopupSize(found);
+        var pipWin = await window.documentPictureInPicture.requestWindow({ width: pipSize.w, height: pipSize.h });
         copyStylesInto(pipWin.document);
         var container = pipWin.document.createElement("div");
         container.className = "stb-root stb-pip-root";
