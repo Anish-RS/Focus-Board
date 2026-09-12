@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Board — a to-do board that carries your day forward</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wood:#8a6438;
+    --cork:#B98A54;
+    --ink:#2B2620;
+    --cream:#FBF8F1;
+    --paper:#F4EEDF;
+    --butter:#F5E6A8; --butter-ink:#6B4E12;
+    --sage:#C9D6B8; --sage-ink:#3A4B24;
+    --sky:#B9D3DD; --sky-ink:#20424C;
+    --blush:#E8C5C0; --blush-ink:#6B322A;
+    --lav:#D3C5DE; --lav-ink:#4A2F59;
+  }
+  *{ box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    margin:0;
+    font-family:'Work Sans', sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    line-height:1.08;
+    margin:0;
+  }
+  p{ line-height:1.6; margin:0; }
+  a{ color:inherit; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 28px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+
+  /* ---------- nav ---------- */
+  nav.wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-top:26px; padding-bottom:26px;
+  }
+  .wordmark{
+    font-family:'Fraunces', serif;
+    font-size:20px;
+    font-weight:600;
+    color:var(--ink);
+    text-decoration:none;
+  }
+  .nav-cta{
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    background:var(--ink);
+    color:var(--cream);
+    padding:9px 18px;
+    border-radius:3px;
+    text-decoration:none;
+  }
+  .nav-cta:hover{ background:#453d32; }
+
+  /* ---------- hero (cork) ---------- */
+  .hero{
+    background:var(--cork);
+    background-image:
+      radial-gradient(rgba(94,62,27,0.35) 1px, transparent 1.6px),
+      radial-gradient(rgba(140,100,55,0.28) 1px, transparent 1.7px);
+    background-size:15px 15px, 23px 23px;
+    background-position:0 0, 8px 12px;
+    border-top:1px solid rgba(0,0,0,0.08);
+    border-bottom:1px solid rgba(0,0,0,0.08);
+  }
+  .hero-inner{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:40px;
+    align-items:center;
+    padding:64px 0 84px;
+  }
+  .hero h1{
+    font-size:clamp(34px, 4.4vw, 52px);
+    color:var(--ink);
+    max-width:11.5ch;
+  }
+  .hero .sub{
+    margin-top:20px;
+    font-size:17px;
+    max-width:44ch;
+    color:#3a2f20;
+  }
+  .hero-ctas{
+    margin-top:30px;
+    display:flex;
+    align-items:center;
+    gap:22px;
+    flex-wrap:wrap;
+  }
+  .btn-primary{
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:15px;
+    background:var(--ink);
+    color:var(--cream);
+    padding:13px 24px;
+    border-radius:3px;
+    text-decoration:none;
+    display:inline-block;
+  }
+  .btn-primary:hover{ background:#453d32; }
+  .link-quiet{
+    font-size:14px;
+    font-weight:600;
+    text-decoration:underline;
+    text-decoration-color:rgba(43,38,32,0.35);
+    text-underline-offset:3px;
+    color:var(--ink);
+  }
+
+  /* pinned note base */
+  .note{
+    position:relative;
+    padding:20px 20px 24px;
+    font-size:14.5px;
+    line-height:1.45;
+    box-shadow:3px 6px 14px rgba(0,0,0,0.28);
+  }
+  .note .pin{
+    position:absolute;
+    top:-9px; left:50%;
+    transform:translateX(-50%);
+    width:15px; height:15px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff 0%, #e2453f 28%, #9c2a25 100%);
+    box-shadow:0 2px 3px rgba(0,0,0,0.4);
+  }
+  .note .fold{
+    position:absolute;
+    right:0; bottom:0;
+    width:0; height:0;
+    border-style:solid;
+    border-width:0 0 18px 18px;
+    border-color:transparent transparent rgba(0,0,0,0.14) transparent;
+  }
+  .note .flame{ width:16px; height:16px; vertical-align:-3px; margin-right:5px; }
+
+  .hero-notes{ position:relative; height:310px; }
+  .hero-notes .note{ position:absolute; width:220px; }
+  .note-a{ background:var(--butter); color:var(--butter-ink); top:0; left:18px; transform:rotate(-4deg); z-index:2; }
+  .note-b{ background:var(--sky); color:var(--sky-ink); top:70px; left:150px; transform:rotate(3deg); z-index:1; }
+  .note-a, .note-b{ animation:settle 0.5s ease-out both; }
+  .note-b{ animation-delay:0.12s; }
+  @keyframes settle{
+    from{ transform:translateY(-14px) rotate(0deg); opacity:0; }
+    to{ opacity:1; }
+  }
+  .note-a{ animation-name:settle-a; }
+  .note-b{ animation-name:settle-b; }
+  @keyframes settle-a{ from{ transform:translateY(-16px) rotate(-4deg); opacity:0;} to{ transform:rotate(-4deg); opacity:1; } }
+  @keyframes settle-b{ from{ transform:translateY(-16px) rotate(3deg); opacity:0;} to{ transform:rotate(3deg); opacity:1; } }
+  .note-title{ font-weight:700; margin-bottom:8px; font-size:13px; }
+  .task-row{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:13.5px; }
+  .check{
+    width:14px; height:14px; border-radius:3px; flex:0 0 auto;
+    border:1.6px solid currentColor;
+  }
+  .check.done{ background:currentColor; }
+  .task-row.done span{ text-decoration:line-through; opacity:0.7; }
+
+  /* ---------- problem section ---------- */
+  .problem{ padding:80px 0; }
+  .problem-inner{ display:grid; grid-template-columns:1fr 0.85fr; gap:56px; align-items:start; }
+  .problem h2{ font-size:clamp(26px, 3vw, 34px); max-width:14ch; }
+  .problem p.body{ margin-top:18px; font-size:16px; max-width:46ch; color:#3a332a; }
+  .confession{
+    background:var(--cream);
+    color:var(--ink);
+    transform:rotate(2deg);
+    max-width:290px;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:16px;
+    line-height:1.5;
+  }
+  .confession .note-title{ font-family:'Work Sans',sans-serif; font-style:normal; font-weight:700; font-size:12px; opacity:0.6; }
+
+  /* ---------- how it works (cork) ---------- */
+  .how{
+    background:var(--wood);
+    background-image:
+      radial-gradient(rgba(0,0,0,0.25) 1px, transparent 1.6px),
+      radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1.7px);
+    background-size:15px 15px, 23px 23px;
+    padding:80px 0 96px;
+  }
+  .how h2{ color:var(--cream); font-size:clamp(26px,3vw,34px); max-width:16ch; }
+  .how-row{
+    margin-top:48px;
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:34px;
+  }
+  .how-row .note{ width:100%; min-height:150px; }
+  .how-row .note:nth-child(1){ transform:rotate(-2.5deg); margin-top:0; }
+  .how-row .note:nth-child(2){ transform:rotate(1.5deg); margin-top:22px; }
+  .how-row .note:nth-child(3){ transform:rotate(-1.5deg); margin-top:4px; }
+  .how-row .note-title{ font-size:15px; }
+
+  /* ---------- pricing ---------- */
+  .pricing{ padding:84px 0; }
+  .pricing-head{ max-width:52ch; }
+  .pricing h2{ font-size:clamp(26px,3vw,34px); }
+  .pricing-head p{ margin-top:14px; font-size:15.5px; color:#3a332a; }
+  .tiers{
+    margin-top:42px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:26px;
+  }
+  .tier{
+    background:var(--cream);
+    padding:30px 28px 32px;
+    position:relative;
+  }
+  .tier::before{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0; width:5px;
+    background:var(--tier-accent, var(--sage));
+  }
+  .tier.paid{ --tier-accent: var(--sky-ink); }
+  .tier-name{ font-family:'Fraunces', serif; font-size:20px; font-weight:500; }
+  .tier-price{ margin-top:4px; font-size:14px; font-weight:600; color:#5c5346; }
+  .tier ul{ margin:20px 0 0; padding:0; list-style:none; }
+  .tier li{ font-size:14.5px; padding:6px 0; padding-left:20px; position:relative; }
+  .tier li::before{
+    content:"";
+    position:absolute; left:0; top:12px;
+    width:8px; height:8px; border-radius:50%;
+    background:var(--tier-accent, var(--sage-ink));
+  }
+  .tier-note{ margin-top:20px; font-size:12.5px; color:#7a7061; font-style:italic; }
+
+  /* ---------- feedback ---------- */
+  .feedback{
+    background:var(--ink);
+    padding:90px 0;
+    display:flex; justify-content:center;
+  }
+  .feedback .note{
+    background:var(--paper);
+    color:var(--ink);
+    width:min(90vw, 420px);
+    transform:rotate(-1.5deg);
+    text-align:center;
+    padding:34px 30px 38px;
+  }
+  .feedback h2{ font-size:22px; margin-bottom:12px; }
+  .feedback p{ font-size:14.5px; color:#443c30; }
+  .feedback .btn-primary{ margin-top:22px; }
+
+  /* ---------- footer ---------- */
+  footer{ padding:26px 0; }
+  footer p{ font-size:13px; color:#8a8070; }
+
+  @media (max-width: 860px){
+    .hero-inner{ grid-template-columns:1fr; padding:44px 0 56px; }
+    .hero-notes{ height:230px; margin-top:16px; }
+    .problem-inner{ grid-template-columns:1fr; }
+    .confession{ margin-top:8px; }
+    .how-row{ grid-template-columns:1fr; }
+    .how-row .note{ margin-top:0 !important; }
+    .tiers{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="wrap">
+  <a class="wordmark" href="#top">Focus Board</a>
+  <a class="nav-cta" href="./index.html">Open your board</a>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-inner">
+    <div>
+      <h1>Skip a day. Your tasks come with you.</h1>
+      <p class="sub">Focus Board is a sticky-note board for weekly routines and daily to-dos. Miss a day and nothing resets — whatever didn't get done just shows up again tomorrow.</p>
+      <div class="hero-ctas">
+        <a class="btn-primary" href="./index.html">Open your board</a>
+        <a class="link-quiet" href="#how">See how it works</a>
+      </div>
+    </div>
+    <div class="hero-notes">
+      <div class="note note-a">
+        <span class="pin"></span>
+        <div class="note-title">Monday routine</div>
+        <div class="task-row done"><span class="check done"></span><span>Gym</span></div>
+        <div class="task-row done"><span class="check done"></span><span>Laundry</span></div>
+        <div class="task-row"><span class="check"></span><span>Meal prep</span></div>
+        <div class="fold"></div>
+      </div>
+      <div class="note note-b">
+        <span class="pin"></span>
+        <div class="note-title">Carried from yesterday</div>
+        <div class="task-row"><span class="check"></span><span>Reply to Priya</span></div>
+        <div class="task-row"><span class="check"></span><span>Water the plants</span></div>
+        <div class="fold"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="problem">
+  <div class="wrap problem-inner">
+    <div>
+      <h2>Most habit trackers quit on you the moment you do.</h2>
+      <p class="body">You get sick, or you travel, or you're just tired, and the streak breaks. So the app starts to feel like one more thing keeping score against you — and it's usually the app that gets deleted, not the habit. Focus Board doesn't reset when you miss a day. It just waits.</p>
+    </div>
+    <div class="note confession">
+      <span class="pin"></span>
+      <div class="note-title">note to self</div>
+      Build the one where missing a day doesn't erase the whole week.
+      <div class="fold"></div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <h2>Three things it actually does</h2>
+    <div class="how-row">
+      <div class="note" style="background:var(--butter); color:var(--butter-ink);">
+        <span class="pin"></span>
+        <div class="note-title">Weekly routines</div>
+        <p>Set what repeats — gym on Monday, laundry on Wednesday, whatever's yours. Pin it once and it's there every week without re-adding it.</p>
+        <div class="fold"></div>
+      </div>
+      <div class="note" style="background:var(--sky); color:var(--sky-ink);">
+        <span class="pin"></span>
+        <div class="note-title">Carries over</div>
+        <p>Didn't finish something today? It shows up on tomorrow's board on its own. Nothing quietly vanishes at midnight.</p>
+        <div class="fold"></div>
+      </div>
+      <div class="note" style="background:var(--sage); color:var(--sage-ink);">
+        <span class="pin"></span>
+        <div class="note-title">Streaks that wait</div>
+        <p>Finish a task and the streak builds. Miss one and it holds where it was instead of snapping back to zero.</p>
+        <div class="fold"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing">
+  <div class="wrap">
+    <div class="pricing-head">
+      <h2>Free on one device. Synced if you want it.</h2>
+      <p>The board itself — routines, carry-over, streaks, reminders — is free, full stop. Syncing it across your phone and laptop is the one part that costs money to run, so that's the part that may eventually carry a small price. Pricing for sync isn't live yet.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tier-name">On this device</div>
+        <div class="tier-price">Free, always</div>
+        <ul>
+          <li>Weekly routines and daily to-dos</li>
+          <li>Carry-over for unfinished tasks</li>
+          <li>Streak tracking</li>
+          <li>Install as an app, reminders</li>
+        </ul>
+      </div>
+      <div class="tier paid">
+        <div class="tier-name">Synced</div>
+        <div class="tier-price">Coming soon</div>
+        <ul>
+          <li>Everything on the free tier</li>
+          <li>Your board follows you across devices</li>
+          <li>Backed up if you lose a device</li>
+        </ul>
+        <div class="tier-note">Sync already works — pricing is what's still being decided.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feedback">
+  <div class="note">
+    <span class="pin"></span>
+    <h2>This board's still being built.</h2>
+    <p>Focus Board is early and changing most weeks. If something's confusing, missing, or just wrong, tell me and it'll get looked at.</p>
+    <a class="btn-primary" href="mailto:YOUR-EMAIL-HERE@example.com?subject=Focus%20Board%20feedback">Send feedback</a>
+    <div class="fold"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Focus Board — built by Anish.</p>
+  </div>
+</footer>
+
+</body>
+</html>
