@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Sign in — Sticky To-Do Board</title>
+<meta name="description" content="Sign in or create an account for your sticky-note board." />
+<link rel="icon" href="favicon.png" type="image/png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .stb-login-wrap {
+    max-width: 420px;
+    margin: 48px auto;
+    padding: 30px 28px 32px;
+    background: #FBF8F1;
+    color: #2B2620;
+    border-radius: 10px;
+    box-shadow: 3px 6px 18px rgba(0,0,0,0.3);
+  }
+  .stb-login-wrap h1 {
+    font-family: 'Caveat', cursive;
+    font-size: 40px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .stb-login-sub { font-size: 14px; color: #5c5346; margin-bottom: 22px; }
+  .stb-login-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .stb-login-tab {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(43,38,32,0.08);
+    color: #2B2620;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .stb-login-tab.is-active { background: #2B2620; color: #FBF8F1; }
+  .stb-field { margin-bottom: 14px; }
+  .stb-field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; color: #5c5346; }
+  .stb-field input {
+    width: 100%;
+    border: 1.5px solid rgba(43,38,32,0.18);
+    border-radius: 6px;
+    padding: 10px 11px;
+    font-size: 14.5px;
+    font-family: 'Work Sans', sans-serif;
+  }
+  .stb-field input:focus { outline: none; border-color: #8a6438; }
+  .stb-field-hint { font-size: 12px; margin-top: 4px; color: #7a7061; }
+  .stb-field-hint.is-bad { color: #9c2a25; }
+  .stb-field-hint.is-good { color: #3A4B24; }
+  .stb-login-submit {
+    width: 100%;
+    background: #2B2620;
+    color: #FBF8F1;
+    border: none;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .stb-login-submit:hover { background: #453d32; }
+  .stb-login-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: #6B322A; }
+  .stb-login-forgot {
+    background: none; border: none; text-decoration: underline; font-size: 12.5px;
+    color: #5c5346; cursor: pointer; padding: 0; margin-top: 10px;
+  }
+  .stb-login-trial-note { font-size: 12.5px; color: #7a7061; margin-top: 18px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="stb-root" style="max-width:none;">
+  <div class="stb-login-wrap">
+    <h1 id="stb-login-heading">Welcome back</h1>
+    <p class="stb-login-sub" id="stb-login-sub">Sign in to sync your board across devices.</p>
+
+    <div class="stb-login-tabs">
+      <button class="stb-login-tab is-active" id="stb-tab-signin" type="button">Sign in</button>
+      <button class="stb-login-tab" id="stb-tab-signup" type="button">Create account</button>
+    </div>
+
+    <form id="stb-login-form">
+      <div class="stb-field" id="stb-field-username" style="display:none;">
+        <label for="stb-username">Username</label>
+        <input type="text" id="stb-username" placeholder="e.g. anish_s" autocomplete="off" maxlength="20" />
+        <div class="stb-field-hint" id="stb-username-hint">Shown instead of your email. 3-20 characters, letters/numbers/underscore, must be unique.</div>
+      </div>
+      <div class="stb-field">
+        <label for="stb-email">Email</label>
+        <input type="email" id="stb-email" placeholder="you@example.com" autocomplete="email" />
+        <div class="stb-field-hint">Used to sign in and for account recovery only — never shown in the app.</div>
+      </div>
+      <div class="stb-field">
+        <label for="stb-password">Password</label>
+        <input type="password" id="stb-password" placeholder="At least 6 characters" autocomplete="current-password" />
+      </div>
+      <button type="submit" class="stb-login-submit" id="stb-submit-btn">Sign in</button>
+      <button type="button" class="stb-login-forgot" id="stb-forgot-btn">Forgot password?</button>
+      <div class="stb-login-msg" id="stb-login-msg"></div>
+    </form>
+
+    <p class="stb-login-trial-note" id="stb-trial-note">New accounts start with a 30-day free trial. No card needed.</p>
+  </div>
+</div>
+
+<script src="js/helpers.js"></script>
+<script src="js/config-loader.js"></script>
+<script src="js/sync.js"></script>
+<script>
+(function () {
+  "use strict";
+  var mode = "signin";
+  var usernameOk = false;
+  var usernameCheckTimer = null;
+
+  var tabSignin = document.getElementById("stb-tab-signin");
+  var tabSignup = document.getElementById("stb-tab-signup");
+  var heading = document.getElementById("stb-login-heading");
+  var sub = document.getElementById("stb-login-sub");
+  var fieldUsername = document.getElementById("stb-field-username");
+  var usernameInput = document.getElementById("stb-username");
+  var usernameHint = document.getElementById("stb-username-hint");
+  var emailInput = document.getElementById("stb-email");
+  var passwordInput = document.getElementById("stb-password");
+  var submitBtn = document.getElementById("stb-submit-btn");
+  var msg = document.getElementById("stb-login-msg");
+  var form = document.getElementById("stb-login-form");
+  var trialNote = document.getElementById("stb-trial-note");
+
+  function setMode(next) {
+    mode = next;
+    tabSignin.classList.toggle("is-active", mode === "signin");
+    tabSignup.classList.toggle("is-active", mode === "signup");
+    fieldUsername.style.display = mode === "signup" ? "block" : "none";
+    heading.textContent = mode === "signup" ? "Create your board" : "Welcome back";
+    sub.textContent = mode === "signup" ? "Pick a username, then set your email and password." : "Sign in to sync your board across devices.";
+    submitBtn.textContent = mode === "signup" ? "Create account" : "Sign in";
+    trialNote.style.display = mode === "signup" ? "block" : "none";
+    msg.textContent = "";
+  }
+  tabSignin.addEventListener("click", function () { setMode("signin"); });
+  tabSignup.addEventListener("click", function () { setMode("signup"); });
+  setMode("signin");
+
+  usernameInput.addEventListener("input", function () {
+    usernameOk = false;
+    var val = usernameInput.value.trim();
+    clearTimeout(usernameCheckTimer);
+    if (!val) {
+      usernameHint.textContent = "Shown instead of your email. 3-20 characters, letters/numbers/underscore, must be unique.";
+      usernameHint.className = "stb-field-hint";
+      return;
+    }
+    usernameHint.textContent = "Checking availability\u2026";
+    usernameHint.className = "stb-field-hint";
+    usernameCheckTimer = setTimeout(function () {
+      STB.checkUsernameAvailable(val).then(function (res) {
+        if (res.available) {
+          usernameOk = true;
+          usernameHint.textContent = "Available.";
+          usernameHint.className = "stb-field-hint is-good";
+        } else {
+          usernameOk = false;
+          usernameHint.textContent = res.reason || "That username is taken.";
+          usernameHint.className = "stb-field-hint is-bad";
+        }
+      });
+    }, 400);
+  });
+
+  document.getElementById("stb-forgot-btn").addEventListener("click", function () {
+    var email = emailInput.value.trim();
+    if (!email) { msg.textContent = "Enter your email above first, then click \u201cForgot password?\u201d again."; return; }
+    msg.textContent = "Sending reset link\u2026";
+    STB.sendPasswordReset(email).then(function (res) {
+      msg.textContent = res.error ? res.error.message : "Check your email for a password reset link.";
+    }).catch(function (e) { msg.textContent = (e && e.message) || "Something went wrong."; });
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!STB.isSyncAvailable()) { msg.textContent = "Sync isn't set up on this deployment yet."; return; }
+    var email = emailInput.value.trim();
+    var password = passwordInput.value;
+    if (!email || !password) { msg.textContent = "Enter an email and password."; return; }
+
+    if (mode === "signup") {
+      var username = usernameInput.value.trim();
+      if (!username) { msg.textContent = "Choose a username first."; return; }
+      if (!usernameOk) { msg.textContent = "Pick a username that's available (see the hint above)."; return; }
+      msg.textContent = "Creating your account\u2026";
+      STB.signUp(email, password, username).then(function (res) {
+        if (res.error) { msg.textContent = res.error.message; return; }
+        if (res.data && res.data.session) {
+          window.location.href = "app.html";
+        } else {
+          msg.textContent = "Check your email to confirm your account, then sign in.";
+        }
+      }).catch(function (e2) { msg.textContent = (e2 && e2.message) || "Something went wrong."; });
+      return;
+    }
+
+    msg.textContent = "Signing in\u2026";
+    STB.signIn(email, password).then(function (res) {
+      if (res.error) { msg.textContent = res.error.message; return; }
+      window.location.href = "app.html";
+    }).catch(function (e3) { msg.textContent = (e3 && e3.message) || "Something went wrong."; });
+  });
+
+  // If someone's already signed in and lands here, just send them to the board.
+  var configReady = STB.configReady && typeof STB.configReady.then === "function" ? STB.configReady : Promise.resolve();
+  configReady.then(function () {
+    if (!STB.isSyncAvailable()) return;
+    STB.getClient().auth.getSession().then(function (res) {
+      if (res.data && res.data.session) window.location.href = "app.html";
+    });
+  });
+})();
+</script>
+</body>
+</html>

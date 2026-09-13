@@ -3,6 +3,7 @@
 
   var client = null;
   var currentUser = null;
+  var currentProfile = null; // { username, trial_ends_at, is_paid } or null
   var pushTimeout = null;
   var applyingRemoteUpdate = false;
   var realtimeChannel = null;
@@ -24,20 +25,78 @@
   }
 
   STB.isSyncAvailable = isConfigured;
+  STB.getClient = getClient;
   STB.getCurrentUser = function () { return currentUser; };
+  STB.getCurrentProfile = function () { return currentProfile; };
 
-  STB.signUp = function (email, password) {
+  // ---------- trial status, derived from the profile row ----------
+  // Reads are always allowed by the database; writes are blocked server-side (RLS) once
+  // the trial has expired and the account isn't marked paid. This mirrors that client-side
+  // so the UI can show a banner and disable inputs instead of writes silently failing.
+  STB.getTrialStatus = function () {
+    if (!currentProfile) {
+      return { known: false, expired: false, daysLeft: null, isPaid: false };
+    }
+    if (currentProfile.is_paid) {
+      return { known: true, expired: false, daysLeft: null, isPaid: true };
+    }
+    var msLeft = new Date(currentProfile.trial_ends_at).getTime() - Date.now();
+    var daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    return { known: true, expired: msLeft <= 0, daysLeft: Math.max(daysLeft, 0), isPaid: false };
+  };
+
+  // ---------- username availability + claiming ----------
+  STB.checkUsernameAvailable = function (username) {
+    var c = getClient();
+    if (!c) return Promise.resolve(false);
+    var normalized = String(username || "").trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,20}$/.test(normalized)) {
+      return Promise.resolve({ available: false, reason: "3-20 characters: letters, numbers, underscore only." });
+    }
+    return c.from("usernames").select("username_lower").eq("username_lower", normalized).maybeSingle().then(function (res) {
+      if (res.error) return { available: false, reason: "Couldn't check that right now." };
+      return { available: !res.data, reason: res.data ? "That username is taken." : null };
+    });
+  };
+
+  function claimUsernameAndStartTrial(userId, username) {
+    var c = getClient();
+    var normalized = username.trim();
+    var lower = normalized.toLowerCase();
+    return c.from("usernames").insert({ username_lower: lower, username: normalized, user_id: userId }).then(function (res) {
+      if (res.error) throw res.error;
+      var trialEnds = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      return c.from("profiles").insert({ user_id: userId, username: normalized, trial_ends_at: trialEnds }).select().single();
+    }).then(function (res) {
+      if (res.error) throw res.error;
+      currentProfile = res.data;
+      return currentProfile;
+    });
+  }
+  STB.claimUsername = claimUsernameAndStartTrial;
+
+  function fetchProfile(userId) {
+    var c = getClient();
+    return c.from("profiles").select("username, trial_ends_at, is_paid").eq("user_id", userId).maybeSingle().then(function (res) {
+      if (res.error) throw res.error;
+      currentProfile = res.data || null;
+      return currentProfile;
+    });
+  }
+
+  // ---------- auth ----------
+  // email/password stay the sign-in credential (Supabase requires one), but the email is
+  // never shown anywhere in the app UI -- only the username chosen at signup is displayed.
+  STB.signUp = function (email, password, username) {
     var c = getClient();
     if (!c) return Promise.reject(new Error("Sync isn't set up yet."));
+    // Stashed so afterSignedIn can claim it once a session exists -- which may be
+    // immediately, or only after the user confirms their email, depending on project settings.
+    try { window.localStorage.setItem("stb_pending_username", username || ""); } catch (e) {}
     return c.auth.signUp({
       email: email,
       password: password,
-      // Without this, Supabase falls back to the dashboard's "Site URL" setting
-      // (which defaults to localhost:3000) for the confirmation link -- explicitly
-      // pointing it at wherever this page is actually loaded keeps it correct
-      // whether that's your Vercel URL or a local dev server, without needing to
-      // remember to update the dashboard every time.
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: window.location.origin + "/app.html" },
     });
   };
 
@@ -51,6 +110,7 @@
     var c = getClient();
     stopRealtime();
     currentUser = null;
+    currentProfile = null;
     inRecoveryMode = false;
     STB.renderAuthUI();
     if (!c) return Promise.resolve();
@@ -60,7 +120,7 @@
   STB.sendPasswordReset = function (email) {
     var c = getClient();
     if (!c) return Promise.reject(new Error("Sync isn't set up yet."));
-    return c.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+    return c.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + "/login.html" });
   };
 
   STB.updatePassword = function (newPassword) {
@@ -132,14 +192,31 @@
 
   function afterSignedIn(user) {
     currentUser = user;
-    STB.renderAuthUI();
-    pullFromCloud(user.id)
+    fetchProfile(user.id)
+      .then(function (profile) {
+        if (profile) return profile;
+        // No profile yet -- either this is their very first sign-in after confirming
+        // email (claim the username they picked at signup time), or something went
+        // wrong and they need to be prompted to pick one on app.html.
+        var pending = null;
+        try { pending = window.localStorage.getItem("stb_pending_username"); } catch (e) {}
+        if (pending) {
+          try { window.localStorage.removeItem("stb_pending_username"); } catch (e) {}
+          return claimUsernameAndStartTrial(user.id, pending);
+        }
+        return null;
+      })
+      .catch(function (e) { console.error("Could not load profile", e); })
+      .then(function () {
+        STB.renderAuthUI();
+        return pullFromCloud(user.id);
+      })
       .then(function (cloudData) {
         if (cloudData) {
           STB.state = STB.normalizeAndRollover(cloudData);
         } else {
           // First time this account has synced: seed the cloud with whatever's here now
-          // (e.g. guest notes made before creating an account), rather than losing them.
+          // (e.g. notes made before this sign-in), rather than losing them.
           pushToCloud();
         }
         STB.saveState();
@@ -151,14 +228,12 @@
       });
   }
 
+  // Resolves once the initial session check is done: true if signed in, false if not.
+  // Ongoing changes (sign in/out in another tab, password recovery links) are still
+  // handled live via onAuthStateChange.
   STB.initSync = function () {
     var c = getClient();
-    if (!c) { STB.renderAuthUI(); return; }
-    c.auth.getSession().then(function (res) {
-      var session = res.data && res.data.session;
-      if (session && session.user) afterSignedIn(session.user);
-      else STB.renderAuthUI();
-    });
+    if (!c) { STB.renderAuthUI(); return Promise.resolve(false); }
     c.auth.onAuthStateChange(function (event, session) {
       if (event === "PASSWORD_RECOVERY") {
         inRecoveryMode = true;
@@ -169,42 +244,22 @@
         afterSignedIn(session.user);
       } else if (event === "SIGNED_OUT") {
         currentUser = null;
+        currentProfile = null;
         inRecoveryMode = false;
         stopRealtime();
         STB.renderAuthUI();
       }
     });
-  };
-
-  // ---- minimal inline auth UI ----
-  function submitAuth(mode) {
-    var email = document.getElementById("stb-auth-email").value.trim();
-    var password = document.getElementById("stb-auth-password").value;
-    var msg = document.getElementById("stb-auth-msg");
-    if (!email || !password) { msg.textContent = "Enter an email and password."; return; }
-    msg.textContent = "Working\u2026";
-    var action = mode === "signin" ? STB.signIn(email, password) : STB.signUp(email, password);
-    action.then(function (res) {
-      if (res.error) { msg.textContent = res.error.message; return; }
-      if (mode === "signup" && res.data && !res.data.session) {
-        msg.textContent = "Check your email to confirm your account, then sign in.";
+    return c.auth.getSession().then(function (res) {
+      var session = res.data && res.data.session;
+      if (session && session.user) {
+        afterSignedIn(session.user);
+        return true;
       }
-    }).catch(function (e) {
-      msg.textContent = (e && e.message) || "Something went wrong.";
+      STB.renderAuthUI();
+      return false;
     });
-  }
-
-  function submitForgotPassword() {
-    var email = document.getElementById("stb-auth-email").value.trim();
-    var msg = document.getElementById("stb-auth-msg");
-    if (!email) { msg.textContent = "Enter your email above first, then click \"Forgot password?\" again."; return; }
-    msg.textContent = "Sending reset link\u2026";
-    STB.sendPasswordReset(email).then(function (res) {
-      msg.textContent = res.error ? res.error.message : "Check your email for a password reset link.";
-    }).catch(function (e) {
-      msg.textContent = (e && e.message) || "Something went wrong.";
-    });
-  }
+  };
 
   function submitNewPassword() {
     var password = document.getElementById("stb-recovery-password").value;
@@ -218,6 +273,41 @@
     });
   }
 
+  // Disables note-editing controls once the trial has expired (or the account has no
+  // username/profile yet). This is a UX convenience only -- the real enforcement is the
+  // "trial_active" row-level security policy on the boards table, which blocks writes
+  // at the database no matter what the client does.
+  function applyLockState(locked, needsUsername) {
+    var board = document.getElementById("stb-board");
+    var clipboard = document.getElementById("stb-clipboard");
+    var addBtn = document.getElementById("stb-add-btn");
+    var addDocBtn = document.getElementById("stb-add-doc-btn");
+    var banner = document.getElementById("stb-readonly-banner");
+    [board, clipboard].forEach(function (elm) {
+      if (!elm) return;
+      elm.classList.toggle("stb-locked", !!locked);
+    });
+    [addBtn, addDocBtn].forEach(function (btn) {
+      if (!btn) return;
+      btn.disabled = !!locked;
+      btn.style.opacity = locked ? "0.5" : "";
+      btn.style.pointerEvents = locked ? "none" : "";
+    });
+    if (banner) {
+      if (needsUsername) {
+        banner.innerHTML = "Almost done \u2014 <a href=\"login.html?step=username\">choose a username</a> to start your free trial.";
+        banner.classList.add("is-visible");
+      } else if (locked) {
+        banner.innerHTML = "Your free trial has ended. The board is view-only until you upgrade.";
+        banner.classList.add("is-visible");
+      } else {
+        banner.classList.remove("is-visible");
+      }
+    }
+  }
+
+  // Minimal header widget for app.html: shows the username + trial status + sign out.
+  // The actual sign-in/sign-up forms live on the dedicated login.html page now.
   STB.renderAuthUI = function () {
     var el = document.getElementById("stb-auth");
     if (!el) return;
@@ -240,31 +330,31 @@
     }
 
     if (currentUser) {
+      var trial = STB.getTrialStatus();
+      var trialHtml = "";
+      var locked = false;
+      if (!currentProfile) {
+        trialHtml = '<span class="stb-trial-badge stb-trial-badge--needsname">Finish setup: choose a username</span>';
+        locked = true;
+      } else if (trial.isPaid) {
+        trialHtml = '<span class="stb-trial-badge">Full access</span>';
+      } else if (trial.expired) {
+        trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Trial ended \u00b7 view only</span>';
+        locked = true;
+      } else {
+        trialHtml = '<span class="stb-trial-badge">' + trial.daysLeft + " day" + (trial.daysLeft === 1 ? "" : "s") + " left in trial</span>";
+      }
       el.innerHTML =
-        '<span class="stb-auth-email">' + STB.escapeAttr(currentUser.email) + " \u00b7 synced</span>" +
+        '<span class="stb-auth-email">' + STB.escapeAttr(currentProfile ? currentProfile.username : currentUser.email.split("@")[0]) + " \u00b7 synced</span>" +
+        trialHtml +
         '<button class="stb-auth-signout" id="stb-signout-btn">Sign out</button>';
       document.getElementById("stb-signout-btn").addEventListener("click", function () { STB.signOut(); });
+      applyLockState(locked, !currentProfile);
       return;
     }
 
-    el.innerHTML =
-      '<span class="stb-auth-guest">Guest \u00b7 not synced</span>' +
-      '<button class="stb-auth-toggle" id="stb-auth-toggle-btn">Sign in / Sign up</button>' +
-      '<div class="stb-auth-form" id="stb-auth-form">' +
-      '<input type="email" id="stb-auth-email" placeholder="Email" autocomplete="email" />' +
-      '<input type="password" id="stb-auth-password" placeholder="Password" autocomplete="current-password" />' +
-      '<button id="stb-auth-signin-btn">Sign in</button>' +
-      '<button id="stb-auth-signup-btn">Create account</button>' +
-      '<button class="stb-auth-link" id="stb-auth-forgot-btn" type="button">Forgot password?</button>' +
-      '<span class="stb-auth-msg" id="stb-auth-msg"></span>' +
-      "</div>";
-    var form = document.getElementById("stb-auth-form");
-    form.style.display = "none";
-    document.getElementById("stb-auth-toggle-btn").addEventListener("click", function () {
-      form.style.display = form.style.display === "none" ? "flex" : "none";
-    });
-    document.getElementById("stb-auth-signin-btn").addEventListener("click", function () { submitAuth("signin"); });
-    document.getElementById("stb-auth-signup-btn").addEventListener("click", function () { submitAuth("signup"); });
-    document.getElementById("stb-auth-forgot-btn").addEventListener("click", submitForgotPassword);
+    // Not signed in and sync is configured: this page requires an account, so send them
+    // to the dedicated login page rather than showing an inline form.
+    window.location.href = "login.html";
   };
 })(window.STB = window.STB || {});

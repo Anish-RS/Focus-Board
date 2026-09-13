@@ -33,7 +33,7 @@
     });
   }
 
-  function init() {
+  function initBoard() {
     try {
       STB.state = STB.loadOrInitState();
       STB.saveState();
@@ -90,22 +90,31 @@
     // core board above, which has already rendered successfully by this point.
     try { if (STB.renderReminderButton) STB.renderReminderButton(); } catch (e) { console.error("Reminders UI failed to init", e); }
     try { if (STB.startReminderChecks) STB.startReminderChecks(); } catch (e) { console.error("Reminder checks failed to start", e); }
-
-    try {
-      var startSync = function () {
-        try { if (STB.initSync) STB.initSync(); } catch (e) { console.error("Sync failed to init", e); }
-      };
-      if (STB.configReady && typeof STB.configReady.then === "function") {
-        STB.configReady.then(startSync, startSync);
-      } else {
-        startSync();
-      }
-    } catch (e) {
-      console.error("Sync bootstrap failed", e);
-    }
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  // Accounts are mandatory whenever sync is configured (so trial expiry can be tracked).
+  // Wait for config + the initial session check before showing anything: if there's no
+  // session, send them to login.html instead of letting the local board flash on screen.
+  function gateAndInit() {
+    var configReady = STB.configReady && typeof STB.configReady.then === "function" ? STB.configReady : Promise.resolve();
+    configReady.then(function () {
+      if (!STB.isSyncAvailable || !STB.isSyncAvailable()) {
+        // No Supabase project configured (e.g. local dev without env vars) -- fall back
+        // to guest/local-only mode so the app is still usable while building.
+        initBoard();
+        return;
+      }
+      STB.initSync().then(function (signedIn) {
+        if (!signedIn) {
+          window.location.href = "login.html";
+          return;
+        }
+        initBoard();
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", gateAndInit);
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {

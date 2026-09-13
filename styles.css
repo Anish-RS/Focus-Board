@@ -84,6 +84,34 @@ body {
 }
 .stb-auth-link:hover { opacity: 0.8; }
 
+.stb-trial-badge {
+  background: rgba(0,0,0,0.2);
+  color: #FBF8F1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.stb-trial-badge--expired { background: #6B322A; color: #FBF8F1; }
+.stb-trial-badge--needsname { background: #6B4E12; color: #FBF8F1; }
+
+.stb-readonly-banner {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: #FBF8F1;
+  color: #2B2620;
+  border-left: 4px solid #6B322A;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.stb-readonly-banner a { color: #2B2620; font-weight: 700; }
+.stb-readonly-banner.is-visible { display: flex; }
+
+.stb-locked { opacity: 0.6; pointer-events: none; }
+
 .stb-reminder-btn {
   display: flex;
   align-items: center;
