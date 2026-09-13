@@ -358,13 +358,13 @@
   @media (prefers-reduced-motion: reduce){ .doodle{ animation:none; } }
   @media (max-width:860px){ .doodle{ display:none; } }
   .hero{ position:relative; overflow:hidden; }
-  .hero .doodle{ opacity:0.16; color:var(--ink); }
-  .hero .doodle--1{ top:10%; right:6%; width:44px; height:44px; }
-  .hero .doodle--2{ bottom:10%; right:16%; width:34px; height:34px; animation-delay:1s; }
+  .hero .doodle{ opacity:0.32; color:var(--ink); }
+  .hero .doodle--1{ top:10%; right:6%; width:52px; height:52px; }
+  .hero .doodle--2{ bottom:10%; right:16%; width:40px; height:40px; animation-delay:1s; }
   .how{ position:relative; overflow:hidden; }
-  .how .doodle{ opacity:0.14; color:var(--cream); }
-  .how .doodle--1{ top:8%; left:4%; width:50px; height:50px; }
-  .how .doodle--2{ bottom:10%; right:5%; width:40px; height:40px; animation-delay:1.4s; }
+  .how .doodle{ opacity:0.3; color:var(--cream); }
+  .how .doodle--1{ top:8%; left:4%; width:58px; height:58px; }
+  .how .doodle--2{ bottom:10%; right:5%; width:46px; height:46px; animation-delay:1.4s; }
 
   /* ---------- glass quote banner (bridges problem -> how-it-works) ---------- */
   .glass-banner{
@@ -408,6 +408,71 @@
     .glass-card{ flex-direction:column; align-items:flex-start; text-align:left; }
   }
 
+  /* ---------- showcase: an actual picture of the board, not just words about it ---------- */
+  .showcase{ padding:80px 0 88px; }
+  .showcase-head{ max-width:56ch; }
+  .showcase h2{ font-size:clamp(26px,3vw,34px); }
+  .showcase-head p{ margin-top:14px; font-size:15.5px; color:#3a332a; }
+  .showcase-frame{
+    margin-top:40px;
+    background:var(--ink);
+    border-radius:12px;
+    box-shadow:0 16px 40px rgba(0,0,0,0.25);
+    overflow:hidden;
+  }
+  .chrome-bar{
+    display:flex; align-items:center; gap:8px;
+    padding:11px 16px;
+    background:#1c1815;
+  }
+  .chrome-dot{ width:9px; height:9px; border-radius:50%; }
+  .chrome-dot.r{ background:#e2453f; } .chrome-dot.y{ background:#e8b93f; } .chrome-dot.g{ background:#5fae5f; }
+  .chrome-url{
+    margin-left:10px; font-size:11.5px; color:rgba(251,248,241,0.55);
+    background:rgba(251,248,241,0.07); padding:3px 10px; border-radius:10px;
+  }
+  .showcase-board{
+    background:var(--cork);
+    background-image:
+      radial-gradient(rgba(94,62,27,0.35) 1px, transparent 1.6px),
+      radial-gradient(rgba(140,100,55,0.28) 1px, transparent 1.7px);
+    background-size:15px 15px, 23px 23px;
+    padding:26px 24px 34px;
+  }
+  .showcase-topbar{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+    margin-bottom:22px;
+  }
+  .showcase-user{ color:var(--cream); font-size:13px; font-weight:600; }
+  .showcase-trial{
+    background:rgba(0,0,0,0.2); color:var(--cream); font-size:11.5px; font-weight:600;
+    padding:4px 10px; border-radius:6px;
+  }
+  .showcase-notes{ display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; }
+  .showcase-notes .note{ width:100%; }
+  .showcase-notes .note:nth-child(1){ transform:rotate(-2deg); }
+  .showcase-notes .note:nth-child(2){ transform:rotate(1.5deg); margin-top:14px; }
+  .showcase-notes .note:nth-child(3){ transform:rotate(-1deg); }
+  @media (max-width:700px){ .showcase-notes{ grid-template-columns:1fr; } .showcase-notes .note{ margin-top:0 !important; transform:none !important; } }
+
+  /* ---------- typographic quote strip (breaks up plain paper sections) ---------- */
+  .quote-strip{
+    text-align:center;
+    font-family:'Caveat', cursive;
+    font-size:clamp(22px,2.6vw,28px);
+    font-weight:600;
+    color:#4a3f1f;
+    max-width:38ch;
+    margin:36px auto 0;
+    line-height:1.35;
+  }
+
+  /* ---------- feedback board teaser ---------- */
+  .feedback{ padding:70px 0; }
+  .feedback-inner{ display:flex; flex-direction:column; align-items:center; gap:18px; }
+  .feedback .note{ margin:0; }
+  .feedback-sub{ color:rgba(251,248,241,0.75); font-size:13.5px; max-width:44ch; text-align:center; }
+
   @media (max-width: 860px){
     .hero-inner{ grid-template-columns:1fr; padding:44px 0 56px; }
     .hero-notes{ height:230px; margin-top:16px; }
@@ -427,6 +492,7 @@
 <nav class="wrap">
   <a class="wordmark" href="#top">Focus Board</a>
   <div class="nav-right">
+    <a class="link-quiet" href="./feedback.html" style="font-size:13px;">Feedback</a>
     <span class="nav-trial-pill">30-day free trial</span>
     <a class="nav-cta" href="./login.html?signup=1">Start free trial</a>
   </div>
@@ -522,6 +588,50 @@
   </div>
 </section>
 
+<section class="showcase">
+  <div class="wrap">
+    <div class="showcase-head reveal">
+      <h2>What your board actually looks like</h2>
+      <p>No tour needed — here's a real board, mid-week, with two tasks already carried over from yesterday.</p>
+    </div>
+    <div class="showcase-frame reveal reveal-1">
+      <div class="chrome-bar">
+        <span class="chrome-dot r"></span><span class="chrome-dot y"></span><span class="chrome-dot g"></span>
+        <span class="chrome-url">stickytodo.vercel.app/app.html</span>
+      </div>
+      <div class="showcase-board">
+        <div class="showcase-topbar">
+          <span class="showcase-user">sam_92 &middot; synced</span>
+          <span class="showcase-trial">18 days left in trial</span>
+        </div>
+        <div class="showcase-notes">
+          <div class="note" style="background:var(--butter); color:var(--butter-ink);">
+            <span class="pin"></span>
+            <div class="note-title">Morning</div>
+            <div class="task-row done"><span class="check done"></span><span>Check emails</span></div>
+            <div class="task-row"><span class="check"></span><span>Team standup</span></div>
+            <div class="fold"></div>
+          </div>
+          <div class="note" style="background:var(--sky); color:var(--sky-ink);">
+            <span class="pin"></span>
+            <div class="note-title">Carried from yesterday</div>
+            <div class="task-row"><span class="check"></span><span>Reply to Priya</span></div>
+            <div class="task-row"><span class="check"></span><span>Water the plants</span></div>
+            <div class="fold"></div>
+          </div>
+          <div class="note" style="background:var(--sage); color:var(--sage-ink);">
+            <span class="pin"></span>
+            <div class="note-title">Weekly &middot; Wednesday</div>
+            <div class="task-row done"><span class="check done"></span><span>Laundry</span></div>
+            <div class="task-row"><span class="check"></span><span>Gym</span></div>
+            <div class="fold"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="features">
   <div class="wrap">
     <div class="features-head reveal">
@@ -571,7 +681,8 @@
       <h2>Try the whole board free for 30 days</h2>
       <p>No card required to start. When your trial ends, your board doesn't disappear — it just goes view-only until you upgrade, so nothing you've built is ever lost.</p>
     </div>
-    <div class="trial-card reveal reveal-1">
+    <p class="quote-strip reveal reveal-1">&ldquo;No card, no catch &mdash; just a board that remembers what you didn't finish.&rdquo;</p>
+    <div class="trial-card reveal reveal-2">
       <span class="pin"></span>
       <div class="trial-name">Free trial</div>
       <div class="trial-price">30 days, full access, $0</div>
@@ -589,12 +700,15 @@
 </section>
 
 <section class="feedback">
-  <div class="note reveal">
-    <span class="pin"></span>
-    <h2>This board's still being built.</h2>
-    <p>Focus Board is early and changing most weeks. If something's confusing, missing, or just wrong, tell me and it'll get looked at.</p>
-    <a class="btn-primary" href="mailto:YOUR-EMAIL-HERE@example.com?subject=Focus%20Board%20feedback">Send feedback</a>
-    <div class="fold"></div>
+  <div class="wrap feedback-inner">
+    <div class="note reveal">
+      <span class="pin"></span>
+      <h2>This board's still being built.</h2>
+      <p>Focus Board is early and changing most weeks. Post a bug or an idea and it goes straight on the public thread — no inbox, nothing private.</p>
+      <a class="btn-primary" href="./feedback.html">Read &amp; post feedback</a>
+      <div class="fold"></div>
+    </div>
+    <p class="feedback-sub">Every post is visible to everyone. When something gets fixed or answered, the reply goes right there too.</p>
   </div>
 </section>
 
