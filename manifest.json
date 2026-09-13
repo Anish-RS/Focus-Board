@@ -2,7 +2,7 @@
   "name": "Sticky To-Do Board",
   "short_name": "Sticky Board",
   "description": "A cork board of sticky notes: weekly recurring routines plus daily tasks that carry over when left unfinished.",
-  "start_url": "./index.html",
+  "start_url": "./app.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#B98A54",
