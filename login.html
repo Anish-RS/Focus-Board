@@ -141,10 +141,26 @@
     position: relative;
     z-index: 1;
     padding: 34px 30px 30px;
-    background: #F5E6A8;
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 16%),
+      #F5E6A8;
     color: #2B2620;
-    box-shadow: 3px 6px 18px rgba(0,0,0,0.32);
+    box-shadow:
+      3px 6px 18px rgba(0,0,0,0.32),
+      0 1px 0 rgba(255,255,255,0.25) inset,
+      0 -14px 22px -16px rgba(0,0,0,0.12) inset;
     transform: rotate(-1.1deg);
+    transition: transform .35s ease, box-shadow .35s ease;
+  }
+  .stb-login-note-wrap:hover .stb-login-wrap {
+    transform: rotate(-0.4deg) translateY(-3px);
+    box-shadow:
+      5px 10px 26px rgba(0,0,0,0.34),
+      0 1px 0 rgba(255,255,255,0.25) inset,
+      0 -14px 22px -16px rgba(0,0,0,0.12) inset;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stb-login-wrap, .stb-login-note-wrap:hover .stb-login-wrap { transition: none; transform: rotate(-1.1deg); }
   }
   .stb-login-pin {
     position: absolute;
@@ -187,7 +203,32 @@
     transition: background .2s ease;
   }
   .stb-login-tab.is-active { background: #FBF8F1; color: #2B2620; border-bottom: 3px solid #8a6438; }
+  .stb-login-tab:focus-visible { outline: 2px solid #8a6438; outline-offset: 2px; }
+
+  .stb-login-wrap button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .stb-login-tab { -webkit-appearance: none; appearance: none; }
+  .stb-login-submit { -webkit-appearance: none; appearance: none; }
+  .stb-login-forgot { -webkit-appearance: none; appearance: none; }
   .stb-field { margin-bottom: 14px; }
+  .stb-field-username-collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows .32s ease, opacity .28s ease, margin .32s ease;
+    margin-bottom: 0;
+  }
+  .stb-field-username-collapse.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-bottom: 14px;
+  }
+  .stb-field-username-collapse > .stb-field-inner { overflow: hidden; min-height: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .stb-field-username-collapse { transition: none; }
+  }
+
   .stb-field label { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 5px; color: #5c4e28; }
   .stb-field input {
     width: 100%;
@@ -198,13 +239,53 @@
     font-family: 'Work Sans', sans-serif;
     background: #FBF8F1;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
-    transition: box-shadow .2s ease;
+    transition: box-shadow .18s ease, background .18s ease;
   }
-  .stb-field input:focus { outline: 2px solid #8a6438; outline-offset: 1px; }
-  .stb-field-hint { font-size: 12px; margin-top: 4px; color: #6b5c33; }
+  .stb-field input:hover { box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+  .stb-field input:focus-visible,
+  .stb-field input:focus {
+    outline: 2px solid #8a6438;
+    outline-offset: 1px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 0 0 3px rgba(138,100,56,0.16);
+  }
+  .stb-field input.is-invalid { box-shadow: inset 0 1px 3px rgba(0,0,0,0.15), 0 0 0 2px rgba(156,42,37,0.45); }
+
+  .stb-field-password-wrap { position: relative; }
+  .stb-field-password-wrap input { padding-right: 40px; }
+  .stb-pw-toggle {
+    position: absolute;
+    top: 50%; right: 4px;
+    transform: translateY(-50%);
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-appearance: none; appearance: none;
+    background: transparent; background-color: transparent;
+    border: none; border-radius: 4px;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
+    color: #6b5c33; cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .stb-pw-toggle:hover { background-color: rgba(43,38,32,0.08); color: #2B2620; }
+  .stb-pw-toggle:active { background-color: rgba(43,38,32,0.14); }
+  .stb-pw-toggle:focus-visible { outline: 2px solid #8a6438; outline-offset: 1px; }
+  .stb-pw-toggle svg { width: 18px; height: 18px; display: block; }
+  .stb-pw-toggle .eye-off { display: none; }
+  .stb-pw-toggle.is-visible .eye-on { display: none; }
+  .stb-pw-toggle.is-visible .eye-off { display: block; }
+
+  .stb-field-hint { font-size: 12px; margin-top: 4px; color: #6b5c33; transition: color .15s ease; }
   .stb-field-hint.is-bad { color: #9c2a25; font-weight: 600; }
   .stb-field-hint.is-good { color: #3A4B24; font-weight: 600; }
+  .stb-field-hint.is-checking { color: #6b5c33; font-style: italic; }
+  .stb-capslock-hint {
+    font-size: 12px; margin-top: 4px; color: #9c6a25; font-weight: 600;
+    display: none; align-items: center; gap: 5px;
+  }
+  .stb-capslock-hint.is-shown { display: flex; }
+
   .stb-login-submit {
+    position: relative;
     width: 100%;
     background: #2B2620;
     color: #FBF8F1;
@@ -215,10 +296,40 @@
     font-weight: 700;
     cursor: pointer;
     margin-top: 4px;
-    transition: background .2s ease, transform .2s ease;
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
   }
-  .stb-login-submit:hover { background: #453d32; transform: translateY(-1px); }
-  .stb-login-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: #6B322A; font-weight: 600; }
+  .stb-login-submit:hover { background: #453d32; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.22); }
+  .stb-login-submit:active { transform: translateY(0); }
+  .stb-login-submit:focus-visible { outline: 2px solid #F5E6A8; outline-offset: 2px; }
+  .stb-login-submit:disabled { cursor: default; opacity: 0.85; transform: none; }
+  .stb-login-submit .btn-label { transition: opacity .15s ease; }
+  .stb-login-submit.is-loading .btn-label { opacity: 0; }
+  .stb-login-submit .btn-spinner {
+    position: absolute; top: 50%; left: 50%;
+    width: 18px; height: 18px;
+    margin: -9px 0 0 -9px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(251,248,241,0.35);
+    border-top-color: #FBF8F1;
+    opacity: 0;
+    animation: stb-spin .7s linear infinite;
+  }
+  .stb-login-submit.is-loading .btn-spinner { opacity: 1; }
+  @keyframes stb-spin { to { transform: rotate(360deg); } }
+
+  .stb-login-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: #6B322A; font-weight: 600; transition: color .15s ease; }
+  .stb-login-msg.is-error { color: #9c2a25; }
+  .stb-login-msg.is-success { color: #3A4B24; }
+  .stb-login-note-wrap.is-shaking { animation: stb-shake .4s ease; }
+  @keyframes stb-shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stb-login-note-wrap.is-shaking { animation: none; }
+  }
   .stb-login-forgot {
     background: none; border: none; text-decoration: underline; font-size: 12.5px;
     color: #5c4e28; cursor: pointer; padding: 0; margin-top: 10px;
@@ -273,27 +384,43 @@
         <h1 id="stb-login-heading">Welcome back</h1>
         <p class="stb-login-sub" id="stb-login-sub">Sign in to sync your board across devices.</p>
 
-        <div class="stb-login-tabs">
-          <button class="stb-login-tab is-active" id="stb-tab-signin" type="button">Sign in</button>
-          <button class="stb-login-tab" id="stb-tab-signup" type="button">Create account</button>
+        <div class="stb-login-tabs" role="tablist" aria-label="Sign in or create an account">
+          <button class="stb-login-tab is-active" id="stb-tab-signin" type="button" role="tab" aria-selected="true">Sign in</button>
+          <button class="stb-login-tab" id="stb-tab-signup" type="button" role="tab" aria-selected="false">Create account</button>
         </div>
 
-        <form id="stb-login-form">
-          <div class="stb-field" id="stb-field-username" style="display:none;">
-            <label for="stb-username">Username</label>
-            <input type="text" id="stb-username" placeholder="e.g. sam_92" autocomplete="off" maxlength="20" />
-            
+        <form id="stb-login-form" novalidate>
+          <div class="stb-field-username-collapse" id="stb-field-username">
+            <div class="stb-field-inner">
+              <div class="stb-field">
+                <label for="stb-username">Username</label>
+                <input type="text" id="stb-username" placeholder="e.g. sam_92" autocomplete="off" maxlength="20" aria-describedby="stb-username-hint" />
+                <div class="stb-field-hint" id="stb-username-hint">Shown instead of your email. 3-20 characters, letters/numbers/underscore, must be unique.</div>
+              </div>
+            </div>
+          </div>
           <div class="stb-field">
             <label for="stb-email">Email</label>
             <input type="email" id="stb-email" placeholder="you@example.com" autocomplete="email" />
-            
+            <div class="stb-field-hint">Used to sign in and for account recovery only — never shown in the app.</div>
+          </div>
           <div class="stb-field">
             <label for="stb-password">Password</label>
-            <input type="password" id="stb-password" placeholder="At least 6 characters" autocomplete="current-password" />
+            <div class="stb-field-password-wrap">
+              <input type="password" id="stb-password" placeholder="At least 6 characters" autocomplete="current-password" />
+              <button type="button" class="stb-pw-toggle" id="stb-pw-toggle" aria-label="Show password" aria-pressed="false">
+                <svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 7 11 7a21.7 21.7 0 0 1-2.61 3.68M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>
+              </button>
+            </div>
+            <div class="stb-capslock-hint" id="stb-capslock-hint">&#9099; Caps Lock is on</div>
           </div>
-          <button type="submit" class="stb-login-submit" id="stb-submit-btn">Sign in</button>
+          <button type="submit" class="stb-login-submit" id="stb-submit-btn">
+            <span class="btn-label" id="stb-submit-label">Sign in</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
           <button type="button" class="stb-login-forgot" id="stb-forgot-btn">Forgot password?</button>
-          <div class="stb-login-msg" id="stb-login-msg"></div>
+          <div class="stb-login-msg" id="stb-login-msg" role="status" aria-live="polite"></div>
         </form>
 
         <p class="stb-login-trial-note" id="stb-trial-note">New accounts start with a 30-day free trial. No card needed.</p>
@@ -331,25 +458,67 @@
   var emailInput = document.getElementById("stb-email");
   var passwordInput = document.getElementById("stb-password");
   var submitBtn = document.getElementById("stb-submit-btn");
+  var submitLabel = document.getElementById("stb-submit-label");
   var msg = document.getElementById("stb-login-msg");
   var form = document.getElementById("stb-login-form");
   var trialNote = document.getElementById("stb-trial-note");
+  var noteWrap = document.querySelector(".stb-login-note-wrap");
+  var pwToggle = document.getElementById("stb-pw-toggle");
+  var capsHint = document.getElementById("stb-capslock-hint");
+
+  function setMsg(text, kind) {
+    msg.textContent = text;
+    msg.classList.remove("is-error", "is-success");
+    if (kind) msg.classList.add(kind);
+  }
+
+  function setLoading(isLoading) {
+    submitBtn.disabled = isLoading;
+    submitBtn.classList.toggle("is-loading", isLoading);
+  }
+
+  function shakeCard() {
+    if (!noteWrap) return;
+    noteWrap.classList.remove("is-shaking");
+    // force reflow so the animation can restart if triggered twice in a row
+    void noteWrap.offsetWidth;
+    noteWrap.classList.add("is-shaking");
+  }
 
   function setMode(next) {
     mode = next;
     tabSignin.classList.toggle("is-active", mode === "signin");
+    tabSignin.setAttribute("aria-selected", mode === "signin" ? "true" : "false");
     tabSignup.classList.toggle("is-active", mode === "signup");
-    fieldUsername.style.display = mode === "signup" ? "block" : "none";
+    tabSignup.setAttribute("aria-selected", mode === "signup" ? "true" : "false");
+    fieldUsername.classList.toggle("is-open", mode === "signup");
     heading.textContent = mode === "signup" ? "Create your board" : "Welcome back";
     sub.textContent = mode === "signup" ? "Pick a username, then set your email and password." : "Sign in to sync your board across devices.";
-    submitBtn.textContent = mode === "signup" ? "Create account" : "Sign in";
+    submitLabel.textContent = mode === "signup" ? "Create account" : "Sign in";
     trialNote.style.display = mode === "signup" ? "block" : "none";
-    msg.textContent = "";
+    setMsg("");
   }
   tabSignin.addEventListener("click", function () { setMode("signin"); });
   tabSignup.addEventListener("click", function () { setMode("signup"); });
   var params = new URLSearchParams(window.location.search);
   setMode(params.get("signup") ? "signup" : "signin");
+
+  pwToggle.addEventListener("click", function () {
+    var showing = passwordInput.type === "text";
+    passwordInput.type = showing ? "password" : "text";
+    pwToggle.classList.toggle("is-visible", !showing);
+    pwToggle.setAttribute("aria-pressed", showing ? "false" : "true");
+    pwToggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+    passwordInput.focus();
+  });
+
+  function checkCapsLock(e) {
+    if (typeof e.getModifierState !== "function") return;
+    capsHint.classList.toggle("is-shown", e.getModifierState("CapsLock"));
+  }
+  passwordInput.addEventListener("keyup", checkCapsLock);
+  passwordInput.addEventListener("keydown", checkCapsLock);
+  passwordInput.addEventListener("blur", function () { capsHint.classList.remove("is-shown"); });
 
   usernameInput.addEventListener("input", function () {
     usernameOk = false;
@@ -379,41 +548,45 @@
 
   document.getElementById("stb-forgot-btn").addEventListener("click", function () {
     var email = emailInput.value.trim();
-    if (!email) { msg.textContent = "Enter your email above first, then click \u201cForgot password?\u201d again."; return; }
-    msg.textContent = "Sending reset link\u2026";
+    if (!email) { setMsg("Enter your email above first, then click \u201cForgot password?\u201d again."); shakeCard(); return; }
+    setMsg("Sending reset link\u2026");
     STB.sendPasswordReset(email).then(function (res) {
-      msg.textContent = res.error ? res.error.message : "Check your email for a password reset link.";
-    }).catch(function (e) { msg.textContent = (e && e.message) || "Something went wrong."; });
+      if (res.error) { setMsg(res.error.message, "is-error"); shakeCard(); }
+      else { setMsg("Check your email for a password reset link.", "is-success"); }
+    }).catch(function (e) { setMsg((e && e.message) || "Something went wrong.", "is-error"); shakeCard(); });
   });
 
   form.addEventListener("submit", function (e) {
     e.preventDefault();
-    if (!STB.isSyncAvailable()) { msg.textContent = "Sync isn't set up on this deployment yet."; return; }
+    if (!STB.isSyncAvailable()) { setMsg("Sync isn't set up on this deployment yet.", "is-error"); return; }
     var email = emailInput.value.trim();
     var password = passwordInput.value;
-    if (!email || !password) { msg.textContent = "Enter an email and password."; return; }
+    if (!email || !password) { setMsg("Enter an email and password."); shakeCard(); return; }
 
     if (mode === "signup") {
       var username = usernameInput.value.trim();
-      if (!username) { msg.textContent = "Choose a username first."; return; }
-      if (!usernameOk) { msg.textContent = "Pick a username that's available (see the hint above)."; return; }
-      msg.textContent = "Creating your account\u2026";
+      if (!username) { setMsg("Choose a username first."); shakeCard(); return; }
+      if (!usernameOk) { setMsg("Pick a username that's available (see the hint above)."); shakeCard(); return; }
+      setMsg("Creating your account\u2026");
+      setLoading(true);
       STB.signUp(email, password, username).then(function (res) {
-        if (res.error) { msg.textContent = res.error.message; return; }
+        setLoading(false);
+        if (res.error) { setMsg(res.error.message, "is-error"); shakeCard(); return; }
         if (res.data && res.data.session) {
           window.location.href = "app.html";
         } else {
-          msg.textContent = "Check your email to confirm your account, then sign in.";
+          setMsg("Check your email to confirm your account, then sign in.", "is-success");
         }
-      }).catch(function (e2) { msg.textContent = (e2 && e2.message) || "Something went wrong."; });
+      }).catch(function (e2) { setLoading(false); setMsg((e2 && e2.message) || "Something went wrong.", "is-error"); shakeCard(); });
       return;
     }
 
-    msg.textContent = "Signing in\u2026";
+    setMsg("Signing in\u2026");
+    setLoading(true);
     STB.signIn(email, password).then(function (res) {
-      if (res.error) { msg.textContent = res.error.message; return; }
+      if (res.error) { setLoading(false); setMsg(res.error.message, "is-error"); shakeCard(); return; }
       window.location.href = "app.html";
-    }).catch(function (e3) { msg.textContent = (e3 && e3.message) || "Something went wrong."; });
+    }).catch(function (e3) { setLoading(false); setMsg((e3 && e3.message) || "Something went wrong.", "is-error"); shakeCard(); });
   });
 
   // If someone's already signed in and lands here, just send them to the board.
