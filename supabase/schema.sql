@@ -99,3 +99,34 @@ create policy "Users can update their own board while trial is active"
 
 -- Let the app's live "second device updates in real time" feature receive change events.
 alter publication supabase_realtime add table public.boards;
+
+-- ---------- public feedback board ----------
+-- Replaces the old "email me" link on the landing page: anyone can post feedback,
+-- and everyone (including people who haven't signed up yet) can see every post and
+-- every reply, so the whole thread is out in the open instead of sitting in an inbox.
+-- Only Anish can add a reply -- there's no public update/delete policy below, so
+-- replies get added from the Supabase dashboard (Table Editor -> feedback -> edit row)
+-- using the project owner's access, which bypasses RLS.
+create extension if not exists pgcrypto;
+
+create table if not exists public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  author text not null default 'Anonymous',
+  message text not null check (char_length(message) between 1 and 500),
+  response text,
+  created_at timestamptz not null default now(),
+  responded_at timestamptz
+);
+
+alter table public.feedback enable row level security;
+
+drop policy if exists "Anyone can read feedback" on public.feedback;
+drop policy if exists "Anyone can post feedback" on public.feedback;
+
+create policy "Anyone can read feedback"
+  on public.feedback for select
+  using (true);
+
+create policy "Anyone can post feedback"
+  on public.feedback for insert
+  with check (char_length(message) <= 500 and char_length(author) <= 60);
