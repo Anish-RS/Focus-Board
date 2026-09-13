@@ -12,12 +12,23 @@
 <link rel="stylesheet" href="styles.css" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+  /* the app's .stb-root card only carries the cork dot-texture on its own inset box,
+     which left a wide plain, undotted band around it here (login has far less content
+     to fill that box than the real board does) -- so the whole page carries the same
+     dot texture, and the inset box gets far less padding, closing that gap. */
+  html, body {
+    background: #8a6438;
+    background-image:
+      radial-gradient(rgba(0,0,0,0.22) 1px, transparent 1.6px),
+      radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1.7px);
+    background-size: 15px 15px, 23px 23px;
+  }
   body {
     display: flex; align-items: center; justify-content: center;
     min-height: calc(100vh - 32px);
     overflow-x: hidden;
   }
-  .stb-root { position: relative; overflow: hidden; }
+  .stb-root { position: relative; overflow: hidden; padding: 14px !important; border-radius: 0 !important; }
 
   /* faint decorative doodles scattered on the cork so the empty space isn't dead --
      pure inline SVG, no external images, kept low-contrast so they read as texture. */
