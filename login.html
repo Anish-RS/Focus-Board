@@ -12,55 +12,95 @@
 <link rel="stylesheet" href="styles.css" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  .stb-login-wrap {
-    max-width: 420px;
+  body { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 32px); }
+  .stb-login-stage {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
     margin: 48px auto;
-    padding: 30px 28px 32px;
-    background: #FBF8F1;
+  }
+  /* a second note peeking out behind, so the login screen reads as "your board" and
+     not a generic auth form dropped on top of it */
+  .stb-login-stage::before {
+    content: "";
+    position: absolute;
+    top: 18px; left: 28px; right: -14px; bottom: -14px;
+    background: #B9D3DD;
+    transform: rotate(3deg);
+    box-shadow: 3px 6px 14px rgba(0,0,0,0.22);
+    z-index: 0;
+  }
+  .stb-login-wrap {
+    position: relative;
+    z-index: 1;
+    padding: 34px 30px 30px;
+    background: #F5E6A8;
     color: #2B2620;
-    border-radius: 10px;
-    box-shadow: 3px 6px 18px rgba(0,0,0,0.3);
+    box-shadow: 3px 6px 18px rgba(0,0,0,0.32);
+    transform: rotate(-1.1deg);
+  }
+  .stb-login-pin {
+    position: absolute;
+    top: -10px; left: 50%;
+    transform: translateX(-50%);
+    width: 17px; height: 17px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff 0%, #e2453f 28%, #9c2a25 100%);
+    box-shadow: 0 2px 3px rgba(0,0,0,0.45);
+    z-index: 2;
+  }
+  .stb-login-fold {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 0 0 22px 22px;
+    border-color: transparent transparent rgba(0,0,0,0.16) transparent;
   }
   .stb-login-wrap h1 {
     font-family: 'Caveat', cursive;
-    font-size: 40px;
+    font-size: 42px;
     font-weight: 700;
-    margin: 0 0 4px;
+    margin: 6px 0 4px;
+    color: #6B4E12;
   }
-  .stb-login-sub { font-size: 14px; color: #5c5346; margin-bottom: 22px; }
-  .stb-login-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .stb-login-sub { font-size: 14px; color: #5c4e28; margin-bottom: 22px; }
+  .stb-login-tabs { display: flex; gap: 6px; margin-bottom: 22px; }
   .stb-login-tab {
     flex: 1;
     padding: 9px;
     border: none;
-    border-radius: 6px;
-    background: rgba(43,38,32,0.08);
-    color: #2B2620;
+    border-radius: 5px 5px 0 0;
+    background: rgba(43,38,32,0.1);
+    color: #4a3f1f;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
+    border-bottom: 3px solid transparent;
   }
-  .stb-login-tab.is-active { background: #2B2620; color: #FBF8F1; }
+  .stb-login-tab.is-active { background: #FBF8F1; color: #2B2620; border-bottom: 3px solid #8a6438; }
   .stb-field { margin-bottom: 14px; }
-  .stb-field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; color: #5c5346; }
+  .stb-field label { display: block; font-size: 12.5px; font-weight: 700; margin-bottom: 5px; color: #5c4e28; }
   .stb-field input {
     width: 100%;
-    border: 1.5px solid rgba(43,38,32,0.18);
-    border-radius: 6px;
+    border: none;
+    border-radius: 4px;
     padding: 10px 11px;
     font-size: 14.5px;
     font-family: 'Work Sans', sans-serif;
+    background: #FBF8F1;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
   }
-  .stb-field input:focus { outline: none; border-color: #8a6438; }
-  .stb-field-hint { font-size: 12px; margin-top: 4px; color: #7a7061; }
-  .stb-field-hint.is-bad { color: #9c2a25; }
-  .stb-field-hint.is-good { color: #3A4B24; }
+  .stb-field input:focus { outline: 2px solid #8a6438; outline-offset: 1px; }
+  .stb-field-hint { font-size: 12px; margin-top: 4px; color: #6b5c33; }
+  .stb-field-hint.is-bad { color: #9c2a25; font-weight: 600; }
+  .stb-field-hint.is-good { color: #3A4B24; font-weight: 600; }
   .stb-login-submit {
     width: 100%;
     background: #2B2620;
     color: #FBF8F1;
     border: none;
-    border-radius: 6px;
+    border-radius: 4px;
     padding: 12px;
     font-size: 15px;
     font-weight: 700;
@@ -68,17 +108,24 @@
     margin-top: 4px;
   }
   .stb-login-submit:hover { background: #453d32; }
-  .stb-login-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: #6B322A; }
+  .stb-login-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: #6B322A; font-weight: 600; }
   .stb-login-forgot {
     background: none; border: none; text-decoration: underline; font-size: 12.5px;
-    color: #5c5346; cursor: pointer; padding: 0; margin-top: 10px;
+    color: #5c4e28; cursor: pointer; padding: 0; margin-top: 10px;
   }
-  .stb-login-trial-note { font-size: 12.5px; color: #7a7061; margin-top: 18px; text-align: center; }
+  .stb-login-trial-note { font-size: 12.5px; color: #6b5c33; margin-top: 18px; text-align: center; }
+  .stb-login-swatches { display: flex; gap: 7px; justify-content: center; margin-top: 18px; }
+  .stb-login-swatches span {
+    width: 13px; height: 13px; border-radius: 50%; display: inline-block;
+    box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.15);
+  }
 </style>
 </head>
 <body>
-<div class="stb-root" style="max-width:none;">
+<div class="stb-root" style="max-width:none; min-height:auto; display:flex; align-items:center; justify-content:center;">
+  <div class="stb-login-stage">
   <div class="stb-login-wrap">
+    <span class="stb-login-pin"></span>
     <h1 id="stb-login-heading">Welcome back</h1>
     <p class="stb-login-sub" id="stb-login-sub">Sign in to sync your board across devices.</p>
 
@@ -90,7 +137,7 @@
     <form id="stb-login-form">
       <div class="stb-field" id="stb-field-username" style="display:none;">
         <label for="stb-username">Username</label>
-        <input type="text" id="stb-username" placeholder="e.g. anish_s" autocomplete="off" maxlength="20" />
+        <input type="text" id="stb-username" placeholder="e.g. sam_92" autocomplete="off" maxlength="20" />
         <div class="stb-field-hint" id="stb-username-hint">Shown instead of your email. 3-20 characters, letters/numbers/underscore, must be unique.</div>
       </div>
       <div class="stb-field">
@@ -108,6 +155,15 @@
     </form>
 
     <p class="stb-login-trial-note" id="stb-trial-note">New accounts start with a 30-day free trial. No card needed.</p>
+    <div class="stb-login-swatches" aria-hidden="true">
+      <span style="background:#F5E6A8;"></span>
+      <span style="background:#C9D6B8;"></span>
+      <span style="background:#B9D3DD;"></span>
+      <span style="background:#E8C5C0;"></span>
+      <span style="background:#D3C5DE;"></span>
+    </div>
+    <span class="stb-login-fold"></span>
+  </div>
   </div>
 </div>
 
@@ -148,7 +204,8 @@
   }
   tabSignin.addEventListener("click", function () { setMode("signin"); });
   tabSignup.addEventListener("click", function () { setMode("signup"); });
-  setMode("signin");
+  var params = new URLSearchParams(window.location.search);
+  setMode(params.get("signup") ? "signup" : "signin");
 
   usernameInput.addEventListener("input", function () {
     usernameOk = false;
