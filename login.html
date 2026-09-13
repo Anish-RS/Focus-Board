@@ -8,20 +8,116 @@
 <link rel="icon" href="favicon.png" type="image/png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  body { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 32px); }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: calc(100vh - 32px);
+    overflow-x: hidden;
+  }
+  .stb-root { position: relative; overflow: hidden; }
+
+  /* faint decorative doodles scattered on the cork so the empty space isn't dead --
+     pure inline SVG, no external images, kept low-contrast so they read as texture. */
+  .stb-doodle {
+    position: absolute;
+    opacity: 0.16;
+    color: #FBF8F1;
+    pointer-events: none;
+    animation: doodle-float 7s ease-in-out infinite;
+  }
+  .stb-doodle svg { width: 100%; height: 100%; display: block; }
+  .stb-doodle--1 { top: 8%; left: 6%; width: 54px; height: 54px; animation-delay: 0s; }
+  .stb-doodle--2 { bottom: 12%; left: 9%; width: 40px; height: 40px; animation-delay: 1.2s; }
+  .stb-doodle--3 { top: 14%; right: 7%; width: 46px; height: 46px; animation-delay: 0.6s; }
+  .stb-doodle--4 { bottom: 8%; right: 10%; width: 60px; height: 60px; animation-delay: 1.8s; }
+  @keyframes doodle-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(4deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stb-doodle { animation: none; }
+  }
+  @media (max-width: 900px) {
+    .stb-doodle { display: none; }
+  }
+
   .stb-login-stage {
     position: relative;
+    z-index: 1;
     width: 100%;
-    max-width: 440px;
-    margin: 48px auto;
+    max-width: 900px;
+    margin: 40px auto;
+    display: grid;
+    grid-template-columns: 0.85fr 1fr;
+    gap: 44px;
+    align-items: center;
   }
-  /* a second note peeking out behind, so the login screen reads as "your board" and
-     not a generic auth form dropped on top of it */
-  .stb-login-stage::before {
+
+  /* ---------- glass brand panel (fills the empty cork space) ---------- */
+  .stb-glass {
+    background: rgba(251,248,241,0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(251,248,241,0.35);
+    border-radius: 18px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    padding: 34px 30px;
+    color: #FBF8F1;
+  }
+  .stb-glass-word {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 26px;
+    opacity: 0.95;
+  }
+  .stb-glass-quote {
+    font-family: 'Caveat', cursive;
+    font-size: 30px;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+  .stb-glass-quote-attr {
+    font-size: 12.5px;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 600;
+    opacity: 0.75;
+    margin-top: 10px;
+  }
+  .stb-glass-divider {
+    height: 1px;
+    background: rgba(251,248,241,0.25);
+    margin: 26px 0;
+  }
+  .stb-glass-list { list-style: none; margin: 0; padding: 0; }
+  .stb-glass-list li {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13.5px; font-weight: 500;
+    padding: 8px 0;
+  }
+  .stb-glass-list .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #F5E6A8; flex: 0 0 auto;
+  }
+  .stb-glass-trial {
+    margin-top: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(245,230,168,0.22);
+    border: 1px solid rgba(245,230,168,0.45);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+  }
+
+  /* ---------- the sticky-note login card ---------- */
+  .stb-login-note-wrap { position: relative; }
+  .stb-login-note-wrap::before {
     content: "";
     position: absolute;
     top: 18px; left: 28px; right: -14px; bottom: -14px;
@@ -77,6 +173,7 @@
     font-size: 14px;
     cursor: pointer;
     border-bottom: 3px solid transparent;
+    transition: background .2s ease;
   }
   .stb-login-tab.is-active { background: #FBF8F1; color: #2B2620; border-bottom: 3px solid #8a6438; }
   .stb-field { margin-bottom: 14px; }
@@ -90,6 +187,7 @@
     font-family: 'Work Sans', sans-serif;
     background: #FBF8F1;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+    transition: box-shadow .2s ease;
   }
   .stb-field input:focus { outline: 2px solid #8a6438; outline-offset: 1px; }
   .stb-field-hint { font-size: 12px; margin-top: 4px; color: #6b5c33; }
@@ -106,8 +204,9 @@
     font-weight: 700;
     cursor: pointer;
     margin-top: 4px;
+    transition: background .2s ease, transform .2s ease;
   }
-  .stb-login-submit:hover { background: #453d32; }
+  .stb-login-submit:hover { background: #453d32; transform: translateY(-1px); }
   .stb-login-msg { font-size: 13px; margin-top: 12px; min-height: 18px; color: #6B322A; font-weight: 600; }
   .stb-login-forgot {
     background: none; border: none; text-decoration: underline; font-size: 12.5px;
@@ -119,51 +218,87 @@
     width: 13px; height: 13px; border-radius: 50%; display: inline-block;
     box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.15);
   }
+
+  .stb-login-fade { opacity: 0; transform: translateY(14px); animation: stb-fade-in .6s ease forwards; }
+  .stb-login-fade.d1 { animation-delay: .1s; }
+  @keyframes stb-fade-in { to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .stb-login-fade { animation: none; opacity: 1; transform: none; } }
+
+  @media (max-width: 900px) {
+    .stb-login-stage { grid-template-columns: 1fr; max-width: 440px; }
+    .stb-glass { order: 2; text-align: center; }
+    .stb-glass-list { display: inline-block; text-align: left; }
+    .stb-login-note-wrap { order: 1; }
+  }
 </style>
 </head>
 <body>
 <div class="stb-root" style="max-width:none; min-height:auto; display:flex; align-items:center; justify-content:center;">
+
+  <span class="stb-doodle stb-doodle--1"><svg viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="2" stroke="currentColor" stroke-width="2"/><path d="M14 16h20M14 24h20M14 32h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+  <span class="stb-doodle stb-doodle--2"><svg viewBox="0 0 40 40" fill="none"><path d="M7 20L16 29L33 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  <span class="stb-doodle stb-doodle--3"><svg viewBox="0 0 46 46" fill="none"><circle cx="23" cy="23" r="17" stroke="currentColor" stroke-width="2"/><path d="M23 14v9l6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+  <span class="stb-doodle stb-doodle--4"><svg viewBox="0 0 60 60" fill="none"><path d="M12 46c4-16 6-28 18-34 10-5 20 1 20 10 0 8-8 12-16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="46" r="3" fill="currentColor"/></svg></span>
+
   <div class="stb-login-stage">
-  <div class="stb-login-wrap">
-    <span class="stb-login-pin"></span>
-    <h1 id="stb-login-heading">Welcome back</h1>
-    <p class="stb-login-sub" id="stb-login-sub">Sign in to sync your board across devices.</p>
 
-    <div class="stb-login-tabs">
-      <button class="stb-login-tab is-active" id="stb-tab-signin" type="button">Sign in</button>
-      <button class="stb-login-tab" id="stb-tab-signup" type="button">Create account</button>
+    <div class="stb-glass stb-login-fade">
+      <div class="stb-glass-word">Focus Board</div>
+      <div class="stb-glass-quote">&ldquo;Skip a day. Your tasks come with you.&rdquo;</div>
+      <div class="stb-glass-quote-attr">— what the board actually does, not just a slogan</div>
+      <div class="stb-glass-divider"></div>
+      <ul class="stb-glass-list">
+        <li><span class="dot"></span>Weekly routines that repeat on their own</li>
+        <li><span class="dot"></span>Unfinished tasks carry to tomorrow</li>
+        <li><span class="dot"></span>Streaks that wait instead of resetting</li>
+        <li><span class="dot"></span>Synced across every device</li>
+      </ul>
+      <div class="stb-glass-trial">30-day free trial &middot; no card needed</div>
     </div>
 
-    <form id="stb-login-form">
-      <div class="stb-field" id="stb-field-username" style="display:none;">
-        <label for="stb-username">Username</label>
-        <input type="text" id="stb-username" placeholder="e.g. sam_92" autocomplete="off" maxlength="20" />
-        <div class="stb-field-hint" id="stb-username-hint">Shown instead of your email. 3-20 characters, letters/numbers/underscore, must be unique.</div>
-      </div>
-      <div class="stb-field">
-        <label for="stb-email">Email</label>
-        <input type="email" id="stb-email" placeholder="you@example.com" autocomplete="email" />
-        <div class="stb-field-hint">Used to sign in and for account recovery only — never shown in the app.</div>
-      </div>
-      <div class="stb-field">
-        <label for="stb-password">Password</label>
-        <input type="password" id="stb-password" placeholder="At least 6 characters" autocomplete="current-password" />
-      </div>
-      <button type="submit" class="stb-login-submit" id="stb-submit-btn">Sign in</button>
-      <button type="button" class="stb-login-forgot" id="stb-forgot-btn">Forgot password?</button>
-      <div class="stb-login-msg" id="stb-login-msg"></div>
-    </form>
+    <div class="stb-login-note-wrap stb-login-fade d1">
+      <div class="stb-login-wrap">
+        <span class="stb-login-pin"></span>
+        <h1 id="stb-login-heading">Welcome back</h1>
+        <p class="stb-login-sub" id="stb-login-sub">Sign in to sync your board across devices.</p>
 
-    <p class="stb-login-trial-note" id="stb-trial-note">New accounts start with a 30-day free trial. No card needed.</p>
-    <div class="stb-login-swatches" aria-hidden="true">
-      <span style="background:#F5E6A8;"></span>
-      <span style="background:#C9D6B8;"></span>
-      <span style="background:#B9D3DD;"></span>
-      <span style="background:#E8C5C0;"></span>
-      <span style="background:#D3C5DE;"></span>
+        <div class="stb-login-tabs">
+          <button class="stb-login-tab is-active" id="stb-tab-signin" type="button">Sign in</button>
+          <button class="stb-login-tab" id="stb-tab-signup" type="button">Create account</button>
+        </div>
+
+        <form id="stb-login-form">
+          <div class="stb-field" id="stb-field-username" style="display:none;">
+            <label for="stb-username">Username</label>
+            <input type="text" id="stb-username" placeholder="e.g. sam_92" autocomplete="off" maxlength="20" />
+            <div class="stb-field-hint" id="stb-username-hint">Shown instead of your email. 3-20 characters, letters/numbers/underscore, must be unique.</div>
+          </div>
+          <div class="stb-field">
+            <label for="stb-email">Email</label>
+            <input type="email" id="stb-email" placeholder="you@example.com" autocomplete="email" />
+            <div class="stb-field-hint">Used to sign in and for account recovery only — never shown in the app.</div>
+          </div>
+          <div class="stb-field">
+            <label for="stb-password">Password</label>
+            <input type="password" id="stb-password" placeholder="At least 6 characters" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="stb-login-submit" id="stb-submit-btn">Sign in</button>
+          <button type="button" class="stb-login-forgot" id="stb-forgot-btn">Forgot password?</button>
+          <div class="stb-login-msg" id="stb-login-msg"></div>
+        </form>
+
+        <p class="stb-login-trial-note" id="stb-trial-note">New accounts start with a 30-day free trial. No card needed.</p>
+        <div class="stb-login-swatches" aria-hidden="true">
+          <span style="background:#F5E6A8;"></span>
+          <span style="background:#C9D6B8;"></span>
+          <span style="background:#B9D3DD;"></span>
+          <span style="background:#E8C5C0;"></span>
+          <span style="background:#D3C5DE;"></span>
+        </div>
+        <span class="stb-login-fold"></span>
+      </div>
     </div>
-    <span class="stb-login-fold"></span>
-  </div>
+
   </div>
 </div>
 
