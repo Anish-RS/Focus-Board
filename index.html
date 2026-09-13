@@ -344,7 +344,70 @@
   footer{ padding:26px 0; }
   footer p{ font-size:13px; color:#8a8070; }
 
-  @media (max-width: 860px){
+  /* ---------- floating doodles (fills empty background space with texture) ---------- */
+  .doodle{
+    position:absolute;
+    pointer-events:none;
+    animation:doodle-float 7s ease-in-out infinite;
+  }
+  .doodle svg{ width:100%; height:100%; display:block; }
+  @keyframes doodle-float{
+    0%,100%{ transform:translateY(0) rotate(0deg); }
+    50%{ transform:translateY(-10px) rotate(4deg); }
+  }
+  @media (prefers-reduced-motion: reduce){ .doodle{ animation:none; } }
+  @media (max-width:860px){ .doodle{ display:none; } }
+  .hero{ position:relative; overflow:hidden; }
+  .hero .doodle{ opacity:0.16; color:var(--ink); }
+  .hero .doodle--1{ top:10%; right:6%; width:44px; height:44px; }
+  .hero .doodle--2{ bottom:10%; right:16%; width:34px; height:34px; animation-delay:1s; }
+  .how{ position:relative; overflow:hidden; }
+  .how .doodle{ opacity:0.14; color:var(--cream); }
+  .how .doodle--1{ top:8%; left:4%; width:50px; height:50px; }
+  .how .doodle--2{ bottom:10%; right:5%; width:40px; height:40px; animation-delay:1.4s; }
+
+  /* ---------- glass quote banner (bridges problem -> how-it-works) ---------- */
+  .glass-banner{
+    background:var(--wood);
+    padding:64px 0;
+    position:relative;
+  }
+  .glass-banner-inner{
+    margin:0 auto;
+    max-width:900px;
+    padding:0 28px;
+  }
+  .glass-card{
+    background:rgba(251,248,241,0.14);
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    border:1px solid rgba(251,248,241,0.35);
+    border-radius:16px;
+    box-shadow:0 10px 34px rgba(0,0,0,0.22);
+    padding:32px 38px;
+    color:var(--cream);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:30px;
+    flex-wrap:wrap;
+  }
+  .glass-quote{
+    font-family:'Caveat', cursive;
+    font-size:26px;
+    font-weight:600;
+    line-height:1.3;
+    max-width:36ch;
+  }
+  .glass-stats{ display:flex; gap:26px; flex-wrap:wrap; }
+  .glass-stat{ text-align:center; }
+  .glass-stat b{ display:block; font-family:'Fraunces', serif; font-size:22px; font-weight:600; }
+  .glass-stat span{ font-size:11.5px; opacity:0.8; letter-spacing:0.02em; }
+
+  @media (max-width:700px){
+    .glass-card{ flex-direction:column; align-items:flex-start; text-align:left; }
+  }
+
     .hero-inner{ grid-template-columns:1fr; padding:44px 0 56px; }
     .hero-notes{ height:230px; margin-top:16px; }
     .problem-inner{ grid-template-columns:1fr; }
@@ -380,6 +443,8 @@
       </div>
       <p class="hero-fineprint">Full access for 30 days. After that your board stays visible, just read-only, until you upgrade.</p>
     </div>
+    <span class="doodle doodle--1"><svg viewBox="0 0 40 40" fill="none"><path d="M7 20L16 29L33 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <span class="doodle doodle--2"><svg viewBox="0 0 46 46" fill="none"><circle cx="23" cy="23" r="17" stroke="currentColor" stroke-width="2"/><path d="M23 14v9l6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
     <div class="hero-notes">
       <div class="note note-a">
         <span class="pin"></span>
@@ -415,7 +480,22 @@
   </div>
 </section>
 
+<section class="glass-banner">
+  <div class="glass-banner-inner reveal">
+    <div class="glass-card">
+      <div class="glass-quote">&ldquo;Built for the days you don't feel like it — those are the ones that count.&rdquo;</div>
+      <div class="glass-stats">
+        <div class="glass-stat"><b>30</b><span>day free trial</span></div>
+        <div class="glass-stat"><b>0</b><span>card required</span></div>
+        <div class="glass-stat"><b>&infin;</b><span>routines you can pin</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="how" id="how">
+  <span class="doodle doodle--1"><svg viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="2" stroke="currentColor" stroke-width="2"/><path d="M14 16h20M14 24h20M14 32h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+  <span class="doodle doodle--2"><svg viewBox="0 0 60 60" fill="none"><path d="M12 46c4-16 6-28 18-34 10-5 20 1 20 10 0 8-8 12-16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="46" r="3" fill="currentColor"/></svg></span>
   <div class="wrap">
     <h2 class="reveal">Three things it actually does</h2>
     <div class="how-row">
