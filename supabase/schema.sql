@@ -98,7 +98,17 @@ create policy "Users can update their own board while trial is active"
   using (auth.uid() = user_id and public.trial_active(auth.uid()));
 
 -- Let the app's live "second device updates in real time" feature receive change events.
-alter publication supabase_realtime add table public.boards;
+-- Wrapped in a check so this file can be re-run safely even if boards was already added
+-- to the publication by an earlier run (Postgres has no "add if not exists" for this).
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'boards'
+  ) then
+    alter publication supabase_realtime add table public.boards;
+  end if;
+end $$;
 
 -- ---------- public feedback board ----------
 -- Replaces the old "email me" link on the landing page: anyone can post feedback,
@@ -130,3 +140,19 @@ create policy "Anyone can read feedback"
 create policy "Anyone can post feedback"
   on public.feedback for insert
   with check (char_length(message) <= 500 and char_length(author) <= 60);
+
+-- ---------- Stripe fields on profiles ----------
+-- These are only ever written by the /api/stripe-webhook serverless function using the
+-- service role key (which bypasses RLS) -- a signed-in user can read their own row via
+-- the existing "Users can read their own profile" policy above, but there is no update
+-- policy that lets a user (or anyone using just the anon key) set these themselves.
+alter table public.profiles add column if not exists stripe_customer_id text;
+alter table public.profiles add column if not exists stripe_subscription_id text;
+
+-- ---------- Razorpay fields on profiles ----------
+-- Same idea as the Stripe columns above -- only ever written by the
+-- /api/verify-razorpay-payment and /api/razorpay-webhook functions using the service
+-- role key. Kept alongside the Stripe columns rather than replacing them, in case Stripe
+-- access for India comes through later and both are wired up side by side.
+alter table public.profiles add column if not exists razorpay_customer_id text;
+alter table public.profiles add column if not exists razorpay_subscription_id text;
