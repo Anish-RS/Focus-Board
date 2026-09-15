@@ -75,6 +75,56 @@
   }
   STB.claimUsername = claimUsernameAndStartTrial;
 
+  // Opens Razorpay's in-page checkout widget for the signed-in user. The server creates
+  // the subscription and verifies who the user is from their session token -- nothing
+  // about which account gets upgraded is decided client-side. Resolves once the payment
+  // is made AND verified server-side (via /api/verify-razorpay-payment); the caller is
+  // expected to refresh the UI/reload once this resolves.
+  STB.startCheckout = function () {
+    var c = getClient();
+    if (!c || !currentUser) return Promise.reject(new Error("Sign in first."));
+    var token;
+    return c.auth.getSession().then(function (res) {
+      token = res.data && res.data.session && res.data.session.access_token;
+      if (!token) throw new Error("Your session has expired -- sign in again.");
+      return fetch("/api/create-subscription", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+      });
+    }).then(function (r) { return r.json(); }).then(function (body) {
+      if (body.error) throw new Error(body.error);
+      if (typeof window.Razorpay === "undefined") {
+        throw new Error("Payment widget failed to load -- check your connection and try again.");
+      }
+      return new Promise(function (resolve, reject) {
+        var rzp = new window.Razorpay({
+          key: body.key_id,
+          subscription_id: body.subscription_id,
+          name: "Focus Board",
+          description: "Focus Board Pro \u2014 \u20b9249/month",
+          theme: { color: "#2B2620" },
+          handler: function (response) {
+            fetch("/api/verify-razorpay-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+              body: JSON.stringify(response),
+            })
+              .then(function (r2) { return r2.json(); })
+              .then(function (verifyBody) {
+                if (verifyBody.error) { reject(new Error(verifyBody.error)); return; }
+                resolve(verifyBody);
+              })
+              .catch(reject);
+          },
+          modal: {
+            ondismiss: function () { reject(new Error("Checkout closed before completing payment.")); },
+          },
+        });
+        rzp.open();
+      });
+    });
+  };
+
   function fetchProfile(userId) {
     var c = getClient();
     return c.from("profiles").select("username, trial_ends_at, is_paid").eq("user_id", userId).maybeSingle().then(function (res) {
@@ -298,8 +348,22 @@
         banner.innerHTML = "Almost done \u2014 <a href=\"login.html?step=username\">choose a username</a> to start your free trial.";
         banner.classList.add("is-visible");
       } else if (locked) {
-        banner.innerHTML = "Your free trial has ended. The board is view-only until you upgrade.";
+        banner.innerHTML = 'Your free trial has ended. The board is view-only until you upgrade. <button class="stb-upgrade-btn stb-upgrade-btn--banner" id="stb-banner-upgrade-btn">Upgrade \u00b7 \u20b9249/mo</button>';
         banner.classList.add("is-visible");
+        var bannerBtn = document.getElementById("stb-banner-upgrade-btn");
+        if (bannerBtn) {
+          bannerBtn.addEventListener("click", function () {
+            bannerBtn.disabled = true;
+            bannerBtn.textContent = "Opening checkout\u2026";
+            STB.startCheckout().then(function () {
+              window.location.reload();
+            }).catch(function (e) {
+              bannerBtn.disabled = false;
+              bannerBtn.textContent = "Upgrade \u00b7 \u20b9249/mo";
+              alert((e && e.message) || "Could not start checkout.");
+            });
+          });
+        }
       } else {
         banner.classList.remove("is-visible");
       }
@@ -332,6 +396,7 @@
     if (currentUser) {
       var trial = STB.getTrialStatus();
       var trialHtml = "";
+      var upgradeHtml = "";
       var locked = false;
       if (!currentProfile) {
         trialHtml = '<span class="stb-trial-badge stb-trial-badge--needsname">Finish setup: choose a username</span>';
@@ -341,14 +406,31 @@
       } else if (trial.expired) {
         trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Trial ended \u00b7 view only</span>';
         locked = true;
+        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">Upgrade \u00b7 \u20b9249/mo</button>';
       } else {
         trialHtml = '<span class="stb-trial-badge">' + trial.daysLeft + " day" + (trial.daysLeft === 1 ? "" : "s") + " left in trial</span>";
+        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">Upgrade \u00b7 \u20b9249/mo</button>';
       }
       el.innerHTML =
         '<span class="stb-auth-email">' + STB.escapeAttr(currentProfile ? currentProfile.username : currentUser.email.split("@")[0]) + " \u00b7 synced</span>" +
         trialHtml +
+        upgradeHtml +
         '<button class="stb-auth-signout" id="stb-signout-btn">Sign out</button>';
       document.getElementById("stb-signout-btn").addEventListener("click", function () { STB.signOut(); });
+      var upgradeBtn = document.getElementById("stb-upgrade-btn");
+      if (upgradeBtn) {
+        upgradeBtn.addEventListener("click", function () {
+          upgradeBtn.disabled = true;
+          upgradeBtn.textContent = "Opening checkout\u2026";
+          STB.startCheckout().then(function () {
+            window.location.reload();
+          }).catch(function (e) {
+            upgradeBtn.disabled = false;
+            upgradeBtn.textContent = "Upgrade \u00b7 \u20b9249/mo";
+            alert((e && e.message) || "Could not start checkout.");
+          });
+        });
+      }
       applyLockState(locked, !currentProfile);
       return;
     }
