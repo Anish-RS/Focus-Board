@@ -1,56 +1,98 @@
-// Runs during `vercel build` (see vercel.json's "buildCommand"). Vercel injects
-// Environment Variables into the build step too, so this can catch a half-configured
-// deployment BEFORE it goes live -- rather than after a customer has already paid into it,
-// which is what happened once (Razorpay was configured but SUPABASE_SERVICE_ROLE_KEY
-// wasn't, so checkout worked but the unlock step silently failed).
+// Vercel serverless function. Mirrors create-checkout-session.js but for Razorpay, which
+// works differently from Stripe: instead of handing back a hosted page URL to redirect to,
+// Razorpay wants the browser to open an in-page checkout widget using a subscription_id
+// this function creates ahead of time. See js/sync.js's STB.startCheckout for the client side.
 //
-// The rule: if you've turned Razorpay on at all (RAZORPAY_KEY_ID is set), every variable
-// the payment flow needs must be set. Partial configuration fails the build with a clear
-// list of what's missing, instead of shipping a broken "pay but don't unlock" flow.
+// Required Environment Variables (Vercel -> Project -> Settings -> Environment Variables):
+//   SUPABASE_URL              = same value already used by api/config.js
+//   SUPABASE_ANON_KEY          = same value already used by api/config.js
+//   SUPABASE_SERVICE_ROLE_KEY = same value used by verify-razorpay-payment.js and
+//                               razorpay-webhook.js. Checked here too (see note below).
+//   RAZORPAY_KEY_ID           = Razorpay Dashboard -> Settings -> API Keys -> Key ID
+//   RAZORPAY_KEY_SECRET       = same page -> Key Secret
+//   RAZORPAY_PLAN_ID          = Razorpay Dashboard -> Subscriptions -> Plans -> your plan's ID (starts "plan_")
 //
-// If you're not using Razorpay yet (RAZORPAY_KEY_ID unset), this script does nothing --
-// it only enforces completeness once you've started turning it on.
+// Why SUPABASE_SERVICE_ROLE_KEY is checked here even though this function never uses it:
+// this is the endpoint that starts checkout, and verify-razorpay-payment.js /
+// razorpay-webhook.js (which actually unlock the account afterwards) both need that key.
+// If it were missing only there, a customer could pay successfully and then get stuck on
+// the trial screen with money already taken -- which is exactly what happened once. Checking
+// for it here means checkout simply won't start until the whole flow is configured, so a
+// half-configured deployment can never collect a payment it can't also fulfill.
 
-const RAZORPAY_REQUIRED = [
-  "RAZORPAY_KEY_ID",
-  "RAZORPAY_KEY_SECRET",
-  "RAZORPAY_PLAN_ID",
-  "RAZORPAY_WEBHOOK_SECRET",
-  "SUPABASE_URL",
-  "SUPABASE_ANON_KEY",
-  "SUPABASE_SERVICE_ROLE_KEY",
-];
+module.exports = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
 
-function main() {
-  if (!process.env.RAZORPAY_KEY_ID) {
-    // Razorpay isn't being enabled in this deployment -- nothing to check.
-    console.log("[check-required-env] Razorpay not configured; skipping payment env check.");
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
-  var missing = RAZORPAY_REQUIRED.filter(function (name) {
-    return !process.env[name];
-  });
-
-  if (missing.length > 0) {
-    console.error("");
-    console.error("========================================================================");
-    console.error(" BUILD FAILED: Razorpay is partially configured.");
-    console.error("");
-    console.error(" RAZORPAY_KEY_ID is set, so this deployment will try to accept payments,");
-    console.error(" but the following required Environment Variables are missing:");
-    console.error("");
-    missing.forEach(function (name) { console.error("   - " + name); });
-    console.error("");
-    console.error(" Add these in Vercel -> Project -> Settings -> Environment Variables,");
-    console.error(" then redeploy. This check exists so a customer can never pay into a");
-    console.error(" deployment that can't actually unlock their account.");
-    console.error("========================================================================");
-    console.error("");
-    process.exit(1);
+  if (
+    !process.env.RAZORPAY_KEY_ID ||
+    !process.env.RAZORPAY_KEY_SECRET ||
+    !process.env.RAZORPAY_PLAN_ID ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    res.status(500).json({ error: "Payments aren't fully configured on this deployment yet." });
+    return;
   }
 
-  console.log("[check-required-env] All required Razorpay + Supabase env vars are present.");
-}
+  var authHeader = req.headers["authorization"] || "";
+  var token = authHeader.replace(/^Bearer\s+/i, "");
+  if (!token) {
+    res.status(401).json({ error: "Not signed in." });
+    return;
+  }
 
-main();
+  // Verify the token directly against Supabase's auth API -- confirms it's real and
+  // current, and tells us exactly which user it belongs to.
+  var user;
+  try {
+    var userRes = await fetch(process.env.SUPABASE_URL + "/auth/v1/user", {
+      headers: {
+        apikey: process.env.SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + token,
+      },
+    });
+    if (!userRes.ok) {
+      res.status(401).json({ error: "Your session has expired -- sign in again." });
+      return;
+    }
+    user = await userRes.json();
+  } catch (e) {
+    res.status(500).json({ error: "Could not verify your session." });
+    return;
+  }
+
+  var basicAuth = Buffer.from(process.env.RAZORPAY_KEY_ID + ":" + process.env.RAZORPAY_KEY_SECRET).toString("base64");
+
+  try {
+    var subRes = await fetch("https://api.razorpay.com/v1/subscriptions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Basic " + basicAuth,
+      },
+      body: JSON.stringify({
+        plan_id: process.env.RAZORPAY_PLAN_ID,
+        customer_notify: 1,
+        // Razorpay subscriptions require a total_count of billing cycles rather than
+        // "forever" -- 120 monthly cycles (10 years) is the common stand-in for
+        // "until cancelled" since nobody actually needs to keep tapping this button.
+        total_count: 120,
+        notes: { supabase_user_id: user.id },
+      }),
+    });
+    var sub = await subRes.json();
+    if (!subRes.ok) {
+      console.error("Razorpay subscription creation failed", sub);
+      res.status(500).json({ error: (sub.error && sub.error.description) || "Could not start checkout." });
+      return;
+    }
+    res.status(200).json({ subscription_id: sub.id, key_id: process.env.RAZORPAY_KEY_ID });
+  } catch (e) {
+    console.error("Razorpay subscription creation failed", e);
+    res.status(500).json({ error: "Could not start checkout. Try again in a moment." });
+  }
+};
