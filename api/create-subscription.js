@@ -4,11 +4,21 @@
 // this function creates ahead of time. See js/sync.js's STB.startCheckout for the client side.
 //
 // Required Environment Variables (Vercel -> Project -> Settings -> Environment Variables):
-//   SUPABASE_URL           = same value already used by api/config.js
-//   SUPABASE_ANON_KEY       = same value already used by api/config.js
-//   RAZORPAY_KEY_ID        = Razorpay Dashboard -> Settings -> API Keys -> Key ID
-//   RAZORPAY_KEY_SECRET    = same page -> Key Secret
-//   RAZORPAY_PLAN_ID       = Razorpay Dashboard -> Subscriptions -> Plans -> your plan's ID (starts "plan_")
+//   SUPABASE_URL              = same value already used by api/config.js
+//   SUPABASE_ANON_KEY          = same value already used by api/config.js
+//   SUPABASE_SERVICE_ROLE_KEY = same value used by verify-razorpay-payment.js and
+//                               razorpay-webhook.js. Checked here too (see note below).
+//   RAZORPAY_KEY_ID           = Razorpay Dashboard -> Settings -> API Keys -> Key ID
+//   RAZORPAY_KEY_SECRET       = same page -> Key Secret
+//   RAZORPAY_PLAN_ID          = Razorpay Dashboard -> Subscriptions -> Plans -> your plan's ID (starts "plan_")
+//
+// Why SUPABASE_SERVICE_ROLE_KEY is checked here even though this function never uses it:
+// this is the endpoint that starts checkout, and verify-razorpay-payment.js /
+// razorpay-webhook.js (which actually unlock the account afterwards) both need that key.
+// If it were missing only there, a customer could pay successfully and then get stuck on
+// the trial screen with money already taken -- which is exactly what happened once. Checking
+// for it here means checkout simply won't start until the whole flow is configured, so a
+// half-configured deployment can never collect a payment it can't also fulfill.
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
@@ -18,8 +28,13 @@ module.exports = async (req, res) => {
     return;
   }
 
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || !process.env.RAZORPAY_PLAN_ID) {
-    res.status(500).json({ error: "Payments aren't configured on this deployment yet." });
+  if (
+    !process.env.RAZORPAY_KEY_ID ||
+    !process.env.RAZORPAY_KEY_SECRET ||
+    !process.env.RAZORPAY_PLAN_ID ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    res.status(500).json({ error: "Payments aren't fully configured on this deployment yet." });
     return;
   }
 
