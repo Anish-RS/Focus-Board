@@ -95,6 +95,20 @@ body {
 .stb-trial-badge--expired { background: #6B322A; color: #FBF8F1; }
 .stb-trial-badge--needsname { background: #6B4E12; color: #FBF8F1; }
 
+.stb-upgrade-btn {
+  background: #3A4B24;
+  color: #FBF8F1;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stb-upgrade-btn:hover { background: #2c3a1b; }
+.stb-upgrade-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.stb-upgrade-btn--banner { margin-left: 10px; flex: 0 0 auto; }
+
 .stb-readonly-banner {
   display: none;
   align-items: center;

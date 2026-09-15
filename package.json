@@ -1,0 +1,9 @@
+{
+  "name": "focus-board",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Serverless functions for Focus Board (Supabase config, Razorpay checkout/webhook, and a dormant Stripe integration kept in case India access opens up later). Plain Node fetch/crypto are used throughout, so there are no runtime dependencies to install. The frontend itself is plain static HTML/JS/CSS and needs no build step.",
+  "dependencies": {
+    "stripe": "^17.4.0"
+  }
+}
