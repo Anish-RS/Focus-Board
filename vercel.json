@@ -1,0 +1,10 @@
+{
+  "buildCommand": "node scripts/check-required-env.js",
+  "outputDirectory": ".",
+  "crons": [
+    {
+      "path": "/api/reconcile-payments",
+      "schedule": "17 3 * * *"
+    }
+  ]
+}
