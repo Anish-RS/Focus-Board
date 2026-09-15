@@ -251,8 +251,14 @@
         var pending = null;
         try { pending = window.localStorage.getItem("stb_pending_username"); } catch (e) {}
         if (pending) {
-          try { window.localStorage.removeItem("stb_pending_username"); } catch (e) {}
-          return claimUsernameAndStartTrial(user.id, pending);
+          // Only clear the pending flag once the claim actually succeeds. Clearing it
+          // first (as before) meant a failed claim -- taken username, network blip,
+          // RLS hiccup -- silently threw away the only record of what to try, leaving
+          // the account stuck in "needs username" forever with nothing to retry.
+          return claimUsernameAndStartTrial(user.id, pending).then(function (profile) {
+            try { window.localStorage.removeItem("stb_pending_username"); } catch (e2) {}
+            return profile;
+          });
         }
         return null;
       })
