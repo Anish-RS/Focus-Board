@@ -4,6 +4,13 @@
   var client = null;
   var currentUser = null;
   var currentProfile = null; // { username, trial_ends_at, is_paid } or null
+  // True only when we tried to load the profile and the request itself failed (network
+  // blip, Supabase cold start, brief RLS/session hiccup) -- as opposed to currentProfile
+  // being null because the account genuinely has no profile row yet. Conflating those two
+  // used to show already-registered users the "choose a username" prompt on a transient
+  // error, which risked them claiming a second username or thinking their account was
+  // wiped. See renderAuthUI/applyLockState below for how this is used.
+  var profileLoadFailed = false;
   var pushTimeout = null;
   var applyingRemoteUpdate = false;
   var realtimeChannel = null;
@@ -150,6 +157,19 @@
     });
   }
 
+  // Retries a couple of times with a short delay before giving up -- smooths over the
+  // transient hiccups (a slow cold start, a dropped request) that used to get misread as
+  // "no profile exists yet" after a single failed attempt.
+  function fetchProfileWithRetry(userId, attemptsLeft) {
+    attemptsLeft = typeof attemptsLeft === "number" ? attemptsLeft : 2;
+    return fetchProfile(userId).catch(function (e) {
+      if (attemptsLeft <= 0) throw e;
+      return new Promise(function (resolve) { setTimeout(resolve, 700); }).then(function () {
+        return fetchProfileWithRetry(userId, attemptsLeft - 1);
+      });
+    });
+  }
+
   // ---------- auth ----------
   // email/password stay the sign-in credential (Supabase requires one), but the email is
   // never shown anywhere in the app UI -- only the username chosen at signup is displayed.
@@ -258,7 +278,8 @@
 
   function afterSignedIn(user) {
     currentUser = user;
-    fetchProfile(user.id)
+    profileLoadFailed = false;
+    fetchProfileWithRetry(user.id)
       .then(function (profile) {
         if (profile) return profile;
         // No profile yet -- either this is their very first sign-in after confirming
@@ -278,7 +299,15 @@
         }
         return null;
       })
-      .catch(function (e) { console.error("Could not load profile", e); })
+      .catch(function (e) {
+        console.error("Could not load profile", e);
+        // Genuinely couldn't tell whether a profile exists -- do NOT fall through to the
+        // "needs username" state. currentProfile is left as-is (still whatever it was
+        // before this attempt, normally null on a fresh sign-in); profileLoadFailed is
+        // what tells renderAuthUI to show a "couldn't load, retry" state instead of
+        // wrongly asking an existing user to pick a username again.
+        profileLoadFailed = true;
+      })
       .then(function () {
         STB.renderAuthUI();
         return pullFromCloud(user.id);
@@ -349,7 +378,7 @@
   // username/profile yet). This is a UX convenience only -- the real enforcement is the
   // "trial_active" row-level security policy on the boards table, which blocks writes
   // at the database no matter what the client does.
-  function applyLockState(locked, needsUsername) {
+  function applyLockState(locked, reason) {
     var board = document.getElementById("stb-board");
     var clipboard = document.getElementById("stb-clipboard");
     var addBtn = document.getElementById("stb-add-btn");
@@ -366,7 +395,10 @@
       btn.style.pointerEvents = locked ? "none" : "";
     });
     if (banner) {
-      if (needsUsername) {
+      if (reason === "load_failed") {
+        banner.innerHTML = "Couldn't load your account just now \u2014 this is usually temporary. Your board is safe; try refreshing the page in a moment.";
+        banner.classList.add("is-visible");
+      } else if (reason === "needs_username") {
         banner.innerHTML = "Almost done \u2014 <a href=\"login.html?step=username\">choose a username</a> to start your free trial.";
         banner.classList.add("is-visible");
       } else if (locked) {
@@ -420,9 +452,19 @@
       var trialHtml = "";
       var upgradeHtml = "";
       var locked = false;
-      if (!currentProfile) {
+      var reason = null;
+      if (profileLoadFailed) {
+        // A fetch failure, not a confirmed "no profile" -- see the comment on
+        // profileLoadFailed above. Offer a retry instead of the "choose a username"
+        // prompt, which would be wrong (and confusing) for an already-registered user.
+        trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Couldn\u2019t load your account</span>';
+        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-retry-profile-btn">Retry</button>';
+        locked = true;
+        reason = "load_failed";
+      } else if (!currentProfile) {
         trialHtml = '<span class="stb-trial-badge stb-trial-badge--needsname">Finish setup: choose a username</span>';
         locked = true;
+        reason = "needs_username";
       } else if (trial.isPaid) {
         trialHtml = trial.renewsInDays != null
           ? '<span class="stb-trial-badge">Full access \u00b7 ' + trial.renewsInDays + " day" + (trial.renewsInDays === 1 ? "" : "s") + " left</span>"
@@ -435,8 +477,14 @@
         trialHtml = '<span class="stb-trial-badge">' + trial.daysLeft + " day" + (trial.daysLeft === 1 ? "" : "s") + " left in trial</span>";
         upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">' + upgradeLabel() + '</button>';
       }
+      // Only fall back to the email-derived name when we've genuinely confirmed there's
+      // no profile yet -- showing it during a load failure is exactly what made a
+      // returning user's own account look unfamiliar ("roysing90s" instead of "roysing").
+      var displayName = currentProfile
+        ? currentProfile.username
+        : (profileLoadFailed ? "Account" : currentUser.email.split("@")[0]);
       el.innerHTML =
-        '<span class="stb-auth-email">' + STB.escapeAttr(currentProfile ? currentProfile.username : currentUser.email.split("@")[0]) + " \u00b7 synced</span>" +
+        '<span class="stb-auth-email">' + STB.escapeAttr(displayName) + " \u00b7 synced</span>" +
         trialHtml +
         upgradeHtml +
         '<button class="stb-auth-signout" id="stb-signout-btn">Sign out</button>';
@@ -455,7 +503,18 @@
           });
         });
       }
-      applyLockState(locked, !currentProfile);
+      var retryBtn = document.getElementById("stb-retry-profile-btn");
+      if (retryBtn) {
+        retryBtn.addEventListener("click", function () {
+          retryBtn.disabled = true;
+          retryBtn.textContent = "Retrying\u2026";
+          fetchProfileWithRetry(currentUser.id)
+            .then(function () { profileLoadFailed = false; })
+            .catch(function (e) { console.error("Retry failed", e); profileLoadFailed = true; })
+            .then(function () { STB.renderAuthUI(); });
+        });
+      }
+      applyLockState(locked, reason);
       return;
     }
 
