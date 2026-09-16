@@ -35,15 +35,31 @@
   // so the UI can show a banner and disable inputs instead of writes silently failing.
   STB.getTrialStatus = function () {
     if (!currentProfile) {
-      return { known: false, expired: false, daysLeft: null, isPaid: false };
+      return { known: false, expired: false, daysLeft: null, isPaid: false, renewsInDays: null };
     }
     if (currentProfile.is_paid) {
-      return { known: true, expired: false, daysLeft: null, isPaid: true };
+      // renewsInDays counts down to paid_until -- the end of the cycle already paid for.
+      // It keeps counting down the same way whether auto-renew is still on or was
+      // cancelled; see razorpay-webhook.js/reconcile-payments.js for why that's correct.
+      var renewsInDays = null;
+      if (currentProfile.paid_until) {
+        var msLeftPaid = new Date(currentProfile.paid_until).getTime() - Date.now();
+        renewsInDays = Math.max(Math.ceil(msLeftPaid / (1000 * 60 * 60 * 24)), 0);
+      }
+      return { known: true, expired: false, daysLeft: null, isPaid: true, renewsInDays: renewsInDays };
     }
     var msLeft = new Date(currentProfile.trial_ends_at).getTime() - Date.now();
     var daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-    return { known: true, expired: msLeft <= 0, daysLeft: Math.max(daysLeft, 0), isPaid: false };
+    return { known: true, expired: msLeft <= 0, daysLeft: Math.max(daysLeft, 0), isPaid: false, renewsInDays: null };
   };
+
+  // Shared label for every "Upgrade" button/banner so the native-currency estimate (once
+  // currency.js has one) shows up everywhere consistently, without repeating the string.
+  function upgradeLabel() {
+    var suffix = (typeof STB.getPriceSuffix === "function") ? STB.getPriceSuffix() : "";
+    return "Upgrade \u00b7 \u20b9" + STB.PRICE_INR + "/mo" + suffix;
+  }
+  STB.PRICE_INR = STB.PRICE_INR || 249; // currency.js also sets this; kept here too in case it isn't loaded on a page
 
   // ---------- username availability + claiming ----------
   STB.checkUsernameAvailable = function (username) {
@@ -127,7 +143,7 @@
 
   function fetchProfile(userId) {
     var c = getClient();
-    return c.from("profiles").select("username, trial_ends_at, is_paid").eq("user_id", userId).maybeSingle().then(function (res) {
+    return c.from("profiles").select("username, trial_ends_at, is_paid, paid_until").eq("user_id", userId).maybeSingle().then(function (res) {
       if (res.error) throw res.error;
       currentProfile = res.data || null;
       return currentProfile;
@@ -354,7 +370,7 @@
         banner.innerHTML = "Almost done \u2014 <a href=\"login.html?step=username\">choose a username</a> to start your free trial.";
         banner.classList.add("is-visible");
       } else if (locked) {
-        banner.innerHTML = 'Your free trial has ended. The board is view-only until you upgrade. <button class="stb-upgrade-btn stb-upgrade-btn--banner" id="stb-banner-upgrade-btn">Upgrade \u00b7 \u20b9249/mo</button>';
+        banner.innerHTML = 'Your free trial has ended. The board is view-only until you upgrade. <button class="stb-upgrade-btn stb-upgrade-btn--banner" id="stb-banner-upgrade-btn">' + upgradeLabel() + '</button>';
         banner.classList.add("is-visible");
         var bannerBtn = document.getElementById("stb-banner-upgrade-btn");
         if (bannerBtn) {
@@ -365,7 +381,7 @@
               window.location.reload();
             }).catch(function (e) {
               bannerBtn.disabled = false;
-              bannerBtn.textContent = "Upgrade \u00b7 \u20b9249/mo";
+              bannerBtn.textContent = upgradeLabel();
               alert((e && e.message) || "Could not start checkout.");
             });
           });
@@ -408,14 +424,16 @@
         trialHtml = '<span class="stb-trial-badge stb-trial-badge--needsname">Finish setup: choose a username</span>';
         locked = true;
       } else if (trial.isPaid) {
-        trialHtml = '<span class="stb-trial-badge">Full access</span>';
+        trialHtml = trial.renewsInDays != null
+          ? '<span class="stb-trial-badge">Full access \u00b7 ' + trial.renewsInDays + " day" + (trial.renewsInDays === 1 ? "" : "s") + " left</span>"
+          : '<span class="stb-trial-badge">Full access</span>';
       } else if (trial.expired) {
         trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Trial ended \u00b7 view only</span>';
         locked = true;
-        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">Upgrade \u00b7 \u20b9249/mo</button>';
+        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">' + upgradeLabel() + '</button>';
       } else {
         trialHtml = '<span class="stb-trial-badge">' + trial.daysLeft + " day" + (trial.daysLeft === 1 ? "" : "s") + " left in trial</span>";
-        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">Upgrade \u00b7 \u20b9249/mo</button>';
+        upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">' + upgradeLabel() + '</button>';
       }
       el.innerHTML =
         '<span class="stb-auth-email">' + STB.escapeAttr(currentProfile ? currentProfile.username : currentUser.email.split("@")[0]) + " \u00b7 synced</span>" +
@@ -432,7 +450,7 @@
             window.location.reload();
           }).catch(function (e) {
             upgradeBtn.disabled = false;
-            upgradeBtn.textContent = "Upgrade \u00b7 \u20b9249/mo";
+            upgradeBtn.textContent = upgradeLabel();
             alert((e && e.message) || "Could not start checkout.");
           });
         });
