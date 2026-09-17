@@ -194,12 +194,14 @@
 
   STB.signOut = function () {
     var c = getClient();
-    stopRealtime();
-    currentUser = null;
-    currentProfile = null;
-    inRecoveryMode = false;
-    STB.renderAuthUI();
     if (!c) return Promise.resolve();
+    // Deliberately does nothing else here -- no clearing local state, no rendering, no
+    // navigating. All of that now happens exactly once, in the SIGNED_OUT handler in
+    // initSync below, and only once Supabase confirms the session is actually gone.
+    // Doing it here too (as before) meant the app started navigating to login.html while
+    // this very request was still in flight, which could get the request aborted
+    // mid-navigation -- leaving a half-cleared session that made the next page load bounce
+    // right back in, and made "Sign out" look like it needed several tries.
     return c.auth.signOut();
   };
 
@@ -348,7 +350,14 @@
         currentProfile = null;
         inRecoveryMode = false;
         stopRealtime();
-        STB.renderAuthUI();
+        // This is now the ONLY place that navigates away from app.html for being signed
+        // out -- whether that's from STB.signOut() actually completing, a token refresh
+        // failing, or another tab signing out. It only runs once Supabase has genuinely
+        // confirmed there's no session, and it runs from exactly one place instead of as
+        // a side effect buried inside renderAuthUI (which used to fire unpredictably from
+        // any of its many callers -- the retry button, the upgrade button, password
+        // recovery -- any time currentUser happened to be falsy).
+        window.location.href = "login.html";
       }
     });
     return c.auth.getSession().then(function (res) {
@@ -518,8 +527,13 @@
       return;
     }
 
-    // Not signed in and sync is configured: this page requires an account, so send them
-    // to the dedicated login page rather than showing an inline form.
-    window.location.href = "login.html";
+    // Not signed in and sync is configured: app.html requires an account, but navigating
+    // away is a real side effect that shouldn't happen as a side effect of just rendering
+    // a header widget -- this function gets called from lots of places (retry, upgrade,
+    // password recovery) and any one of them could trip this if currentUser was ever
+    // unexpectedly falsy. The actual "go to login.html" redirect lives in exactly two
+    // deliberate places instead: app.js's initial gate (first load, no session), and the
+    // SIGNED_OUT handler in initSync above (becoming signed out while already here).
+    el.innerHTML = "";
   };
 })(window.STB = window.STB || {});
