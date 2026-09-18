@@ -25,6 +25,13 @@
     );
   }
 
+  // Exposed so js/state.js can stamp which account's data currently lives in
+  // localStorage (see STB.saveState / STB.clearLocalBoard in state.js) without state.js
+  // needing to know anything about how auth is implemented.
+  STB.getCurrentUserId = function () {
+    return currentUser ? currentUser.id : null;
+  };
+
   function getClient() {
     if (!isConfigured()) return null;
     if (!client) client = window.supabase.createClient(window.STB_SUPABASE_URL, window.STB_SUPABASE_ANON_KEY);
@@ -281,7 +288,7 @@
   function afterSignedIn(user) {
     currentUser = user;
     profileLoadFailed = false;
-    fetchProfileWithRetry(user.id)
+    return fetchProfileWithRetry(user.id)
       .then(function (profile) {
         if (profile) return profile;
         // No profile yet -- either this is their very first sign-in after confirming
@@ -318,11 +325,27 @@
         if (cloudData) {
           STB.state = STB.normalizeAndRollover(cloudData);
         } else {
-          // First time this account has synced: seed the cloud with whatever's here now
-          // (e.g. notes made before this sign-in), rather than losing them.
+          // This account has no cloud board yet. Before treating whatever's sitting in
+          // localStorage as "this account's notes, ready to upload," check who it
+          // actually belongs to -- localStorage survives across sign-outs/sign-ins in the
+          // same browser, so without this check, Account A's leftover notes could get
+          // copied straight into Account B's brand-new board the moment Account B signs
+          // in (bug: same-browser local notes leaking into a new account).
+          var localOwner = null;
+          try { localOwner = window.localStorage.getItem(STB.STORAGE_OWNER_KEY); } catch (e) {}
+          var localBoardIsThisAccounts = !localOwner || localOwner === user.id;
+          if (!localBoardIsThisAccounts) {
+            // Belongs to a different account (most likely one that closed the tab
+            // instead of signing out, so SIGNED_OUT's cleanup never ran). Start this
+            // account clean rather than adopting someone else's notes.
+            STB.state = STB.freshState();
+          }
+          // Either it's unowned (a guest's pre-signup notes, or already this account's)
+          // or we just reset it to fresh above -- either way it's now safe to seed the
+          // cloud with whatever STB.state holds.
           pushToCloud();
         }
-        STB.saveState();
+        STB.saveState(); // also re-stamps local ownership to this user's id (see state.js)
         STB.render();
         startRealtime(user.id);
       })
@@ -350,6 +373,12 @@
         currentProfile = null;
         inRecoveryMode = false;
         stopRealtime();
+        // Wipe the local board now, not just in memory: leaving this account's notes in
+        // localStorage is exactly what let them leak into the next account signed into on
+        // this same browser (see afterSignedIn below for the full mechanism). Once signed
+        // out, the cloud is the only source of truth for this account's data -- signing
+        // back in later pulls it fresh from there anyway.
+        if (STB.clearLocalBoard) STB.clearLocalBoard();
         // This is now the ONLY place that navigates away from app.html for being signed
         // out -- whether that's from STB.signOut() actually completing, a token refresh
         // failing, or another tab signing out. It only runs once Supabase has genuinely
@@ -363,8 +392,14 @@
     return c.auth.getSession().then(function (res) {
       var session = res.data && res.data.session;
       if (session && session.user) {
-        afterSignedIn(session.user);
-        return true;
+        // Wait for afterSignedIn's full chain (profile + cloud pull/seed) to finish before
+        // telling app.js it's safe to initialize the board. app.js used to call initBoard()
+        // (which reads localStorage directly) as soon as this resolved, racing against
+        // afterSignedIn still running in the background -- that race was the other half of
+        // the same-browser local-notes-leaking-into-a-new-account bug: initBoard() could
+        // clobber the correctly-loaded cloud state with a stale local read, or run before
+        // the ownership check above ever had a chance to reset it.
+        return afterSignedIn(session.user).then(function () { return true; });
       }
       STB.renderAuthUI();
       return false;
