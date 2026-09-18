@@ -11,6 +11,11 @@
   STB.DAY_LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
   STB.DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   STB.STORAGE_KEY = "sticky-board";
+  // Tracks which signed-in account's data currently lives under STORAGE_KEY in this
+  // browser. Without this, a board left over in localStorage from a previous account
+  // could get mistaken for -- and copied into -- the next account that signs in on the
+  // same browser. See js/sync.js (afterSignedIn, the SIGNED_OUT handler) for how it's used.
+  STB.STORAGE_OWNER_KEY = "sticky-board-owner";
   STB.IOS_TIP_KEY = "sticky-board-ios-tip-dismissed";
   STB.RING_R = 50;
   STB.RING_C = 2 * Math.PI * STB.RING_R;
