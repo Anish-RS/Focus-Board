@@ -35,9 +35,6 @@
 
   function initBoard() {
     try {
-      STB.state = STB.loadOrInitState();
-      STB.saveState();
-
       var addBtn = document.getElementById("stb-add-btn");
       addBtn.innerHTML = STB.ICON.plus(16) + " New note";
       addBtn.addEventListener("click", STB.addNote);
@@ -100,7 +97,10 @@
     configReady.then(function () {
       if (!STB.isSyncAvailable || !STB.isSyncAvailable()) {
         // No Supabase project configured (e.g. local dev without env vars) -- fall back
-        // to guest/local-only mode so the app is still usable while building.
+        // to guest/local-only mode so the app is still usable while building. There's no
+        // concept of "which account" here, so a plain localStorage read is correct.
+        STB.state = STB.loadOrInitState();
+        STB.saveState();
         initBoard();
         return;
       }
@@ -109,6 +109,10 @@
           window.location.href = "login.html";
           return;
         }
+        // STB.initSync() now waits for the full sign-in chain (profile load, cloud
+        // pull/seed, and the same-account-vs-different-account check on any leftover
+        // local board) before resolving, so STB.state is already correctly set here --
+        // reloading it from localStorage in initBoard() would risk undoing that.
         initBoard();
       });
     });
