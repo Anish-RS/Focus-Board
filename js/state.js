@@ -13,12 +13,20 @@
   STB.showSummary = false;
   STB.draftItems = {}; // noteId -> in-progress "add task" text, kept in memory only
 
+  // The blank-slate board a brand new account (or a guest with nothing saved yet) starts
+  // from. Pulled out on its own so it can be reused for "reset to fresh" cases -- notably
+  // when a different account's leftover local board is detected (see js/sync.js) and needs
+  // to be discarded rather than adopted.
+  STB.freshState = function () {
+    return { date: STB.todayKey(), notes: STB.starterNotes(), documents: [], streak: 0, history: [], nextZIndex: 2 };
+  };
+
   STB.loadOrInitState = function () {
     var raw = null;
     try { raw = localStorage.getItem(STB.STORAGE_KEY); } catch (e) {}
     var data = raw ? JSON.parse(raw) : null;
     if (!data) {
-      data = { date: STB.todayKey(), notes: STB.starterNotes(), documents: [], streak: 0, history: [], nextZIndex: 2 };
+      data = STB.freshState();
     } else {
       data = STB.normalizeAndRollover(data);
       if (!data.nextZIndex) data.nextZIndex = 2;
@@ -27,8 +35,27 @@
   };
 
   STB.saveState = function () {
-    try { localStorage.setItem(STB.STORAGE_KEY, JSON.stringify(STB.state)); } catch (e) { console.error("Could not save board", e); }
+    try {
+      localStorage.setItem(STB.STORAGE_KEY, JSON.stringify(STB.state));
+      // Stamp who this local board currently belongs to, so a later sign-in (in this same
+      // browser, possibly as a different account) can tell whether it's safe to treat this
+      // data as theirs. STB.getCurrentUserId is defined in js/sync.js; guest/local-only
+      // mode (no sync configured) has no such notion of ownership, which is fine -- there's
+      // only ever one "account" (none) for that browser to confuse.
+      var ownerId = STB.getCurrentUserId ? STB.getCurrentUserId() : null;
+      if (ownerId) localStorage.setItem(STB.STORAGE_OWNER_KEY, ownerId);
+    } catch (e) { console.error("Could not save board", e); }
     if (STB.syncPush) STB.syncPush();
+  };
+
+  // Wipes the local board entirely. Called on sign-out so nothing from this account is
+  // still sitting in localStorage to be mistaken for a different account's data the next
+  // time someone signs in on this browser.
+  STB.clearLocalBoard = function () {
+    try {
+      localStorage.removeItem(STB.STORAGE_KEY);
+      localStorage.removeItem(STB.STORAGE_OWNER_KEY);
+    } catch (e) {}
   };
 
   STB.getTodayWeekday = function () {
