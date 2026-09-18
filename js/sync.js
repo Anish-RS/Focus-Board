@@ -351,6 +351,21 @@
       })
       .catch(function (e) {
         console.error("Could not load your synced board", e);
+        // Whatever failed above -- most likely pullFromCloud, on the same kind of
+        // transient blip that can also fail the profile fetch -- must never leave
+        // STB.state unset. app.js's initBoard() assumes it's already set by the time it
+        // runs and will crash trying to render a null board, showing a "something went
+        // wrong" message that a Retry click on the account banner alone couldn't fix
+        // (that button only re-checked the profile, never the board). Fall back to
+        // whatever's safely available locally -- still respecting the same ownership
+        // check as above -- so the board always renders with something, even when this
+        // account's latest cloud data couldn't be fetched just now.
+        if (!STB.state) {
+          var fallbackOwner = null;
+          try { fallbackOwner = window.localStorage.getItem(STB.STORAGE_OWNER_KEY); } catch (e2) {}
+          STB.state = (!fallbackOwner || fallbackOwner === user.id) ? STB.loadOrInitState() : STB.freshState();
+        }
+        try { STB.render(); } catch (renderErr) { console.error("Board still failed to render", renderErr); }
       });
   }
 
@@ -552,10 +567,13 @@
         retryBtn.addEventListener("click", function () {
           retryBtn.disabled = true;
           retryBtn.textContent = "Retrying\u2026";
-          fetchProfileWithRetry(currentUser.id)
-            .then(function () { profileLoadFailed = false; })
-            .catch(function (e) { console.error("Retry failed", e); profileLoadFailed = true; })
-            .then(function () { STB.renderAuthUI(); });
+          // Re-run the entire sign-in load chain (profile AND board), not just the
+          // profile check -- if the first attempt also failed to load the board itself
+          // (see the fallback added in afterSignedIn above), only retrying the profile
+          // would fix the header badge while leaving the board frozen on its own
+          // "something went wrong" message with no way to recover except a hard refresh.
+          // afterSignedIn re-renders the header itself once it knows the outcome.
+          afterSignedIn(currentUser);
         });
       }
       applyLockState(locked, reason);
