@@ -89,19 +89,51 @@
     });
   };
 
+  // Claims a username and creates the trial profile row. Written to be safe to call more
+  // than once for the same account, because it used to fail permanently after a partial
+  // success: if the username insert succeeded but the profile insert then failed for any
+  // reason, every retry re-attempted the username insert, which now conflicted forever
+  // (an account can only have one username row) -- so the retry could never reach the
+  // step that was actually still missing. Now it checks what this account already has
+  // before inserting anything, so it can always pick up wherever a previous attempt left
+  // off and finish the job, rather than looping on the same conflict indefinitely.
   function claimUsernameAndStartTrial(userId, username) {
     var c = getClient();
     var normalized = username.trim();
     var lower = normalized.toLowerCase();
-    return c.from("usernames").insert({ username_lower: lower, username: normalized, user_id: userId }).then(function (res) {
-      if (res.error) throw res.error;
-      var trialEnds = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-      return c.from("profiles").insert({ user_id: userId, username: normalized, trial_ends_at: trialEnds }).select().single();
-    }).then(function (res) {
-      if (res.error) throw res.error;
-      currentProfile = res.data;
-      return currentProfile;
-    });
+    return c.from("usernames").select("username").eq("user_id", userId).maybeSingle()
+      .then(function (existingRes) {
+        if (existingRes.error) throw existingRes.error;
+        if (existingRes.data) {
+          // This account already claimed a username in an earlier attempt -- use it
+          // rather than trying to insert a second row (which would always conflict).
+          return existingRes.data.username;
+        }
+        return c.from("usernames").insert({ username_lower: lower, username: normalized, user_id: userId }).then(function (res) {
+          if (res.error) throw res.error; // a genuine "someone else already has this exact username" still surfaces normally here
+          return normalized;
+        });
+      })
+      .then(function (claimedUsername) {
+        var trialEnds = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        return c.from("profiles").insert({ user_id: userId, username: claimedUsername, trial_ends_at: trialEnds }).select().single()
+          .then(function (res) {
+            if (!res.error) return res.data;
+            // A profile row already exists for this account (the username step above
+            // resumed from a prior attempt, and it turns out the profile was actually
+            // created too). Fetch and use it as-is -- inserting again would just fail,
+            // and upserting would risk overwriting real trial/payment status that's
+            // already in progress.
+            return c.from("profiles").select("*").eq("user_id", userId).single().then(function (fetchRes) {
+              if (fetchRes.error) throw fetchRes.error;
+              return fetchRes.data;
+            });
+          });
+      })
+      .then(function (profile) {
+        currentProfile = profile;
+        return currentProfile;
+      });
   }
   STB.claimUsername = claimUsernameAndStartTrial;
 
@@ -334,7 +366,14 @@
           var localOwner = null;
           try { localOwner = window.localStorage.getItem(STB.STORAGE_OWNER_KEY); } catch (e) {}
           var localBoardIsThisAccounts = !localOwner || localOwner === user.id;
-          if (!localBoardIsThisAccounts) {
+          if (localBoardIsThisAccounts) {
+            // Safe to use whatever's in localStorage as-is (a guest's pre-signup notes,
+            // or genuinely this account's own board continuing) -- STB.state was never
+            // actually loaded from there in this flow before now, so without this it
+            // stayed null all the way to STB.render(), which crashed trying to read a
+            // null board (and pushToCloud() below would have pushed that null too).
+            STB.state = STB.loadOrInitState();
+          } else {
             // Belongs to a different account (most likely one that closed the tab
             // instead of signing out, so SIGNED_OUT's cleanup never ran). Start this
             // account clean rather than adopting someone else's notes.
