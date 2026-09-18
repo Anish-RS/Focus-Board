@@ -15,6 +15,12 @@
   var applyingRemoteUpdate = false;
   var realtimeChannel = null;
   var inRecoveryMode = false;
+  // Tracks an in-flight afterSignedIn() run so a second notification for the SAME user
+  // (Supabase can fire more than one "signed in" event for one page load -- see
+  // afterSignedIn below for the full story) reuses it instead of starting a duplicate
+  // run in parallel. Cleared once the run finishes, so a later, genuinely new attempt
+  // (e.g. the Retry button, or actually signing out and back in) still starts fresh.
+  var pendingAfterSignedIn = null; // { userId, promise }
 
   function isConfigured() {
     return !!(
@@ -318,9 +324,21 @@
   };
 
   function afterSignedIn(user) {
+    if (pendingAfterSignedIn && pendingAfterSignedIn.userId === user.id) {
+      // Supabase can notify us twice for the same session on one page load: an automatic
+      // event fired the moment onAuthStateChange is registered (using whatever session is
+      // already in storage), plus the explicit getSession() check in initSync below
+      // resolving to that same session. Running this whole chain twice in parallel for a
+      // brand new account meant two concurrent attempts to insert the same username row --
+      // one succeeded, the other got a 409 and reported "couldn't load your account" even
+      // though the account had, moments earlier, actually finished setting up correctly
+      // (which is why reloading always showed everything working fine). Reusing the
+      // in-flight run instead removes the race entirely.
+      return pendingAfterSignedIn.promise;
+    }
     currentUser = user;
     profileLoadFailed = false;
-    return fetchProfileWithRetry(user.id)
+    var promise = fetchProfileWithRetry(user.id)
       .then(function (profile) {
         if (profile) return profile;
         // No profile yet -- either this is their very first sign-in after confirming
@@ -406,6 +424,15 @@
         }
         try { STB.render(); } catch (renderErr) { console.error("Board still failed to render", renderErr); }
       });
+    promise = promise.then(function (result) {
+      // This run has settled (successfully or not) -- clear the guard so a genuinely
+      // new attempt (Retry, or a real subsequent sign-in) isn't mistaken for a
+      // duplicate of this one and made to just wait on its already-finished result.
+      if (pendingAfterSignedIn && pendingAfterSignedIn.userId === user.id) pendingAfterSignedIn = null;
+      return result;
+    });
+    pendingAfterSignedIn = { userId: user.id, promise: promise };
+    return promise;
   }
 
   // Resolves once the initial session check is done: true if signed in, false if not.
