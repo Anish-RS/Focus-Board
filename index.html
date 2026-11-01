@@ -497,6 +497,25 @@
     .features-grid .feature-item:last-child{ border-bottom:none !important; }
     .nav-trial-pill{ display:none; }
   }
+
+  /* ---------- site footer ---------- */
+  .site-footer{ background:#2B2620; color:#d9d0bd; padding:56px 0 0; font-family:'Work Sans',system-ui,sans-serif; }
+  .site-footer .sf-inner{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .site-footer .sf-grid{ display:grid; grid-template-columns:1.7fr 1fr 1fr 1.3fr; gap:40px; padding-bottom:40px; }
+  .site-footer .sf-brand{ font-family:'Fraunces',serif; font-size:26px; color:#FBF8F1; margin:0 0 10px; }
+  .site-footer p{ margin:0; font-size:14px; line-height:1.65; color:#b9b09c; }
+  .site-footer h4{ margin:4px 0 14px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#FBF8F1; font-weight:600; }
+  .site-footer ul{ list-style:none; margin:0; padding:0; }
+  .site-footer li{ margin:0 0 9px; font-size:14px; }
+  .site-footer a{ color:#d9d0bd; text-decoration:none; }
+  .site-footer a:hover{ color:#F5E6A8; text-decoration:underline; }
+  .site-footer .sf-pill{ display:inline-block; margin-top:16px; padding:6px 12px; border:1px solid rgba(245,230,168,.45); border-radius:999px; font-size:12px; color:#F5E6A8; }
+  .site-footer .sf-bottom{ border-top:1px solid rgba(255,255,255,.12); padding:20px 0 26px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:13px; color:#968d7a; }
+  .site-footer .sf-bottom a{ color:#968d7a; margin-left:18px; }
+  .site-footer .sf-bottom a:hover{ color:#F5E6A8; }
+  @media (max-width:860px){ .site-footer .sf-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:520px){ .site-footer .sf-grid{ grid-template-columns:1fr; gap:28px; } .site-footer .sf-bottom a{ margin:0 14px 0 0; } }
+
 </style>
 </head>
 <body>
@@ -724,9 +743,42 @@
   </div>
 </section>
 
-<footer>
-  <div class="wrap">
-    <p>Focus Board &middot; built by Anish.</p>
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div class="sf-grid">
+      <div>
+        <div class="sf-brand">Focus Board</div>
+        <p>A sticky-note board for weekly routines and daily to-dos, where unfinished tasks carry over instead of piling up.</p>
+        <span class="sf-pill">30-day free trial &middot; no card needed</span>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="./login.html">Start free trial</a></li>
+          <li><a href="./login.html">Sign in</a></li>
+          <li><a href="./feedback.html">Feedback</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="./privacy.html">Privacy Policy</a></li>
+          <li><a href="./terms.html">Terms of Use</a></li>
+          <li><a href="./terms.html#s6">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="./feedback.html">Ask a question or report an issue</a></li>
+          <li><a href="./terms.html#s5">How to cancel</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; 2026 Focus Board. All rights reserved. Made in India.</span>
+      <span><a href="./privacy.html">Privacy</a><a href="./terms.html">Terms</a><a href="./feedback.html">Feedback</a></span>
+    </div>
   </div>
 </footer>
 
