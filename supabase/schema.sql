@@ -156,3 +156,26 @@ alter table public.profiles add column if not exists stripe_subscription_id text
 -- access for India comes through later and both are wired up side by side.
 alter table public.profiles add column if not exists razorpay_customer_id text;
 alter table public.profiles add column if not exists razorpay_subscription_id text;
+
+
+-- 1. Users can no longer update their own profile (server functions still can)
+drop policy if exists "Users can update their own profile" on public.profiles;
+
+-- 2. Whatever the browser sends on signup, force safe values
+create or replace function public.profiles_force_defaults()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  new.trial_ends_at := now() + interval '30 days';
+  new.is_paid := false;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_force_defaults on public.profiles;
+create trigger profiles_force_defaults
+  before insert on public.profiles
+  for each row execute function public.profiles_force_defaults();
