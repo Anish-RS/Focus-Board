@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://focus-board-nine-beryl.vercel.app/sitemap.xml
+Sitemap: https://stickytodo.vercel.app/sitemap.xml
