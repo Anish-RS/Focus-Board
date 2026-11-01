@@ -148,6 +148,24 @@
   // about which account gets upgraded is decided client-side. Resolves once the payment
   // is made AND verified server-side (via /api/verify-razorpay-payment); the caller is
   // expected to refresh the UI/reload once this resolves.
+  // Cancels the signed-in user's own subscription (server decides whether it ends now or at
+  // the end of the paid period). Resolves with the server's message.
+  STB.cancelSubscription = function () {
+    var c = getClient();
+    if (!c || !currentUser) return Promise.reject(new Error("Sign in first."));
+    return c.auth.getSession().then(function (res) {
+      var token = res.data && res.data.session && res.data.session.access_token;
+      if (!token) throw new Error("Your session has expired -- sign in again.");
+      return fetch("/api/cancel-subscription", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+      });
+    }).then(function (r) { return r.json(); }).then(function (body) {
+      if (body.error) throw new Error(body.error);
+      return body;
+    });
+  };
+
   STB.startCheckout = function () {
     var c = getClient();
     if (!c || !currentUser) return Promise.reject(new Error("Sign in first."));
@@ -594,6 +612,7 @@
         trialHtml = trial.renewsInDays != null
           ? '<span class="stb-trial-badge">Full access \u00b7 ' + trial.renewsInDays + " day" + (trial.renewsInDays === 1 ? "" : "s") + " left</span>"
           : '<span class="stb-trial-badge">Full access</span>';
+        upgradeHtml = '<button class="stb-auth-signout" id="stb-cancel-btn">Cancel plan</button>';
       } else if (trial.expired) {
         trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Trial ended \u00b7 view only</span>';
         locked = true;
@@ -625,6 +644,22 @@
             upgradeBtn.disabled = false;
             upgradeBtn.textContent = upgradeLabel();
             alert((e && e.message) || "Could not start checkout.");
+          });
+        });
+      }
+      var cancelBtn = document.getElementById("stb-cancel-btn");
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", function () {
+          if (!window.confirm("Cancel your subscription?\n\nYou'll keep full access until the end of your current billing period, and you won't be charged again.")) return;
+          cancelBtn.disabled = true;
+          cancelBtn.textContent = "Cancelling\u2026";
+          STB.cancelSubscription().then(function (body) {
+            alert(body.message || "Your subscription is cancelled.");
+            cancelBtn.textContent = "Cancelled";
+          }).catch(function (e) {
+            cancelBtn.disabled = false;
+            cancelBtn.textContent = "Cancel plan";
+            alert((e && e.message) || "Could not cancel right now.");
           });
         });
       }
