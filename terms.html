@@ -3,91 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Terms &amp; Refund Policy — Focus Board</title>
+<title>Terms of Use & Refund Policy — Focus Board</title>
 <meta name="description" content="Terms of use, pricing, cancellation and refund policy for Focus Board.">
 <link rel="canonical" href="https://stickytodo.vercel.app/terms.html">
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --ink:#26221c; --muted:#6b6458; --line:#e3dccb; --bg:#f1ece0; --card:#ffffff; --accent:#6B4E12; }
+  :root{ --wood:#8a6438; --cork:#B98A54; --ink:#2B2620; --cream:#FBF8F1; --paper:#F4EEDF; --butter:#F5E6A8; --butter-ink:#6B4E12; --line:#e6dfcd; --muted:#7a7160; --text:#3b352c; }
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
-  body{ margin:0; font-family:"Work Sans",system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.7; -webkit-font-smoothing:antialiased; }
-  header.top{ background:#2B2620; }
-  header.top .in{ max-width:860px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-  header.top a{ color:#FBF8F1; text-decoration:none; }
-  .brand{ font-family:"Fraunces",serif; font-size:20px; }
-  nav a{ font-size:14px; margin-left:18px; opacity:.85; }
-  nav a:hover, nav a.on{ opacity:1; text-decoration:underline; }
-  main{ max-width:860px; margin:32px auto 48px; padding:0 16px; }
-  article{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:48px 56px; }
-  h1{ font-family:"Fraunces",serif; font-weight:500; font-size:34px; margin:0 0 6px; line-height:1.2; }
-  .meta{ color:var(--muted); font-size:14px; margin:0 0 28px; padding-bottom:20px; border-bottom:1px solid var(--line); }
-  h2{ font-family:"Fraunces",serif; font-weight:500; font-size:20px; margin:34px 0 8px; }
-  p{ margin:0 0 12px; font-size:15.5px; }
-  ul{ margin:0 0 12px; padding-left:22px; } li{ margin:6px 0; font-size:15.5px; }
-  a{ color:var(--accent); }
-  .summary{ background:#faf6ea; border-left:4px solid #c9a24b; padding:16px 20px; margin:0 0 28px; border-radius:0 4px 4px 0; }
-  .summary p{ margin:0; font-size:15px; }
-  .toc{ background:#faf8f2; border:1px solid var(--line); border-radius:4px; padding:16px 22px; margin:0 0 8px; }
-  .toc strong{ font-size:14px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
-  .toc ol{ margin:8px 0 0; padding-left:20px; columns:2; column-gap:32px; } .toc li{ font-size:14.5px; margin:3px 0; }
-  table{ width:100%; border-collapse:collapse; margin:8px 0 14px; font-size:14.5px; }
-  th,td{ text-align:left; padding:10px 12px; border:1px solid var(--line); vertical-align:top; }
-  th{ background:#faf6ea; font-weight:600; }
-  footer{ max-width:860px; margin:0 auto 40px; padding:0 24px; font-size:13px; color:var(--muted); text-align:center; }
-  footer a{ color:var(--muted); margin:0 8px; }
-  @media (max-width:640px){ article{ padding:28px 22px; } h1{ font-size:28px; } .toc ol{ columns:1; } }
+  body{ margin:0; font-family:'Work Sans',system-ui,sans-serif; color:var(--text); background:var(--paper); -webkit-font-smoothing:antialiased; line-height:1.7; }
+  a{ color:var(--butter-ink); }
+  /* top bar */
+  .topbar{ background:var(--cream); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
+  .topbar .in{ max-width:1120px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .logo{ font-family:'Fraunces',serif; font-size:22px; color:var(--ink); text-decoration:none; }
+  .topbar nav{ display:flex; align-items:center; gap:22px; }
+  .topbar nav a{ font-size:14px; color:var(--ink); text-decoration:none; padding:4px 0; border-bottom:2px solid transparent; }
+  .topbar nav a:hover, .topbar nav a.on{ border-bottom-color:var(--cork); }
+  .topbar .cta{ background:var(--ink); color:var(--cream)!important; padding:9px 16px!important; border-radius:8px; border:0!important; font-weight:600; }
+  /* hero */
+  .hero{ background:var(--cork); background-image:radial-gradient(rgba(0,0,0,.18) 1px, transparent 1.6px), radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.7px); background-size:15px 15px,23px 23px; padding:64px 0 96px; color:var(--ink); }
+  .hero .in{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; background:var(--cream); color:var(--butter-ink); font-size:13px; font-weight:600; padding:6px 14px; border-radius:999px; }
+  .hero h1{ font-family:'Fraunces',serif; font-weight:500; font-size:clamp(34px,5vw,54px); line-height:1.08; margin:18px 0 12px; }
+  .hero p.lead{ max-width:620px; font-size:18px; margin:0 0 22px; color:#3a2f1c; }
+  .chips{ display:flex; gap:10px; flex-wrap:wrap; }
+  .chip{ background:rgba(251,248,241,.75); border:1px solid rgba(43,38,32,.15); border-radius:8px; padding:6px 12px; font-size:13px; }
+  .chip b{ font-weight:600; }
+  /* highlight cards */
+  .cards{ max-width:1120px; margin:-56px auto 0; padding:0 28px; display:grid; grid-template-columns:repeat(3,1fr); gap:18px; position:relative; z-index:2; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px 22px 20px; box-shadow:0 10px 28px rgba(43,38,32,.10); }
+  .card .ic{ width:46px; height:46px; border-radius:12px; background:var(--butter); color:var(--butter-ink); display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+  .card h3{ font-family:'Fraunces',serif; font-weight:500; font-size:19px; margin:0 0 4px; color:var(--ink); }
+  .card p{ margin:0; font-size:14.5px; color:var(--muted); line-height:1.55; }
+  .card .big{ font-family:'Fraunces',serif; font-size:30px; color:var(--ink); line-height:1.1; margin:0 0 4px; }
+  /* layout */
+  .layout{ max-width:1120px; margin:44px auto 64px; padding:0 28px; display:grid; grid-template-columns:250px 1fr; gap:36px; align-items:start; }
+  aside.side{ position:sticky; top:84px; }
+  .toc{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 12px; }
+  .toc h5{ margin:0 10px 8px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .toc a{ display:flex; gap:10px; align-items:baseline; padding:7px 10px; border-radius:8px; font-size:14px; color:var(--text); text-decoration:none; border-left:3px solid transparent; }
+  .toc a span{ color:var(--muted); font-size:12px; min-width:18px; }
+  .toc a:hover{ background:var(--paper); }
+  .toc a.active{ background:var(--butter); color:var(--butter-ink); border-left-color:var(--wood); font-weight:600; }
+  .help{ margin-top:16px; background:var(--ink); color:#d9d0bd; border-radius:14px; padding:18px; font-size:13.5px; line-height:1.55; }
+  .help b{ color:var(--cream); display:block; margin-bottom:4px; font-size:15px; font-family:'Fraunces',serif; font-weight:500; }
+  .help a{ color:var(--butter); }
+  /* sections */
+  .sec{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:30px 34px; margin:0 0 18px; scroll-margin-top:84px; }
+  .sec h2{ display:flex; align-items:center; gap:14px; font-family:'Fraunces',serif; font-weight:500; font-size:24px; color:var(--ink); margin:0 0 14px; line-height:1.2; }
+  .num{ flex:none; width:34px; height:34px; border-radius:50%; background:var(--butter); color:var(--butter-ink); font-family:'Work Sans',sans-serif; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .sec p{ margin:0 0 12px; font-size:16px; }
+  .sec ul{ margin:0 0 12px; padding-left:22px; } .sec li{ margin:7px 0; font-size:16px; }
+  .sec li::marker{ color:var(--wood); }
+  .note{ background:#faf6ea; border-left:4px solid var(--cork); border-radius:0 8px 8px 0; padding:12px 16px; margin:14px 0 4px; font-size:15px; }
+  table{ width:100%; border-collapse:separate; border-spacing:0; margin:6px 0 10px; font-size:15px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th,td{ text-align:left; padding:12px 16px; vertical-align:top; border-bottom:1px solid var(--line); }
+  tr:last-child td{ border-bottom:0; }
+  th{ background:var(--butter); color:var(--butter-ink); font-weight:600; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
+  td:first-child{ font-weight:600; color:var(--ink); width:28%; }
+  tbody tr:nth-child(even) td{ background:#fcfaf3; }
+  .updated{ text-align:center; font-size:13px; color:var(--muted); margin-top:6px; }
+  @media (max-width:900px){
+    .cards{ grid-template-columns:1fr; margin-top:-48px; }
+    .layout{ grid-template-columns:1fr; }
+    aside.side{ position:static; display:none; }
+    .sec{ padding:24px 20px; } .topbar nav a:not(.cta):not(.on){ display:none; }
+  }
+  @media print{ .topbar,aside.side,.site-footer{ display:none; } .hero{ background:#fff; padding:20px 0; } .cards{ display:none; } .sec{ border:0; padding:0; } }
+
+  /* ---------- site footer ---------- */
+  .site-footer{ background:#2B2620; color:#d9d0bd; padding:56px 0 0; font-family:'Work Sans',system-ui,sans-serif; }
+  .site-footer .sf-inner{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .site-footer .sf-grid{ display:grid; grid-template-columns:1.7fr 1fr 1fr 1.3fr; gap:40px; padding-bottom:40px; }
+  .site-footer .sf-brand{ font-family:'Fraunces',serif; font-size:26px; color:#FBF8F1; margin:0 0 10px; }
+  .site-footer p{ margin:0; font-size:14px; line-height:1.65; color:#b9b09c; }
+  .site-footer h4{ margin:4px 0 14px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#FBF8F1; font-weight:600; }
+  .site-footer ul{ list-style:none; margin:0; padding:0; }
+  .site-footer li{ margin:0 0 9px; font-size:14px; }
+  .site-footer a{ color:#d9d0bd; text-decoration:none; }
+  .site-footer a:hover{ color:#F5E6A8; text-decoration:underline; }
+  .site-footer .sf-pill{ display:inline-block; margin-top:16px; padding:6px 12px; border:1px solid rgba(245,230,168,.45); border-radius:999px; font-size:12px; color:#F5E6A8; }
+  .site-footer .sf-bottom{ border-top:1px solid rgba(255,255,255,.12); padding:20px 0 26px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:13px; color:#968d7a; }
+  .site-footer .sf-bottom a{ color:#968d7a; margin-left:18px; }
+  .site-footer .sf-bottom a:hover{ color:#F5E6A8; }
+  @media (max-width:860px){ .site-footer .sf-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:520px){ .site-footer .sf-grid{ grid-template-columns:1fr; gap:28px; } .site-footer .sf-bottom a{ margin:0 14px 0 0; } }
 </style>
 </head>
 <body>
-<header class="top"><div class="in">
-  <a class="brand" href="./">Focus Board</a>
-  <nav><a href="./privacy.html">Privacy Policy</a><a href="./terms.html" class="on">Terms &amp; Refunds</a><a href="./feedback.html">Feedback</a></nav>
+<header class="topbar"><div class="in">
+  <a class="logo" href="./">Focus Board</a>
+  <nav><a href="./privacy.html">Privacy Policy</a><a href="./terms.html" class="on">Terms &amp; Refunds</a><a href="./feedback.html">Feedback</a><a class="cta" href="./login.html">Start free trial</a></nav>
 </div></header>
-<main><article>
-<h1>Terms of Use &amp; Refund Policy</h1>
-<p class="meta">Effective date: 1 November 2026 &middot; Last updated: 1 November 2026</p>
-<div class="summary"><p><strong>In short:</strong> 30-day free trial, then &#8377;249 per month. Cancel any time and keep access until the end of the period you paid for. Mistaken or duplicate charges are refunded.</p></div>
-<div class="toc"><strong>Contents</strong><ol><li><a href="#s1">Acceptance of terms</a></li><li><a href="#s2">The service</a></li><li><a href="#s3">Accounts</a></li><li><a href="#s4">Free trial and subscription</a></li><li><a href="#s5">Cancellation</a></li><li><a href="#s6">Refunds</a></li><li><a href="#s7">Acceptable use</a></li><li><a href="#s8">Your content</a></li><li><a href="#s9">Disclaimer and limitation of liability</a></li><li><a href="#s10">Changes and governing law</a></li><li><a href="#s11">Contact</a></li></ol></div><h2 id="s1">1. Acceptance of terms</h2>
-<p>These Terms of Use and Refund Policy (&ldquo;Terms&rdquo;) govern your use of Focus Board, available at stickytodo.vercel.app and operated by an individual developer based in India. By creating an account or using the service, you agree to these Terms. If you do not agree, please do not use the service.</p>
-<h2 id="s2">2. The service</h2>
-<p>Focus Board is a sticky-note to-do board offering weekly routines, carry-over of unfinished tasks and synchronisation across devices. The service is provided on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis. We aim for reliable operation but do not guarantee uninterrupted or error-free availability, and you should not rely on the service as the sole copy of critical information.</p>
-<h2 id="s3">3. Accounts</h2>
-<ul>
-<li>You must provide a valid email address and keep your login credentials confidential.</li>
+<section class="hero"><div class="in">
+  <span class="eyebrow">Legal</span>
+  <h1>Terms of Use &amp; Refund Policy</h1>
+  <p class="lead">Simple, fair terms: a free trial, one clear price, and cancellation whenever you want.</p>
+  <div class="chips"><span class="chip"><b>Effective</b> 1 November 2026</span><span class="chip"><b>Governing law</b> India</span></div>
+</div></section>
+<div class="cards"><div class="card"><div class="big">30 days free</div><p>No card needed to start your trial.</p></div><div class="card"><div class="big">&#8377;249 / month</div><p>Billed monthly through Razorpay.</p></div><div class="card"><div class="big">Cancel anytime</div><p>Keep access until the end of the period you paid for.</p></div></div>
+<div class="layout">
+  <aside class="side">
+    <nav class="toc"><h5>On this page</h5><a href="#s1"><span>1</span>Acceptance of terms</a><a href="#s2"><span>2</span>The service</a><a href="#s3"><span>3</span>Accounts</a><a href="#s4"><span>4</span>Free trial and subscription</a><a href="#s5"><span>5</span>Cancellation</a><a href="#s6"><span>6</span>Refunds</a><a href="#s7"><span>7</span>Acceptable use</a><a href="#s8"><span>8</span>Your content</a><a href="#s9"><span>9</span>Disclaimer and limitation of liability</a><a href="#s10"><span>10</span>Changes and governing law</a><a href="#s11"><span>11</span>Contact</a></nav>
+    <div class="help"><b>Questions?</b>Cancel from the top bar of your board, or use the <a href="./feedback.html">Feedback page</a>. Never post your email, password or payment details &mdash; posts there are public.</div>
+  </aside>
+  <main><section class="sec" id="s1"><h2><span class="num">1</span>Acceptance of terms</h2><p>These Terms of Use and Refund Policy (&ldquo;Terms&rdquo;) govern your use of Focus Board, available at stickytodo.vercel.app and operated by an individual developer based in India. By creating an account or using the service, you agree to these Terms. If you do not agree, please do not use the service.</p></section><section class="sec" id="s2"><h2><span class="num">2</span>The service</h2><p>Focus Board is a sticky-note to-do board offering weekly routines, carry-over of unfinished tasks and synchronisation across devices. The service is provided on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis. We aim for reliable operation but do not guarantee uninterrupted or error-free availability, and you should not rely on the service as the sole copy of critical information.</p></section><section class="sec" id="s3"><h2><span class="num">3</span>Accounts</h2><ul><li>You must provide a valid email address and keep your login credentials confidential.</li>
 <li>You are responsible for all activity under your account.</li>
-<li>Usernames must be unique. We may change or remove usernames that are abusive or impersonate others.</li>
-</ul>
-<h2 id="s4">4. Free trial and subscription</h2>
-<ul>
-<li><strong>Free trial:</strong> new accounts receive a 30-day free trial. No payment card is required to start.</li>
-<li><strong>After the trial:</strong> a paid subscription is required to continue creating and synchronising changes to your board.</li>
-<li><strong>Price:</strong> the subscription is currently &#8377;249 per month, billed monthly in Indian rupees through Razorpay, and renews automatically until cancelled.</li>
-<li><strong>Price changes:</strong> any change applies only to future billing periods and will be shown before you are charged.</li>
-</ul>
-<h2 id="s5">5. Cancellation</h2>
-<p>You may cancel your subscription at any time. To cancel, post a request on the <a href="./feedback.html">Feedback page</a> stating &ldquo;Cancel subscription&rdquo; and your username. Feedback posts are public, so do not include your email address, card or payment details. We may ask you to confirm the request before acting on it, to protect your account. Once cancelled, no further charges will be made and you retain access until the end of the billing period you have already paid for.</p>
-<h2 id="s6">6. Refunds</h2>
-<ul>
-<li>Because the 30-day free trial allows you to evaluate the service before paying, payments for a billing period that has already begun are generally non-refundable.</li>
-<li>If you were charged in error, charged twice, or charged after a confirmed cancellation, post a request on the Feedback page within 7 days of the charge and we will refund the amount.</li>
-<li>Approved refunds are returned to the original payment method and typically reach you within 5&ndash;7 business days, depending on your bank.</li>
-</ul>
-<h2 id="s7">7. Acceptable use</h2>
-<p>You agree not to attempt to disrupt, overload or bypass the limits of the service (including trial and payment checks), not to upload unlawful content, and not to post abusive or harmful content on the public feedback page. We may suspend accounts that violate these Terms.</p>
-<h2 id="s8">8. Your content</h2>
-<p>You retain ownership of the notes, tasks and other content you create. You grant us permission to store and process that content solely to operate the service for you.</p>
-<h2 id="s9">9. Disclaimer and limitation of liability</h2>
-<p>To the maximum extent permitted by law, Focus Board is not liable for any indirect, incidental or consequential loss, or for loss of data, arising from your use of the service. Our total liability for any claim is limited to the amount you paid for the service in the three months before the claim arose.</p>
-<h2 id="s10">10. Changes and governing law</h2>
-<p>We may update these Terms from time to time; the &ldquo;Last updated&rdquo; date above will change when we do. These Terms are governed by the laws of India.</p>
-<h2 id="s11">11. Contact</h2>
-<p>For questions about these Terms, cancellations or refunds, please use the <a href="./feedback.html">Feedback page</a>. Posts there are public, so never include your email address, password or payment details.</p>
-
-</article></main>
-<footer>&copy; 2026 Focus Board &middot; <a href="./privacy.html">Privacy Policy</a><a href="./terms.html">Terms &amp; Refunds</a><a href="./feedback.html">Feedback</a></footer>
+<li>Usernames must be unique. We may change or remove usernames that are abusive or impersonate others.</li></ul></section><section class="sec" id="s4"><h2><span class="num">4</span>Free trial and subscription</h2><table><thead><tr><th>Item</th><th>Details</th></tr></thead><tbody>
+<tr><td>Free trial</td><td>New accounts receive a 30-day free trial. No payment card is required to start.</td></tr>
+<tr><td>After the trial</td><td>Your board stays visible in read-only mode. A paid subscription is required to continue creating and synchronising changes.</td></tr>
+<tr><td>Price</td><td>&#8377;249 per month, billed monthly in Indian rupees through Razorpay. The subscription renews automatically until cancelled.</td></tr>
+<tr><td>Price changes</td><td>Any change applies only to future billing periods and will be shown before you are charged.</td></tr></tbody></table></section><section class="sec" id="s5"><h2><span class="num">5</span>Cancellation</h2><p>You can cancel your subscription yourself at any time:</p>
+<ul><li>Sign in and open your board.</li><li>Click <b>Cancel plan</b> in the top bar and confirm.</li></ul>
+<p>Once cancelled, no further charges will be made, and you keep full access until the end of the billing period you have already paid for. After that, your board becomes read-only.</p>
+<div class="note">If the Cancel plan button is unavailable for any reason, post a request on the <a href="./feedback.html">Feedback page</a> with your username only. Posts there are public, so never include your email, card or payment details.</div></section><section class="sec" id="s6"><h2><span class="num">6</span>Refunds</h2><ul><li>Because the 30-day free trial lets you evaluate the service before paying, payments for a billing period that has already begun are generally non-refundable.</li>
+<li>If you were charged in error, charged twice, or charged after cancelling, post a request on the Feedback page within 7 days of the charge and we will refund the amount.</li>
+<li>Approved refunds are returned to the original payment method and typically reach you within 5&ndash;7 business days, depending on your bank.</li></ul></section><section class="sec" id="s7"><h2><span class="num">7</span>Acceptable use</h2><p>You agree not to attempt to disrupt, overload or bypass the limits of the service (including trial and payment checks), not to upload unlawful content, and not to post abusive or harmful content on the public feedback page. We may suspend accounts that violate these Terms.</p></section><section class="sec" id="s8"><h2><span class="num">8</span>Your content</h2><p>You retain ownership of the notes, tasks and other content you create. You grant us permission to store and process that content solely to operate the service for you.</p></section><section class="sec" id="s9"><h2><span class="num">9</span>Disclaimer and limitation of liability</h2><p>To the maximum extent permitted by law, Focus Board is not liable for any indirect, incidental or consequential loss, or for loss of data, arising from your use of the service. Our total liability for any claim is limited to the amount you paid for the service in the three months before the claim arose.</p></section><section class="sec" id="s10"><h2><span class="num">10</span>Changes and governing law</h2><p>We may update these Terms from time to time; the &ldquo;Last updated&rdquo; date on this page will change when we do. These Terms are governed by the laws of India.</p></section><section class="sec" id="s11"><h2><span class="num">11</span>Contact</h2><p>For questions about these Terms, cancellations or refunds, please use the <a href="./feedback.html">Feedback page</a>.</p><div class="note">Posts on the Feedback page are public. Never include your email address, password or payment details.</div></section><p class="updated">Last updated 1 November 2026</p></main>
+</div>
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div class="sf-grid">
+      <div>
+        <div class="sf-brand">Focus Board</div>
+        <p>A sticky-note board for weekly routines and daily to-dos, where unfinished tasks carry over instead of piling up.</p>
+        <span class="sf-pill">30-day free trial &middot; no card needed</span>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="./login.html">Start free trial</a></li>
+          <li><a href="./login.html">Sign in</a></li>
+          <li><a href="./feedback.html">Feedback</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="./privacy.html">Privacy Policy</a></li>
+          <li><a href="./terms.html">Terms of Use</a></li>
+          <li><a href="./terms.html#s6">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="./feedback.html">Ask a question or report an issue</a></li>
+          <li><a href="./terms.html#s5">How to cancel</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; 2026 Focus Board. All rights reserved. Made in India.</span>
+      <span><a href="./privacy.html">Privacy</a><a href="./terms.html">Terms</a><a href="./feedback.html">Feedback</a></span>
+    </div>
+  </div>
+</footer>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.toc a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function spy(){
+    var y=window.scrollY+140, cur=0;
+    secs.forEach(function(s,i){ if(s && s.offsetTop<=y) cur=i; });
+    links.forEach(function(a,i){ a.classList.toggle('active', i===cur); });
+  }
+  window.addEventListener('scroll',spy,{passive:true}); spy();
+})();
+</script>
 </body>
 </html>
