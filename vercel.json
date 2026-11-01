@@ -5,6 +5,10 @@
     {
       "path": "/api/reconcile-payments",
       "schedule": "17 3 * * *"
+    },
+    {
+      "path": "/api/keep-alive",
+      "schedule": "41 5 * * *"
     }
   ]
 }
