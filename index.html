@@ -516,29 +516,174 @@
   @media (max-width:860px){ .site-footer .sf-grid{ grid-template-columns:1fr 1fr; } }
   @media (max-width:520px){ .site-footer .sf-grid{ grid-template-columns:1fr; gap:28px; } .site-footer .sf-bottom a{ margin:0 14px 0 0; } }
 
+
+  /* =====================================================
+     ENHANCEMENTS
+     ===================================================== */
+  ::selection{ background:var(--butter); color:var(--butter-ink); }
+  :focus-visible{ outline:3px solid #e2453f; outline-offset:3px; border-radius:4px; }
+  body{ background:
+      radial-gradient(900px 500px at 90% -5%, rgba(245,230,168,.55), transparent 60%),
+      radial-gradient(700px 500px at -5% 40%, rgba(185,211,221,.35), transparent 60%),
+      var(--paper); }
+
+  /* scroll progress bar */
+  .progress{ position:fixed; top:0; left:0; height:3px; width:0; z-index:100;
+    background:linear-gradient(90deg,#e2453f,#e8b93f,#5fae5f); transition:width .1s linear; }
+
+  /* sticky glass nav */
+  .topnav{ position:sticky; top:0; z-index:50;
+    background:rgba(244,238,223,.72);
+    backdrop-filter:blur(14px) saturate(160%); -webkit-backdrop-filter:blur(14px) saturate(160%);
+    border-bottom:1px solid transparent; transition:border-color .25s, box-shadow .25s; }
+  .topnav.scrolled{ border-bottom-color:rgba(43,38,32,.1); box-shadow:0 6px 20px rgba(43,38,32,.07); }
+  .topnav nav.wrap{ padding-top:14px; padding-bottom:14px; }
+  .wordmark{ display:inline-flex; align-items:center; gap:9px; }
+  .wordmark .logo-dot{ width:22px; height:22px; background:var(--butter); border:1.5px solid var(--butter-ink);
+    border-radius:3px; transform:rotate(-8deg); position:relative; box-shadow:2px 3px 0 rgba(0,0,0,.12); }
+  .wordmark .logo-dot::after{ content:""; position:absolute; top:-4px; left:50%; width:7px; height:7px; margin-left:-3.5px;
+    border-radius:50%; background:#e2453f; }
+  .nav-links{ display:flex; gap:22px; margin-right:6px; }
+  .nav-links a{ font-size:14px; font-weight:500; text-decoration:none; color:#4a3f30; position:relative; }
+  .nav-links a::after{ content:""; position:absolute; left:0; bottom:-4px; height:2px; width:0; background:var(--ink); transition:width .25s; }
+  .nav-links a:hover::after{ width:100%; }
+  @media (max-width:760px){ .nav-links{ display:none; } }
+
+  /* buttons */
+  .btn-primary, .nav-cta{ border-radius:8px; }
+  .btn-primary{ background:linear-gradient(180deg,#3a342b,#2B2620); box-shadow:0 4px 0 #0f0d0a, 0 8px 18px rgba(0,0,0,.2);
+    position:relative; }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 6px 0 #0f0d0a, 0 12px 22px rgba(0,0,0,.28); }
+  .btn-primary:active{ transform:translateY(3px); box-shadow:0 1px 0 #0f0d0a; }
+  .btn-primary .arr{ display:inline-block; margin-left:8px; transition:transform .2s; }
+  .btn-primary:hover .arr{ transform:translateX(4px); }
+
+  /* hero */
+  .hero{ background-image:
+      radial-gradient(ellipse at 20% 30%, rgba(255,240,200,.35), transparent 55%),
+      radial-gradient(ellipse at 100% 100%, rgba(60,35,10,.28), transparent 55%),
+      radial-gradient(rgba(94,62,27,0.35) 1px, transparent 1.6px),
+      radial-gradient(rgba(140,100,55,0.28) 1px, transparent 1.7px); 
+    background-size:auto, auto, 15px 15px, 23px 23px; background-position:0 0, 0 0, 0 0, 8px 12px;
+    box-shadow:inset 0 10px 24px rgba(0,0,0,.18), inset 0 -10px 24px rgba(0,0,0,.18); }
+  .hero h1{ font-size:clamp(36px,5vw,60px); max-width:12ch; letter-spacing:-.01em; }
+  .hl{ position:relative; white-space:nowrap; z-index:0; }
+  .hl::after{ content:""; position:absolute; left:-4px; right:-4px; bottom:2px; height:.36em; z-index:-1;
+    background:var(--butter); border-radius:3px; transform:rotate(-1deg); }
+  .hero-badge{ box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  .hero-badge::before{ animation:pulse 2s infinite; }
+  @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(58,75,36,.5);} 70%{ box-shadow:0 0 0 8px rgba(58,75,36,0);} 100%{ box-shadow:0 0 0 0 rgba(58,75,36,0);} }
+  .hero-proof{ margin-top:22px; display:flex; flex-wrap:wrap; gap:8px 18px; font-size:13px; font-weight:600; color:#3a2f20; }
+  .hero-proof span::before{ content:"\2713"; display:inline-block; margin-right:6px; width:18px; height:18px; line-height:18px; text-align:center;
+    border-radius:50%; background:rgba(251,248,241,.85); color:#3A4B24; font-size:11px; }
+  .hero-notes{ height:360px; }
+  .note-c{ background:var(--sage); color:var(--sage-ink); top:200px; left:0; transform:rotate(-2deg); z-index:3; width:200px !important;
+    animation:settle-c .6s .28s ease-out both; }
+  .note-c:hover{ transform:rotate(-2deg) translateY(-4px); }
+  @keyframes settle-c{ from{ transform:translateY(-18px) rotate(-2deg); opacity:0;} to{ transform:rotate(-2deg); opacity:1; } }
+  .streak-num{ font-family:'Fraunces',serif; font-size:34px; font-weight:600; line-height:1; }
+  .streak-sub{ font-size:12.5px; opacity:.85; margin-top:4px; }
+  .note:hover{ box-shadow:5px 12px 24px rgba(0,0,0,.35); }
+  .note::before{ content:""; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(160deg, rgba(255,255,255,.28), transparent 45%); }
+
+  /* torn-paper divider under hero */
+  .hero::after{ content:""; position:absolute; left:0; right:0; bottom:-1px; height:16px;
+    background:linear-gradient(135deg, var(--paper) 25%, transparent 25%) -8px 0, linear-gradient(225deg, var(--paper) 25%, transparent 25%) -8px 0;
+    background-size:16px 16px; }
+
+  /* trust strip */
+  .stats{ padding:46px 0 0; }
+  .stats-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  .stat{ text-align:center; padding:18px 10px; border-radius:14px; background:rgba(251,248,241,.7); border:1px solid rgba(43,38,32,.08);
+    transition:transform .25s, box-shadow .25s; }
+  .stat:hover{ transform:translateY(-4px); box-shadow:0 10px 22px rgba(43,38,32,.1); }
+  .stat b{ display:block; font-family:'Fraunces',serif; font-size:28px; font-weight:600; }
+  .stat span{ font-size:12.5px; color:#5c5346; }
+  @media (max-width:700px){ .stats-row{ grid-template-columns:1fr 1fr; } }
+
+  /* section labels */
+  .eyebrow{ display:inline-block; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:#9c2a25; margin-bottom:12px; }
+  .how .eyebrow{ color:var(--butter); }
+  .problem h2, .features h2, .pricing h2, .showcase h2, .how h2{ letter-spacing:-.01em; }
+
+  /* feature cards */
+  .features-grid{ background:none; padding:0; column-gap:18px; row-gap:18px; }
+  .feature-item, .features-grid .feature-item:nth-last-child(1), .features-grid .feature-item:nth-last-child(2){
+    background:var(--cream); border:1px solid rgba(43,38,32,.08); border-radius:14px; padding:22px 22px;
+    box-shadow:0 2px 0 rgba(43,38,32,.04); transition:transform .25s, box-shadow .25s, border-color .25s; }
+  .feature-item:hover{ transform:translateY(-4px); box-shadow:0 14px 26px rgba(43,38,32,.12); border-color:rgba(58,75,36,.35); }
+  .feature-check{ background:var(--sage); transition:background .25s, transform .25s; }
+  .feature-item:hover .feature-check{ background:#A9C48C; transform:rotate(-10deg) scale(1.1); }
+  @media (max-width:860px){ .features-grid{ padding:0; } .features-grid .feature-item{ border-bottom:1px solid rgba(43,38,32,.08) !important; } }
+
+  /* pricing card */
+  .trial-card{ border-radius:2px; }
+  .ribbon{ position:absolute; top:18px; right:-10px; background:#e2453f; color:#fff; font-size:11.5px; font-weight:700;
+    padding:5px 14px; letter-spacing:.04em; box-shadow:0 3px 8px rgba(0,0,0,.25); }
+  .ribbon::after{ content:""; position:absolute; right:0; bottom:-6px; border-style:solid; border-width:6px 0 0 10px; border-color:#8c2420 transparent transparent transparent; }
+
+  /* FAQ */
+  .faq{ padding:20px 0 90px; }
+  .faq-head{ text-align:center; margin-bottom:34px; }
+  .faq h2{ font-size:clamp(26px,3vw,34px); }
+  .faq-list{ max-width:760px; margin:0 auto; display:grid; gap:12px; }
+  .faq details{ background:var(--cream); border:1px solid rgba(43,38,32,.1); border-radius:12px; padding:0 22px; transition:box-shadow .25s; }
+  .faq details[open]{ box-shadow:0 10px 24px rgba(43,38,32,.1); }
+  .faq summary{ cursor:pointer; list-style:none; padding:18px 0; font-weight:600; font-size:15.5px; display:flex; justify-content:space-between; gap:14px; align-items:center; }
+  .faq summary::-webkit-details-marker{ display:none; }
+  .faq summary::after{ content:"+"; font-size:22px; font-weight:400; color:#9c2a25; transition:transform .25s; }
+  .faq details[open] summary::after{ transform:rotate(45deg); }
+  .faq details p{ padding:0 0 18px; font-size:14.5px; color:#4a4236; }
+
+  /* final CTA */
+  .final-cta{ background:var(--cork); position:relative; overflow:hidden; text-align:center; padding:84px 0;
+    background-image:radial-gradient(rgba(94,62,27,0.35) 1px, transparent 1.6px), radial-gradient(rgba(140,100,55,0.28) 1px, transparent 1.7px);
+    background-size:15px 15px, 23px 23px; background-position:0 0, 8px 12px;
+    box-shadow:inset 0 10px 24px rgba(0,0,0,.16); }
+  .final-cta h2{ font-size:clamp(28px,4vw,44px); max-width:18ch; margin:0 auto; }
+  .final-cta p{ margin:16px auto 28px; max-width:46ch; color:#3a2f20; }
+
+  /* back to top */
+  .to-top{ position:fixed; right:20px; bottom:20px; width:44px; height:44px; border-radius:50%; border:0; cursor:pointer;
+    background:var(--ink); color:var(--cream); font-size:18px; box-shadow:0 6px 16px rgba(0,0,0,.3);
+    opacity:0; transform:translateY(12px); pointer-events:none; transition:opacity .25s, transform .25s; z-index:60; }
+  .to-top.show{ opacity:1; transform:none; pointer-events:auto; }
+
+  @media (max-width:860px){
+    .hero-notes{ height:330px; }
+    .hero-notes .note-b{ left:110px; }
+    .note-c{ top:190px; }
+  }
 </style>
 </head>
 <body>
 
+<div class="progress" id="progress"></div>
+<div class="topnav" id="topnav">
 <nav class="wrap">
-  <a class="wordmark" href="#top">Focus Board</a>
+  <a class="wordmark" href="#top"><span class="logo-dot"></span>Focus Board</a>
   <div class="nav-right">
+    <div class="nav-links"><a href="#how">How it works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
     <a class="link-quiet" href="./feedback.html" style="font-size:13px;">Feedback</a>
     <span class="nav-trial-pill">30-day free trial</span>
     <a class="nav-cta" href="./login.html?signup=1">Start free trial</a>
   </div>
 </nav>
+</div>
 
 <header class="hero" id="top">
   <div class="wrap hero-inner">
     <div>
       <span class="hero-badge">30-day free trial &middot; no card needed</span>
-      <h1>Skip a day. Your tasks come with you.</h1>
+      <h1>Skip a day. Your tasks <span class="hl">come with you.</span></h1>
       <p class="sub">Focus Board is a sticky-note board for weekly routines and daily to-dos. Miss a day and nothing resets — whatever didn't get done just shows up again tomorrow.</p>
       <div class="hero-ctas">
-        <a class="btn-primary" href="./login.html?signup=1">Start your free trial</a>
+        <a class="btn-primary" href="./login.html?signup=1">Start your free trial<span class="arr">&rarr;</span></a>
         <a class="link-quiet" href="#how">See how it works</a>
       </div>
+      <div class="hero-proof"><span>No card needed</span><span>Works on phone &amp; laptop</span><span>Nothing ever deleted</span></div>
       <p class="hero-fineprint">Full access for 30 days. After that your board stays visible, just read-only, until you upgrade.</p>
     </div>
     <span class="doodle doodle--1"><svg viewBox="0 0 40 40" fill="none"><path d="M7 20L16 29L33 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -559,13 +704,30 @@
         <div class="task-row"><span class="check"></span><span>Water the plants</span></div>
         <div class="fold"></div>
       </div>
+      <div class="note note-c">
+        <span class="pin"></span>
+        <div class="note-title">Streak</div>
+        <div class="streak-num">12 days</div>
+        <div class="streak-sub">Missed Tuesday? Still 12. It waits.</div>
+        <div class="fold"></div>
+      </div>
     </div>
   </div>
 </header>
 
+<section class="stats">
+  <div class="wrap stats-row">
+    <div class="stat reveal"><b>30</b><span>days free, full access</span></div>
+    <div class="stat reveal reveal-1"><b>0</b><span>cards to start</span></div>
+    <div class="stat reveal reveal-2"><b>100%</b><span>of tasks carried, never lost</span></div>
+    <div class="stat reveal reveal-3"><b>&#8377;249</b><span>per month after trial</span></div>
+  </div>
+</section>
+
 <section class="problem">
   <div class="wrap problem-inner">
     <div class="reveal">
+      <span class="eyebrow">The problem</span>
       <h2>Most habit trackers quit on you the moment you do.</h2>
       <p class="body">You get sick, or you travel, or you're just tired, and the streak breaks. So the app starts to feel like one more thing keeping score against you — and it's usually the app that gets deleted, not the habit. Focus Board doesn't reset when you miss a day. It just waits.</p>
     </div>
@@ -595,6 +757,7 @@
   <span class="doodle doodle--1"><svg viewBox="0 0 48 48" fill="none"><rect x="8" y="6" width="32" height="36" rx="2" stroke="currentColor" stroke-width="2"/><path d="M14 16h20M14 24h20M14 32h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
   <span class="doodle doodle--2"><svg viewBox="0 0 60 60" fill="none"><path d="M12 46c4-16 6-28 18-34 10-5 20 1 20 10 0 8-8 12-16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="46" r="3" fill="currentColor"/></svg></span>
   <div class="wrap">
+    <span class="eyebrow">How it works</span>
     <h2 class="reveal">Three things it actually does</h2>
     <div class="how-row">
       <div class="note reveal reveal-1" style="background:var(--butter); color:var(--butter-ink);">
@@ -622,6 +785,7 @@
 <section class="showcase">
   <div class="wrap">
     <div class="showcase-head reveal">
+      <span class="eyebrow">Preview</span>
       <h2>What your board actually looks like</h2>
       <p>No tour needed — here's a real board, mid-week, with two tasks already carried over from yesterday.</p>
     </div>
@@ -666,6 +830,7 @@
 <section class="features">
   <div class="wrap">
     <div class="features-head reveal">
+      <span class="eyebrow">Features</span>
       <h2>Everything that's included</h2>
       <p>No feature paywalls during the trial — every account gets the full board from day one.</p>
     </div>
@@ -709,12 +874,14 @@
 <section class="pricing" id="pricing">
   <div class="wrap">
     <div class="pricing-head reveal">
+      <span class="eyebrow">Pricing</span>
       <h2>Try the whole board free for 30 days</h2>
       <p>No card required to start. When your trial ends, your board doesn't disappear — it just goes view-only until you upgrade, so nothing you've built is ever lost.</p>
     </div>
     <p class="quote-strip reveal reveal-1">&ldquo;No card, no catch &mdash; just a board that remembers what you didn't finish.&rdquo;</p>
     <div class="trial-card reveal reveal-2">
       <span class="pin"></span>
+      <span class="ribbon">NO CARD</span>
       <div class="trial-name">Free trial</div>
       <div class="trial-price">30 days, full access, $0</div>
       <ul>
@@ -724,9 +891,30 @@
         <li>Sync across every device</li>
       </ul>
       <div class="trial-after">After 30 days: your board stays visible (view-only) until you upgrade for &#8377;249/month<span data-stb-price-native></span>. Nothing is deleted.</div>
-      <a class="btn-primary" href="./login.html?signup=1">Start free trial</a>
+      <a class="btn-primary" href="./login.html?signup=1">Start free trial<span class="arr">&rarr;</span></a>
       <div class="fold"></div>
     </div>
+  </div>
+</section>
+
+<section class="faq" id="faq">
+  <div class="wrap">
+    <div class="faq-head reveal"><span class="eyebrow">Questions</span><h2>Quick answers</h2></div>
+    <div class="faq-list reveal reveal-1">
+      <details><summary>Do I need a card to start?</summary><p>No. The 30-day trial gives you full access with no card required.</p></details>
+      <details><summary>What happens when the trial ends?</summary><p>Your board stays visible but becomes read-only until you upgrade. Nothing is deleted.</p></details>
+      <details><summary>What if I miss a day?</summary><p>Unfinished tasks carry over to tomorrow, and your streak holds where it was instead of resetting to zero.</p></details>
+      <details><summary>Can I use it on my phone?</summary><p>Yes. Install it to your home screen like an app, and your board syncs across all your devices.</p></details>
+      <details><summary>Is my email visible to others?</summary><p>No. You pick a username and your email is never shown to anyone.</p></details>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="wrap reveal">
+    <h2>Pin your first note today.</h2>
+    <p>30 days free. No card. A board that waits for you when life gets in the way.</p>
+    <a class="btn-primary" href="./login.html?signup=1">Start your free trial<span class="arr">&rarr;</span></a>
   </div>
 </section>
 
@@ -801,5 +989,19 @@
 })();
 </script>
 
+<button class="to-top" id="toTop" aria-label="Back to top">&uarr;</button>
+<script>
+(function(){
+  var nav=document.getElementById('topnav'), bar=document.getElementById('progress'), top=document.getElementById('toTop');
+  function onScroll(){
+    var y=window.scrollY||0, h=document.documentElement.scrollHeight-window.innerHeight;
+    nav.classList.toggle('scrolled', y>10);
+    bar.style.width=(h>0?(y/h)*100:0)+'%';
+    top.classList.toggle('show', y>600);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+  top.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
+})();
+</script>
 </body>
 </html>
