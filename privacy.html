@@ -9,89 +9,173 @@
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --ink:#26221c; --muted:#6b6458; --line:#e3dccb; --bg:#f1ece0; --card:#ffffff; --accent:#6B4E12; }
+  :root{ --wood:#8a6438; --cork:#B98A54; --ink:#2B2620; --cream:#FBF8F1; --paper:#F4EEDF; --butter:#F5E6A8; --butter-ink:#6B4E12; --line:#e6dfcd; --muted:#7a7160; --text:#3b352c; }
   *{ box-sizing:border-box; }
   html{ scroll-behavior:smooth; }
-  body{ margin:0; font-family:"Work Sans",system-ui,sans-serif; color:var(--ink); background:var(--bg); line-height:1.7; -webkit-font-smoothing:antialiased; }
-  header.top{ background:#2B2620; }
-  header.top .in{ max-width:860px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-  header.top a{ color:#FBF8F1; text-decoration:none; }
-  .brand{ font-family:"Fraunces",serif; font-size:20px; }
-  nav a{ font-size:14px; margin-left:18px; opacity:.85; }
-  nav a:hover, nav a.on{ opacity:1; text-decoration:underline; }
-  main{ max-width:860px; margin:32px auto 48px; padding:0 16px; }
-  article{ background:var(--card); border:1px solid var(--line); border-radius:6px; padding:48px 56px; }
-  h1{ font-family:"Fraunces",serif; font-weight:500; font-size:34px; margin:0 0 6px; line-height:1.2; }
-  .meta{ color:var(--muted); font-size:14px; margin:0 0 28px; padding-bottom:20px; border-bottom:1px solid var(--line); }
-  h2{ font-family:"Fraunces",serif; font-weight:500; font-size:20px; margin:34px 0 8px; }
-  p{ margin:0 0 12px; font-size:15.5px; }
-  ul{ margin:0 0 12px; padding-left:22px; } li{ margin:6px 0; font-size:15.5px; }
-  a{ color:var(--accent); }
-  .summary{ background:#faf6ea; border-left:4px solid #c9a24b; padding:16px 20px; margin:0 0 28px; border-radius:0 4px 4px 0; }
-  .summary p{ margin:0; font-size:15px; }
-  .toc{ background:#faf8f2; border:1px solid var(--line); border-radius:4px; padding:16px 22px; margin:0 0 8px; }
-  .toc strong{ font-size:14px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); }
-  .toc ol{ margin:8px 0 0; padding-left:20px; columns:2; column-gap:32px; } .toc li{ font-size:14.5px; margin:3px 0; }
-  table{ width:100%; border-collapse:collapse; margin:8px 0 14px; font-size:14.5px; }
-  th,td{ text-align:left; padding:10px 12px; border:1px solid var(--line); vertical-align:top; }
-  th{ background:#faf6ea; font-weight:600; }
-  footer{ max-width:860px; margin:0 auto 40px; padding:0 24px; font-size:13px; color:var(--muted); text-align:center; }
-  footer a{ color:var(--muted); margin:0 8px; }
-  @media (max-width:640px){ article{ padding:28px 22px; } h1{ font-size:28px; } .toc ol{ columns:1; } }
+  body{ margin:0; font-family:'Work Sans',system-ui,sans-serif; color:var(--text); background:var(--paper); -webkit-font-smoothing:antialiased; line-height:1.7; }
+  a{ color:var(--butter-ink); }
+  /* top bar */
+  .topbar{ background:var(--cream); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
+  .topbar .in{ max-width:1120px; margin:0 auto; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
+  .logo{ font-family:'Fraunces',serif; font-size:22px; color:var(--ink); text-decoration:none; }
+  .topbar nav{ display:flex; align-items:center; gap:22px; }
+  .topbar nav a{ font-size:14px; color:var(--ink); text-decoration:none; padding:4px 0; border-bottom:2px solid transparent; }
+  .topbar nav a:hover, .topbar nav a.on{ border-bottom-color:var(--cork); }
+  .topbar .cta{ background:var(--ink); color:var(--cream)!important; padding:9px 16px!important; border-radius:8px; border:0!important; font-weight:600; }
+  /* hero */
+  .hero{ background:var(--cork); background-image:radial-gradient(rgba(0,0,0,.18) 1px, transparent 1.6px), radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.7px); background-size:15px 15px,23px 23px; padding:64px 0 96px; color:var(--ink); }
+  .hero .in{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .eyebrow{ display:inline-flex; align-items:center; gap:8px; background:var(--cream); color:var(--butter-ink); font-size:13px; font-weight:600; padding:6px 14px; border-radius:999px; }
+  .hero h1{ font-family:'Fraunces',serif; font-weight:500; font-size:clamp(34px,5vw,54px); line-height:1.08; margin:18px 0 12px; }
+  .hero p.lead{ max-width:620px; font-size:18px; margin:0 0 22px; color:#3a2f1c; }
+  .chips{ display:flex; gap:10px; flex-wrap:wrap; }
+  .chip{ background:rgba(251,248,241,.75); border:1px solid rgba(43,38,32,.15); border-radius:8px; padding:6px 12px; font-size:13px; }
+  .chip b{ font-weight:600; }
+  /* highlight cards */
+  .cards{ max-width:1120px; margin:-56px auto 0; padding:0 28px; display:grid; grid-template-columns:repeat(3,1fr); gap:18px; position:relative; z-index:2; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:22px 22px 20px; box-shadow:0 10px 28px rgba(43,38,32,.10); }
+  .card .ic{ width:46px; height:46px; border-radius:12px; background:var(--butter); color:var(--butter-ink); display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+  .card h3{ font-family:'Fraunces',serif; font-weight:500; font-size:19px; margin:0 0 4px; color:var(--ink); }
+  .card p{ margin:0; font-size:14.5px; color:var(--muted); line-height:1.55; }
+  .card .big{ font-family:'Fraunces',serif; font-size:30px; color:var(--ink); line-height:1.1; margin:0 0 4px; }
+  /* layout */
+  .layout{ max-width:1120px; margin:44px auto 64px; padding:0 28px; display:grid; grid-template-columns:250px 1fr; gap:36px; align-items:start; }
+  aside.side{ position:sticky; top:84px; }
+  .toc{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 12px; }
+  .toc h5{ margin:0 10px 8px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+  .toc a{ display:flex; gap:10px; align-items:baseline; padding:7px 10px; border-radius:8px; font-size:14px; color:var(--text); text-decoration:none; border-left:3px solid transparent; }
+  .toc a span{ color:var(--muted); font-size:12px; min-width:18px; }
+  .toc a:hover{ background:var(--paper); }
+  .toc a.active{ background:var(--butter); color:var(--butter-ink); border-left-color:var(--wood); font-weight:600; }
+  .help{ margin-top:16px; background:var(--ink); color:#d9d0bd; border-radius:14px; padding:18px; font-size:13.5px; line-height:1.55; }
+  .help b{ color:var(--cream); display:block; margin-bottom:4px; font-size:15px; font-family:'Fraunces',serif; font-weight:500; }
+  .help a{ color:var(--butter); }
+  /* sections */
+  .sec{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:30px 34px; margin:0 0 18px; scroll-margin-top:84px; }
+  .sec h2{ display:flex; align-items:center; gap:14px; font-family:'Fraunces',serif; font-weight:500; font-size:24px; color:var(--ink); margin:0 0 14px; line-height:1.2; }
+  .num{ flex:none; width:34px; height:34px; border-radius:50%; background:var(--butter); color:var(--butter-ink); font-family:'Work Sans',sans-serif; font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center; }
+  .sec p{ margin:0 0 12px; font-size:16px; }
+  .sec ul{ margin:0 0 12px; padding-left:22px; } .sec li{ margin:7px 0; font-size:16px; }
+  .sec li::marker{ color:var(--wood); }
+  .note{ background:#faf6ea; border-left:4px solid var(--cork); border-radius:0 8px 8px 0; padding:12px 16px; margin:14px 0 4px; font-size:15px; }
+  table{ width:100%; border-collapse:separate; border-spacing:0; margin:6px 0 10px; font-size:15px; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th,td{ text-align:left; padding:12px 16px; vertical-align:top; border-bottom:1px solid var(--line); }
+  tr:last-child td{ border-bottom:0; }
+  th{ background:var(--butter); color:var(--butter-ink); font-weight:600; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
+  td:first-child{ font-weight:600; color:var(--ink); width:28%; }
+  tbody tr:nth-child(even) td{ background:#fcfaf3; }
+  .updated{ text-align:center; font-size:13px; color:var(--muted); margin-top:6px; }
+  @media (max-width:900px){
+    .cards{ grid-template-columns:1fr; margin-top:-48px; }
+    .layout{ grid-template-columns:1fr; }
+    aside.side{ position:static; display:none; }
+    .sec{ padding:24px 20px; } .topbar nav a:not(.cta):not(.on){ display:none; }
+  }
+  @media print{ .topbar,aside.side,.site-footer{ display:none; } .hero{ background:#fff; padding:20px 0; } .cards{ display:none; } .sec{ border:0; padding:0; } }
+
+  /* ---------- site footer ---------- */
+  .site-footer{ background:#2B2620; color:#d9d0bd; padding:56px 0 0; font-family:'Work Sans',system-ui,sans-serif; }
+  .site-footer .sf-inner{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .site-footer .sf-grid{ display:grid; grid-template-columns:1.7fr 1fr 1fr 1.3fr; gap:40px; padding-bottom:40px; }
+  .site-footer .sf-brand{ font-family:'Fraunces',serif; font-size:26px; color:#FBF8F1; margin:0 0 10px; }
+  .site-footer p{ margin:0; font-size:14px; line-height:1.65; color:#b9b09c; }
+  .site-footer h4{ margin:4px 0 14px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#FBF8F1; font-weight:600; }
+  .site-footer ul{ list-style:none; margin:0; padding:0; }
+  .site-footer li{ margin:0 0 9px; font-size:14px; }
+  .site-footer a{ color:#d9d0bd; text-decoration:none; }
+  .site-footer a:hover{ color:#F5E6A8; text-decoration:underline; }
+  .site-footer .sf-pill{ display:inline-block; margin-top:16px; padding:6px 12px; border:1px solid rgba(245,230,168,.45); border-radius:999px; font-size:12px; color:#F5E6A8; }
+  .site-footer .sf-bottom{ border-top:1px solid rgba(255,255,255,.12); padding:20px 0 26px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; font-size:13px; color:#968d7a; }
+  .site-footer .sf-bottom a{ color:#968d7a; margin-left:18px; }
+  .site-footer .sf-bottom a:hover{ color:#F5E6A8; }
+  @media (max-width:860px){ .site-footer .sf-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:520px){ .site-footer .sf-grid{ grid-template-columns:1fr; gap:28px; } .site-footer .sf-bottom a{ margin:0 14px 0 0; } }
 </style>
 </head>
 <body>
-<header class="top"><div class="in">
-  <a class="brand" href="./">Focus Board</a>
-  <nav><a href="./privacy.html" class="on">Privacy Policy</a><a href="./terms.html">Terms &amp; Refunds</a><a href="./feedback.html">Feedback</a></nav>
+<header class="topbar"><div class="in">
+  <a class="logo" href="./">Focus Board</a>
+  <nav><a href="./privacy.html" class="on">Privacy Policy</a><a href="./terms.html">Terms &amp; Refunds</a><a href="./feedback.html">Feedback</a><a class="cta" href="./login.html">Start free trial</a></nav>
 </div></header>
-<main><article>
-<h1>Privacy Policy</h1>
-<p class="meta">Effective date: 1 November 2026 &middot; Last updated: 1 November 2026</p>
-<div class="summary"><p><strong>In short:</strong> we collect only what is needed to run your account and sync your board, we never see your payment details, and we do not sell your data or show ads.</p></div>
-<div class="toc"><strong>Contents</strong><ol><li><a href="#s1">Introduction</a></li><li><a href="#s2">Information we collect</a></li><li><a href="#s3">How we use your information</a></li><li><a href="#s4">Service providers</a></li><li><a href="#s5">Local storage on your device</a></li><li><a href="#s6">Data retention and deletion</a></li><li><a href="#s7">Your rights</a></li><li><a href="#s8">Children</a></li><li><a href="#s9">Changes to this policy</a></li><li><a href="#s10">Contact</a></li></ol></div><h2 id="s1">1. Introduction</h2>
-<p>This Privacy Policy explains how Focus Board (&ldquo;Focus Board&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), a sticky-note to-do application available at stickytodo.vercel.app, collects, uses and protects personal information. Focus Board is operated by an individual developer based in India. By creating an account or using the service, you agree to the practices described here.</p>
-<h2 id="s2">2. Information we collect</h2>
-<table>
-<tr><th>Category</th><th>Details</th></tr>
-<tr><td>Account information</td><td>Email address, chosen username, and password. Passwords are processed by our authentication provider and stored in hashed form; we cannot view them.</td></tr>
-<tr><td>User content</td><td>Notes, tasks, routines, documents and streak data that you create, stored so they can sync across your devices.</td></tr>
+<section class="hero"><div class="in">
+  <span class="eyebrow">Legal</span>
+  <h1>Privacy Policy</h1>
+  <p class="lead">What we collect, why we collect it, and the choices you have &mdash; explained plainly.</p>
+  <div class="chips"><span class="chip"><b>Effective</b> 1 November 2026</span><span class="chip"><b>Applies to</b> stickytodo.vercel.app</span></div>
+</div></section>
+<div class="cards"><div class="card"><div class="ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div><h3>Minimal data</h3><p>We collect only what is needed to run your account and sync your board.</p></div><div class="card"><div class="ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 7.8-8 9-4.8-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div><h3>Never sold</h3><p>No ads, no data sales and no marketing lists, ever.</p></div><div class="card"><div class="ic"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg></div><h3>Payments stay with Razorpay</h3><p>We never see your card, UPI or bank details.</p></div></div>
+<div class="layout">
+  <aside class="side">
+    <nav class="toc"><h5>On this page</h5><a href="#s1"><span>1</span>Introduction</a><a href="#s2"><span>2</span>Information we collect</a><a href="#s3"><span>3</span>How we use your information</a><a href="#s4"><span>4</span>Service providers</a><a href="#s5"><span>5</span>Local storage on your device</a><a href="#s6"><span>6</span>Data retention and deletion</a><a href="#s7"><span>7</span>Your rights</a><a href="#s8"><span>8</span>Children</a><a href="#s9"><span>9</span>Changes to this policy</a><a href="#s10"><span>10</span>Contact</a></nav>
+    <div class="help"><b>Questions?</b>Use the <a href="./feedback.html">Feedback page</a> for privacy requests. Never post your email, password or payment details &mdash; posts there are public.</div>
+  </aside>
+  <main><section class="sec" id="s1"><h2><span class="num">1</span>Introduction</h2><p>This Privacy Policy explains how Focus Board (&ldquo;Focus Board&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;), a sticky-note to-do application available at stickytodo.vercel.app, collects, uses and protects personal information. Focus Board is operated by an individual developer based in India.</p><p>By creating an account or using the service, you agree to the practices described on this page.</p></section><section class="sec" id="s2"><h2><span class="num">2</span>Information we collect</h2><table><thead><tr><th>Category</th><th>Details</th></tr></thead><tbody>
+<tr><td>Account information</td><td>Email address, chosen username and password. Passwords are processed by our authentication provider and stored in hashed form; we cannot view them.</td></tr>
+<tr><td>Your content</td><td>Notes, tasks, routines, documents and streak data that you create, stored so they can sync across your devices.</td></tr>
 <tr><td>Plan information</td><td>Trial end date and subscription status.</td></tr>
 <tr><td>Payment references</td><td>If you subscribe, our payment provider shares identifiers (customer ID, subscription ID) and payment status. We do not receive or store your card, UPI or bank details.</td></tr>
-<tr><td>Public feedback</td><td>Messages and display names you post on the feedback page are visible to everyone. Please do not post personal or financial information there.</td></tr>
-</table>
-<h2 id="s3">3. How we use your information</h2>
-<ul>
-<li>To provide the service: authenticate you, save and synchronise your board, and apply your trial or subscription.</li>
+<tr><td>Public feedback</td><td>Messages and display names you post on the feedback page are visible to everyone.</td></tr></tbody></table>
+<div class="note">Please do not post personal or financial information on the public feedback page.</div></section><section class="sec" id="s3"><h2><span class="num">3</span>How we use your information</h2><ul><li>To provide the service: authenticate you, save and synchronise your board, and apply your trial or subscription.</li>
 <li>To communicate with you about your account, such as password recovery and payment-related notices. Your email address is never displayed within the application.</li>
-<li>To improve the service, based on feedback you choose to submit.</li>
-</ul>
-<p>We do not sell your personal information, we do not display advertising, and we do not share your information for marketing purposes.</p>
-<h2 id="s4">4. Service providers</h2>
-<p>We use the following third-party providers to operate the service. They process data on our behalf and may do so on servers located outside India.</p>
-<table>
-<tr><th>Provider</th><th>Purpose</th></tr>
+<li>To improve the service, based on feedback you choose to submit.</li></ul>
+<div class="note"><b>We do not sell your personal information, we do not display advertising, and we do not share your information for marketing purposes.</b></div></section><section class="sec" id="s4"><h2><span class="num">4</span>Service providers</h2><p>We use the following third-party providers to operate the service. They process data on our behalf and may do so on servers located outside India.</p>
+<table><thead><tr><th>Provider</th><th>Purpose</th></tr></thead><tbody>
 <tr><td>Supabase</td><td>Database and user authentication</td></tr>
 <tr><td>Vercel</td><td>Website hosting and server functions</td></tr>
 <tr><td>Razorpay</td><td>Payment processing for subscriptions</td></tr>
-<tr><td>Google Fonts</td><td>Delivery of web fonts (your IP address is visible to Google when fonts load)</td></tr>
-</table>
-<h2 id="s5">5. Local storage on your device</h2>
-<p>The application uses your browser&rsquo;s local storage and a service worker so that your board loads quickly and works offline. This information remains on your device. We do not use advertising or cross-site tracking cookies.</p>
-<h2 id="s6">6. Data retention and deletion</h2>
-<p>We retain your information for as long as your account exists. You may request deletion of your account and associated board data at any time (see Section 10). Certain payment records may be retained where required by law or by our payment provider.</p>
-<h2 id="s7">7. Your rights</h2>
-<p>You may request access to, correction of, or deletion of the personal information we hold about you. We will respond within a reasonable period. To protect your account, we may need to verify that the request comes from the account holder.</p>
-<h2 id="s8">8. Children</h2>
-<p>Focus Board is not directed at children under 13, and we do not knowingly collect personal information from them. If you believe a child has provided us with information, please let us know so that we can remove it.</p>
-<h2 id="s9">9. Changes to this policy</h2>
-<p>We may update this policy from time to time. The &ldquo;Last updated&rdquo; date at the top of this page will change when we do. Continued use of the service after an update constitutes acceptance of the revised policy.</p>
-<h2 id="s10">10. Contact</h2>
-<p>For privacy questions or requests, please use the <a href="./feedback.html">Feedback page</a>. Posts there are public, so include only your username and the nature of your request, and never your email address, password or payment details.</p>
-
-</article></main>
-<footer>&copy; 2026 Focus Board &middot; <a href="./privacy.html">Privacy Policy</a><a href="./terms.html">Terms &amp; Refunds</a><a href="./feedback.html">Feedback</a></footer>
+<tr><td>Google Fonts</td><td>Delivery of web fonts (your IP address is visible to Google when fonts load)</td></tr></tbody></table></section><section class="sec" id="s5"><h2><span class="num">5</span>Local storage on your device</h2><p>The application uses your browser&rsquo;s local storage and a service worker so that your board loads quickly and works offline. This information remains on your device. We do not use advertising or cross-site tracking cookies.</p></section><section class="sec" id="s6"><h2><span class="num">6</span>Data retention and deletion</h2><p>We retain your information for as long as your account exists. You may request deletion of your account and associated board data at any time (see Section 10). Certain payment records may be retained where required by law or by our payment provider.</p></section><section class="sec" id="s7"><h2><span class="num">7</span>Your rights</h2><p>You may request access to, correction of, or deletion of the personal information we hold about you. We will respond within a reasonable period. To protect your account, we may need to verify that the request comes from the account holder.</p></section><section class="sec" id="s8"><h2><span class="num">8</span>Children</h2><p>Focus Board is not directed at children under 13, and we do not knowingly collect personal information from them. If you believe a child has provided us with information, please let us know so that we can remove it.</p></section><section class="sec" id="s9"><h2><span class="num">9</span>Changes to this policy</h2><p>We may update this policy from time to time. The &ldquo;Last updated&rdquo; date on this page will change when we do. Continued use of the service after an update constitutes acceptance of the revised policy.</p></section><section class="sec" id="s10"><h2><span class="num">10</span>Contact</h2><p>For privacy questions or requests, please use the <a href="./feedback.html">Feedback page</a>.</p><div class="note">Posts on the Feedback page are public. Include only your username and the nature of your request &mdash; never your email address, password or payment details.</div></section><p class="updated">Last updated 1 November 2026</p></main>
+</div>
+<footer class="site-footer">
+  <div class="sf-inner">
+    <div class="sf-grid">
+      <div>
+        <div class="sf-brand">Focus Board</div>
+        <p>A sticky-note board for weekly routines and daily to-dos, where unfinished tasks carry over instead of piling up.</p>
+        <span class="sf-pill">30-day free trial &middot; no card needed</span>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="./login.html">Start free trial</a></li>
+          <li><a href="./login.html">Sign in</a></li>
+          <li><a href="./feedback.html">Feedback</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="./privacy.html">Privacy Policy</a></li>
+          <li><a href="./terms.html">Terms of Use</a></li>
+          <li><a href="./terms.html#s6">Refund Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Support</h4>
+        <ul>
+          <li><a href="./feedback.html">Ask a question or report an issue</a></li>
+          <li><a href="./terms.html#s5">How to cancel</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="sf-bottom">
+      <span>&copy; 2026 Focus Board. All rights reserved. Made in India.</span>
+      <span><a href="./privacy.html">Privacy</a><a href="./terms.html">Terms</a><a href="./feedback.html">Feedback</a></span>
+    </div>
+  </div>
+</footer>
+<script>
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.toc a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function spy(){
+    var y=window.scrollY+140, cur=0;
+    secs.forEach(function(s,i){ if(s && s.offsetTop<=y) cur=i; });
+    links.forEach(function(a,i){ a.classList.toggle('active', i===cur); });
+  }
+  window.addEventListener('scroll',spy,{passive:true}); spy();
+})();
+</script>
 </body>
 </html>
