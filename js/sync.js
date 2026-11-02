@@ -186,8 +186,8 @@
         var rzp = new window.Razorpay({
           key: body.key_id,
           subscription_id: body.subscription_id,
-          name: "Focus Board",
-          description: "Focus Board Pro \u2014 \u20b9249/month",
+          name: "Nudgeboard",
+          description: "Nudgeboard Pro \u2014 \u20b9249/month",
           theme: { color: "#2B2620" },
           handler: function (response) {
             fetch("/api/verify-razorpay-payment", {
