@@ -80,6 +80,6 @@ module.exports = async (req, res) => {
     res.status(200).json({ ok: true });
   } catch (e) {
     console.error("Could not update profile after Razorpay payment", e);
-    res.status(500).json({ error: "Payment succeeded, but updating your account failed -- contact support." });
+    res.status(500).json({ error: "Payment succeeded, but updating your account failed -- please email focusboard.support@gmail.com." });
   }
 };
