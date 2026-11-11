@@ -10,16 +10,22 @@
       doc.head.appendChild(node.cloneNode(true));
     });
     var override = doc.createElement("style");
+    // A popped-out card IS the window. No cork margin, no frame, no drop shadow: the window
+    // takes the note's own colour, the way a sticky note sits on a desktop. The note becomes
+    // a flex column so the item list swallows the spare space and the footer stays pinned to
+    // the bottom edge instead of floating halfway up a stretched card.
     override.textContent =
       "html,body{margin:0;padding:0;background:#B98A54;box-sizing:border-box;min-height:100%;height:100%;overflow:hidden;}" +
-      ".stb-pip-root{min-height:100%;height:100%;display:flex;align-items:flex-start;justify-content:center;}" +
-      ".stb-pip-root .stb-note,.stb-pip-root .stb-doc{position:static !important;left:auto !important;top:auto !important;transform:none !important;width:100% !important;box-sizing:border-box;margin:0 !important;}" +
-      ".stb-pip-root .stb-doc{height:100% !important;}" +
+      ".stb-pip-root{min-height:100%;height:100%;display:flex;overflow:hidden;padding:0;box-sizing:border-box;}" +
+      ".stb-pip-root .stb-note,.stb-pip-root .stb-doc{position:static !important;left:auto !important;top:auto !important;transform:none !important;box-sizing:border-box;margin:0 !important;width:100% !important;height:100% !important;border-radius:0 !important;box-shadow:none !important;}" +
+      ".stb-pip-root .stb-note{display:flex !important;flex-direction:column !important;}" +
+      ".stb-pip-root .stb-note .stb-items{flex:1 1 auto !important;overflow:auto;}" +
       "*{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,0.3) transparent;}" +
       "*::-webkit-scrollbar{width:4px;height:4px;}" +
       "*::-webkit-scrollbar-button{display:none;height:0;width:0;}" +
       "*::-webkit-scrollbar-track{background:transparent;}" +
-      "*::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.3);border-radius:2px;}";
+      "*::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.3);border-radius:2px;}" +
+      ".stb-pip-root .stb-doc-text{height:100% !important;}";
     doc.head.appendChild(override);
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "Nudgeboard",
-  "short_name": "Sticky Board",
+  "short_name": "Nudgeboard",
   "description": "A cork board of sticky notes: weekly recurring routines plus daily tasks that carry over when left unfinished.",
   "start_url": "./app.html",
   "scope": "./",
@@ -8,6 +8,7 @@
   "background_color": "#B98A54",
   "theme_color": "#2B2620",
   "orientation": "any",
+  "lang": "en",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

@@ -1305,3 +1305,68 @@ kbd {
   }
   .stb-title { color: #000; }
 }
+
+/* ---------- 12. desktop side rail ----------
+   On a wide screen the header turns into a panel down the left, so the board gets the
+   whole height and the buttons read as actions rather than a toolbar strip. This is
+   purely visual: the markup, the ids and the DOM order the scripts rely on are untouched,
+   and below 880px it collapses back to exactly the header it was before. */
+@media (min-width: 880px) {
+  .stb-root {
+    display: grid;
+    grid-template-columns: 244px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "rail banner"
+      "rail main";
+    column-gap: 24px;
+    align-items: stretch;
+  }
+  .stb-header {
+    grid-area: rail;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 0;
+    padding: 22px 16px 18px;
+    background: rgba(0, 0, 0, 0.11);
+    border-radius: 10px;
+    box-shadow: inset 0 1px 0 rgba(251, 248, 241, 0.1);
+  }
+  .stb-header-titles { min-width: 0; }
+  .stb-title { font-size: 30px; line-height: 1.05; letter-spacing: 0.01em; }
+  .stb-date-wrap {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 9px 0 0 1px;
+  }
+  .stb-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(251, 248, 241, 0.14);
+  }
+  .stb-header-actions > button {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 12px;
+    font-size: 13.5px;
+  }
+  .stb-readonly-banner { grid-area: banner; align-self: start; }
+  .stb-main { grid-area: main; min-width: 0; }
+  .stb-board { height: clamp(520px, calc(100vh - 150px), 900px); }
+}
+
+/* The rail eats 244px, so on a laptop the board and the saved-notes panel no longer fit
+   side by side. Below 1180px the panel drops underneath the board and gets the full width
+   -- the board is the thing you came for. At 1180px and up it returns to the right. */
+@media (min-width: 880px) and (max-width: 1179px) {
+  .stb-main { flex-direction: column; align-items: stretch; gap: 18px; }
+  .stb-clipboard { width: 100%; }
+  .stb-board { height: clamp(420px, calc(100vh - 320px), 620px); }
+}
