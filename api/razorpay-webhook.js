@@ -28,6 +28,28 @@ function readRawBody(req) {
   });
 }
 
+function safeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+// Reads the profile row for a subscription so a charge event can extend the paid period
+// from wherever it currently is, and a "cancelled at cycle end" event doesn't cut access
+// off mid-period.
+async function supabaseAdminGet(path) {
+  const r = await fetch(process.env.SUPABASE_URL + "/rest/v1/" + path, {
+    headers: {
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: "Bearer " + process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
+  });
+  if (!r.ok) throw new Error("Supabase read failed: " + r.status);
+  return r.json();
+}
+
 function supabaseAdminPatch(path, body) {
   return fetch(process.env.SUPABASE_URL + "/rest/v1/" + path, {
     method: "PATCH",
@@ -54,7 +76,7 @@ module.exports = async (req, res) => {
   var rawBody = await readRawBody(req);
   var signature = req.headers["x-razorpay-signature"];
   var expected = crypto.createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET).update(rawBody).digest("hex");
-  if (signature !== expected) {
+  if (!safeEqual(signature, expected)) {
     console.error("Razorpay webhook signature check failed");
     res.status(400).send("Signature verification failed.");
     return;
@@ -72,13 +94,30 @@ module.exports = async (req, res) => {
     var sub = event.payload && event.payload.subscription && event.payload.subscription.entity;
     if (sub) {
       if (event.event === "subscription.charged") {
-        await supabaseAdminPatch("profiles?razorpay_subscription_id=eq." + sub.id, { is_paid: true });
+        // current_end is the end of the cycle this charge just paid for. That is the honest
+        // answer to "full access until when?", and it's what the header badge counts down.
+        var paidUntil = sub.current_end
+          ? new Date(sub.current_end * 1000).toISOString()
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        await supabaseAdminPatch("profiles?razorpay_subscription_id=eq." + encodeURIComponent(sub.id), {
+          is_paid: true,
+          paid_until: paidUntil,
+        });
       } else if (
         event.event === "subscription.cancelled" ||
         event.event === "subscription.halted" ||
         event.event === "subscription.completed"
       ) {
-        await supabaseAdminPatch("profiles?razorpay_subscription_id=eq." + sub.id, { is_paid: false });
+        // Don't yank access the instant a cancellation is registered: a subscription
+        // cancelled with cancel_at_cycle_end still has time the user already paid for. Only
+        // lock the board once that paid period is genuinely over.
+        var rows = await supabaseAdminGet(
+          "profiles?razorpay_subscription_id=eq." + encodeURIComponent(sub.id) + "&select=paid_until"
+        );
+        var stillPaid = rows && rows[0] && rows[0].paid_until && new Date(rows[0].paid_until).getTime() > Date.now();
+        await supabaseAdminPatch("profiles?razorpay_subscription_id=eq." + encodeURIComponent(sub.id), {
+          is_paid: !!stillPaid,
+        });
       }
     }
     res.status(200).json({ received: true });

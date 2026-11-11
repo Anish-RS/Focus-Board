@@ -43,6 +43,10 @@ create table if not exists public.profiles (
   username text not null,
   trial_ends_at timestamptz not null default (now() + interval '30 days'),
   is_paid boolean not null default false,
+  -- End of the billing cycle that has actually been paid for. Read by the client to show
+  -- "Full access - N days left"; only ever written by the serverless payment functions
+  -- (service role) from Razorpay's current_end. Never trust the browser for this.
+  paid_until timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -156,6 +160,9 @@ alter table public.profiles add column if not exists stripe_subscription_id text
 -- access for India comes through later and both are wired up side by side.
 alter table public.profiles add column if not exists razorpay_customer_id text;
 alter table public.profiles add column if not exists razorpay_subscription_id text;
+
+-- Backfill for projects created before paid_until was part of the table definition above.
+alter table public.profiles add column if not exists paid_until timestamptz;
 
 
 -- 1. Users can no longer update their own profile (server functions still can)

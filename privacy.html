@@ -7,9 +7,8 @@
 <meta name="description" content="How Nudgeboard collects, uses and protects your data.">
 <link rel="canonical" href="https://nudgeboard.vercel.app/privacy.html">
 <link rel="icon" href="favicon.png" type="image/png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/worksans-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="fonts/fonts.css" />
 <style>
   :root{ --wood:#8a6438; --cork:#B98A54; --ink:#2B2620; --cream:#FBF8F1; --paper:#F4EEDF; --butter:#F5E6A8; --butter-ink:#6B4E12; --line:#e6dfcd; --muted:#7a7160; --text:#3b352c; }
   *{ box-sizing:border-box; }
@@ -125,7 +124,7 @@
 <tr><td>Supabase</td><td>Database and user authentication</td></tr>
 <tr><td>Vercel</td><td>Website hosting and server functions</td></tr>
 <tr><td>Razorpay</td><td>Payment processing for subscriptions</td></tr>
-<tr><td>Google Fonts</td><td>Delivery of web fonts (your IP address is visible to Google when fonts load)</td></tr></tbody></table></section><section class="sec" id="s5"><h2><span class="num">5</span>Local storage on your device</h2><p>The application uses your browser&rsquo;s local storage and a service worker so that your board loads quickly and works offline. This information remains on your device. We do not use advertising or cross-site tracking cookies.</p></section><section class="sec" id="s6"><h2><span class="num">6</span>Data retention and deletion</h2><p>We retain your information for as long as your account exists. You may request deletion of your account and associated board data at any time (see Section 10). Certain payment records may be retained where required by law or by our payment provider.</p></section><section class="sec" id="s7"><h2><span class="num">7</span>Your rights</h2><p>You may request access to, correction of, or deletion of the personal information we hold about you. We will respond within a reasonable period. To protect your account, we may need to verify that the request comes from the account holder.</p></section><section class="sec" id="s8"><h2><span class="num">8</span>Children</h2><p>Nudgeboard is not directed at children under 13, and we do not knowingly collect personal information from them. If you believe a child has provided us with information, please let us know so that we can remove it.</p></section><section class="sec" id="s9"><h2><span class="num">9</span>Changes to this policy</h2><p>We may update this policy from time to time. The &ldquo;Last updated&rdquo; date on this page will change when we do. Continued use of the service after an update constitutes acceptance of the revised policy.</p></section><section class="sec" id="s10"><h2><span class="num">10</span>Contact</h2><p>For privacy questions or requests, please use the <a href="./feedback.html">Feedback page</a>.</p><div class="note">Posts on the Feedback page are public. Include only your username and the nature of your request &mdash; never your email address, password or payment details.</div></section><p class="updated">Last updated 1 November 2026</p></main>
+<tr><td>Exchange-rate lookup (open.er-api.com)</td><td>Shows an approximate price in your local currency next to the ₹249 price. This request comes from your browser, so that service sees your IP address. No account data is sent, and the INR price is always the one charged.</td></tr><tr><td>Web fonts</td><td>Fonts are served from this site itself, not from Google. No request is made to a third party to render text.</td></tr></tbody></table></section><section class="sec" id="s5"><h2><span class="num">5</span>Local storage on your device</h2><p>The application uses your browser&rsquo;s local storage and a service worker so that your board loads quickly and works offline. This information remains on your device. We do not use advertising or cross-site tracking cookies.</p></section><section class="sec" id="s6"><h2><span class="num">6</span>Data retention and deletion</h2><p>We retain your information for as long as your account exists. You may request deletion of your account and associated board data at any time (see Section 10). Certain payment records may be retained where required by law or by our payment provider.</p></section><section class="sec" id="s7"><h2><span class="num">7</span>Your rights</h2><p>You may request access to, correction of, or deletion of the personal information we hold about you. We will respond within a reasonable period. To protect your account, we may need to verify that the request comes from the account holder.</p></section><section class="sec" id="s8"><h2><span class="num">8</span>Children</h2><p>Nudgeboard is not directed at children under 13, and we do not knowingly collect personal information from them. If you believe a child has provided us with information, please let us know so that we can remove it.</p></section><section class="sec" id="s9"><h2><span class="num">9</span>Changes to this policy</h2><p>We may update this policy from time to time. The &ldquo;Last updated&rdquo; date on this page will change when we do. Continued use of the service after an update constitutes acceptance of the revised policy.</p></section><section class="sec" id="s10"><h2><span class="num">10</span>Contact</h2><p>For privacy questions or requests, please use the <a href="./feedback.html">Feedback page</a>.</p><div class="note">Posts on the Feedback page are public. Include only your username and the nature of your request &mdash; never your email address, password or payment details.</div></section><p class="updated">Last updated 9 November 2026</p></main>
 </div>
 <footer class="site-footer">
   <div class="sf-inner">
@@ -166,17 +165,6 @@
     </div>
   </div>
 </footer>
-<script>
-(function(){
-  var links=[].slice.call(document.querySelectorAll('.toc a'));
-  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
-  function spy(){
-    var y=window.scrollY+140, cur=0;
-    secs.forEach(function(s,i){ if(s && s.offsetTop<=y) cur=i; });
-    links.forEach(function(a,i){ a.classList.toggle('active', i===cur); });
-  }
-  window.addEventListener('scroll',spy,{passive:true}); spy();
-})();
-</script>
+<script src="js/doc-toc.js" defer></script>
 </body>
 </html>

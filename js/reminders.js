@@ -75,11 +75,17 @@
     var el = document.createElement("div");
     el.className = "stb-alarm-overlay";
     el.id = "stb-alarm-overlay";
+    // Announced as a dialog rather than being a silent visual overlay, so a screen
+    // reader user hears the reminder instead of missing it entirely.
+    el.setAttribute("role", "alertdialog");
+    el.setAttribute("aria-modal", "true");
+    el.setAttribute("aria-labelledby", "stb-alarm-heading");
+    el.setAttribute("aria-describedby", "stb-alarm-text");
     el.innerHTML =
       '<div class="stb-alarm-card">' +
       '<div class="stb-alarm-bell">' + STB.ICON.bell(28) + "</div>" +
-      '<h3 class="stb-alarm-title">' + STB.escapeAttr(entry.title) + "</h3>" +
-      '<p class="stb-alarm-body">' + STB.escapeAttr(entry.body) + "</p>" +
+      '<h3 class="stb-alarm-title" id="stb-alarm-heading">' + STB.escapeAttr(entry.title) + "</h3>" +
+      '<p class="stb-alarm-body" id="stb-alarm-text">' + STB.escapeAttr(entry.body) + "</p>" +
       '<div class="stb-alarm-actions">' +
       '<button class="stb-alarm-snooze" id="stb-alarm-snooze-btn">Snooze 5 min</button>' +
       '<button class="stb-alarm-dismiss" id="stb-alarm-dismiss-btn">Dismiss</button>' +
@@ -87,6 +93,12 @@
       "</div>";
     document.body.appendChild(el);
     document.getElementById("stb-alarm-dismiss-btn").addEventListener("click", function () { dismissAlarm(false); });
+    // Put the keyboard where the dialog is, and let Escape dismiss it.
+    var dismissBtn = document.getElementById("stb-alarm-dismiss-btn");
+    if (dismissBtn) dismissBtn.focus();
+    el.addEventListener("keydown", function (ev) {
+      if (ev.key === "Escape") { ev.preventDefault(); dismissAlarm(false); }
+    });
     document.getElementById("stb-alarm-snooze-btn").addEventListener("click", function () { dismissAlarm(true, entry); });
   }
 

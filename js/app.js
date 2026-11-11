@@ -1,6 +1,7 @@
 (function (STB) {
   "use strict";
 
+  var FIRST_RUN_TIP_KEY = "stb-first-run-tip-seen";
   var deferredInstallPrompt = null;
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault();
@@ -33,7 +34,28 @@
     });
   }
 
+  // One-time nudge toward the keyboard shortcuts, for people who never go looking for
+  // them. Shown after the board itself has rendered so it can never get in the way of a
+  // first paint.
+  function maybeShowFirstRunTip() {
+    try {
+      if (localStorage.getItem(FIRST_RUN_TIP_KEY) === "1") return;
+      localStorage.setItem(FIRST_RUN_TIP_KEY, "1");
+    } catch (e) { return; }
+    if (typeof STB.toast !== "function") return;
+    setTimeout(function () {
+      STB.toast("Tip: press N for a new note, or ? for all shortcuts", { duration: 9000 });
+    }, 1200);
+  }
+
+  var boardBooted = false;
+
   function initBoard() {
+    // Idempotent on purpose: a second call would attach a second set of card event
+    // handlers to the same containers, and a single click would then run every action
+    // twice (delete once, then delete again -- which silently ate the undo snapshot).
+    if (boardBooted) return;
+    boardBooted = true;
     try {
       var addBtn = document.getElementById("stb-add-btn");
       addBtn.innerHTML = STB.ICON.plus(16) + " New note";
@@ -60,6 +82,8 @@
       STB.attachCardEvents(document.getElementById("stb-clipboard"), { enableReposition: false });
       maybeShowIosTip();
       STB.render();
+      if (STB.initSyncStatus) STB.initSyncStatus();
+      maybeShowFirstRunTip();
 
       window.addEventListener("resize", STB.clampCardsToBoard);
 

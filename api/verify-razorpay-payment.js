@@ -23,6 +23,18 @@ function supabaseAdminPatch(path, body) {
   });
 }
 
+// Constant-time comparison. A plain `!==` on an HMAC leaks, byte by byte, how much of the
+// guess was correct via response timing -- not a practical attack over the network for a
+// 64-char hex digest, but there's no reason to leave it there when crypto gives us the
+// safe version for free.
+function safeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
 
@@ -30,7 +42,7 @@ module.exports = async (req, res) => {
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
-  if (!process.env.RAZORPAY_KEY_SECRET || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     res.status(500).json({ error: "Payments aren't fully configured on this deployment yet." });
     return;
   }
@@ -67,17 +79,59 @@ module.exports = async (req, res) => {
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(paymentId + "|" + subscriptionId)
     .digest("hex");
-  if (expected !== signature) {
+  if (!safeEqual(expected, signature)) {
     res.status(400).json({ error: "Payment verification failed." });
     return;
   }
 
+  // The signature above proves "a real payment happened for this subscription". It does
+  // NOT prove the subscription belongs to the account calling this endpoint -- the
+  // signature is a property of the payment, not of the caller, so a valid
+  // (payment_id, subscription_id, signature) triple could be replayed by a different
+  // signed-in account and would otherwise unlock that account for free. So we now ask
+  // Razorpay who the subscription was created for (we stamp notes.supabase_user_id at
+  // creation time in create-subscription.js) and refuse to unlock anyone else.
+  var subscription;
   try {
-    await supabaseAdminPatch("profiles?user_id=eq." + user.id, {
-      is_paid: true,
-      razorpay_subscription_id: subscriptionId,
+    var basic = Buffer.from(process.env.RAZORPAY_KEY_ID + ":" + process.env.RAZORPAY_KEY_SECRET).toString("base64");
+    var subRes = await fetch("https://api.razorpay.com/v1/subscriptions/" + encodeURIComponent(subscriptionId), {
+      headers: { Authorization: "Basic " + basic },
     });
-    res.status(200).json({ ok: true });
+    if (!subRes.ok) {
+      console.error("Razorpay subscription lookup failed", subRes.status);
+      res.status(502).json({ error: "Could not confirm the payment with the payment provider. If you were charged, email focusboard.support@gmail.com." });
+      return;
+    }
+    subscription = await subRes.json();
+  } catch (e) {
+    console.error("Razorpay subscription lookup threw", e);
+    res.status(502).json({ error: "Could not confirm the payment with the payment provider. If you were charged, email focusboard.support@gmail.com." });
+    return;
+  }
+
+  var ownerId = subscription && subscription.notes && subscription.notes.supabase_user_id;
+  if (!ownerId || ownerId !== user.id) {
+    console.error("Payment verification rejected: subscription " + subscriptionId + " does not belong to user " + user.id);
+    res.status(403).json({ error: "That payment doesn't belong to this account." });
+    return;
+  }
+
+  // paid_until is what the client counts down ("Full access - N days left"). Razorpay
+  // gives us the end of the paid cycle on the subscription itself; fall back to a month
+  // out if it's missing so the field is never left empty.
+  var paidUntil = subscription.current_end
+    ? new Date(subscription.current_end * 1000).toISOString()
+    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  try {
+    var patchRes = await supabaseAdminPatch("profiles?user_id=eq." + encodeURIComponent(user.id), {
+      is_paid: true,
+      paid_until: paidUntil,
+      razorpay_subscription_id: subscriptionId,
+      razorpay_customer_id: subscription.customer_id || null,
+    });
+    if (!patchRes.ok) throw new Error("Supabase patch failed: " + patchRes.status);
+    res.status(200).json({ ok: true, paid_until: paidUntil });
   } catch (e) {
     console.error("Could not update profile after Razorpay payment", e);
     res.status(500).json({ error: "Payment succeeded, but updating your account failed -- please email focusboard.support@gmail.com." });

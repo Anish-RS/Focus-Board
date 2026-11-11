@@ -1,8 +1,16 @@
 {
   "name": "focus-board",
   "private": true,
-  "version": "1.0.0",
-  "description": "Serverless functions for Nudgeboard (Supabase config, Razorpay checkout/webhook, and a dormant Stripe integration kept in case India access opens up later). Plain Node fetch/crypto are used throughout, so there are no runtime dependencies to install. The frontend itself is plain static HTML/JS/CSS and needs no build step.",
+  "version": "1.1.0",
+  "description": "Serverless functions for Nudgeboard (Supabase config, Razorpay checkout/webhook, and a dormant Stripe integration kept in case India access opens up later). Plain Node fetch/crypto are used throughout, so there are no runtime dependencies to install beyond Stripe. The frontend itself is plain static HTML/JS/CSS and needs no build step.",
+  "engines": {
+    "node": ">=20.x"
+  },
+  "scripts": {
+    "build": "node scripts/check-required-env.js",
+    "check:env": "node scripts/check-required-env.js",
+    "serve": "python3 -m http.server 5173"
+  },
   "dependencies": {
     "stripe": "^17.4.0"
   }

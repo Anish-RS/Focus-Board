@@ -18,6 +18,15 @@
 //                  cron" apart from a random person hitting the URL. You can also call this
 //                  endpoint manually (e.g. from curl) with the same token to run it on demand.
 
+const crypto = require("crypto");
+
+function timingSafeEqual(a, b) {
+  const bufA = Buffer.from(String(a), "utf8");
+  const bufB = Buffer.from(String(b), "utf8");
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 function supabaseAdminFetch(path, options) {
   return fetch(process.env.SUPABASE_URL + "/rest/v1/" + path, {
     ...options,
@@ -64,7 +73,7 @@ module.exports = async (req, res) => {
     return;
   }
   var authHeader = req.headers["authorization"] || "";
-  if (authHeader !== "Bearer " + process.env.CRON_SECRET) {
+  if (!timingSafeEqual(authHeader, "Bearer " + process.env.CRON_SECRET)) {
     res.status(401).json({ error: "Not authorized." });
     return;
   }
@@ -90,19 +99,39 @@ module.exports = async (req, res) => {
       else if (UNPAID_STATUSES.indexOf(sub.status) !== -1) desiredPaid = false;
       else continue; // "created" / "authenticated" / "pending" -- not decided yet
 
+      // The end of the cycle Razorpay says has actually been paid for. Razorpay reports it
+      // in unix seconds; profiles.paid_until is the same moment, so the header can count
+      // down honestly and a cancellation never cuts off time the user already paid for.
+      var paidUntil = sub.current_end ? new Date(sub.current_end * 1000).toISOString() : null;
+
       try {
-        var profileRes = await supabaseAdminFetch("profiles?user_id=eq." + userId + "&select=is_paid,razorpay_subscription_id");
+        var profileRes = await supabaseAdminFetch(
+          "profiles?user_id=eq." + userId + "&select=is_paid,razorpay_subscription_id,paid_until"
+        );
         var profiles = await profileRes.json();
         var profile = profiles && profiles[0];
         if (!profile) continue; // no matching profile row (shouldn't normally happen)
 
-        var needsUpdate = profile.is_paid !== desiredPaid || profile.razorpay_subscription_id !== sub.id;
+        // Cancelled/halted/completed but still inside a paid period: leave them unlocked
+        // until paid_until lapses (the next daily run will finish the job).
+        if (!desiredPaid && profile.paid_until && new Date(profile.paid_until).getTime() > Date.now()) {
+          desiredPaid = true;
+        }
+
+        var needsUpdate =
+          profile.is_paid !== desiredPaid ||
+          profile.razorpay_subscription_id !== sub.id ||
+          (desiredPaid && paidUntil && profile.paid_until !== paidUntil);
         if (!needsUpdate) continue;
 
         var patchRes = await supabaseAdminFetch("profiles?user_id=eq." + userId, {
           method: "PATCH",
           headers: { Prefer: "return=minimal" },
-          body: JSON.stringify({ is_paid: desiredPaid, razorpay_subscription_id: sub.id }),
+          body: JSON.stringify({
+            is_paid: desiredPaid,
+            razorpay_subscription_id: sub.id,
+            ...(desiredPaid && paidUntil ? { paid_until: paidUntil } : {}),
+          }),
         });
         if (!patchRes.ok) {
           errors.push({ user_id: userId, subscription_id: sub.id, error: "Supabase patch failed: " + patchRes.status });

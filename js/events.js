@@ -115,12 +115,31 @@
       if (action === "clear-reminder") { STB.clearReminderTime(cardId); return; }
       if (action === "delete-card") {
         var foundDel = STB.findCard(cardId);
-        if (foundDel && foundDel.kind === "doc") STB.deleteDocument(cardId); else STB.deleteNote(cardId);
+        var isDoc = !!(foundDel && foundDel.kind === "doc");
+        var title = foundDel ? STB.autoTitleFor(foundDel.kind, foundDel.item) : "";
+        function reallyDelete() {
+          if (isDoc) STB.deleteDocument(cardId); else STB.deleteNote(cardId);
+        }
+        // Deleting used to be instant and permanent, with the "x" sitting a few pixels from
+        // the copy button. Now it's reversible for a few seconds instead of confirmed.
+        if (STB.withUndo) {
+          STB.withUndo(isDoc ? "document" : "note", "\u201c" + title + "\u201d deleted", reallyDelete);
+        } else {
+          reallyDelete();
+        }
         return;
       }
       if (action === "copy-card") { STB.copyCardText(cardId); return; }
       if (action === "toggle-item") { STB.toggleItem(cardId, btn.getAttribute("data-item-id")); return; }
-      if (action === "delete-item") { STB.deleteItem(cardId, btn.getAttribute("data-item-id")); return; }
+      if (action === "delete-item") {
+        var itemId = btn.getAttribute("data-item-id");
+        if (STB.withUndo) {
+          STB.withUndo("task", "Task deleted", function () { STB.deleteItem(cardId, itemId); });
+        } else {
+          STB.deleteItem(cardId, itemId);
+        }
+        return;
+      }
       if (action === "toggle-item-reminder") { STB.toggleItemReminderPicker(btn.getAttribute("data-item-id")); return; }
       if (action === "clear-item-reminder") { STB.clearItemReminderTime(cardId, btn.getAttribute("data-item-id")); return; }
       if (action === "toggle-picker") { STB.togglePicker(cardId); return; }
@@ -174,8 +193,17 @@
         var noteId = e.target.getAttribute("data-card-id");
         var val = e.target.value.trim();
         if (val) {
+          e.preventDefault();
           delete STB.draftItems[noteId];
           STB.addItem(noteId, val);
+          // Adding a task re-renders the card, which throws away the input element the
+          // caret was in. Without this, typing a list meant clicking back into the field
+          // after every single item.
+          requestAnimationFrame(function () {
+            var inputs = document.querySelectorAll('[data-role="add-item"][data-card-id="' + noteId + '"]');
+            var next = inputs[inputs.length - 1];
+            if (next) next.focus();
+          });
         }
       }
     });

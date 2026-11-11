@@ -22,6 +22,17 @@
   // (e.g. the Retry button, or actually signing out and back in) still starts fresh.
   var pendingAfterSignedIn = null; // { userId, promise }
 
+  // Both helpers fall back to the browser dialog if js/toast.js hasn't loaded, so this
+  // file keeps working on pages that don't include it (e.g. login.html).
+  function showError(message) {
+    if (typeof STB.alertToast === "function") STB.alertToast(message);
+    else window.alert(message);
+  }
+  function showInfo(message) {
+    if (typeof STB.toast === "function") STB.toast(message, { tone: "success", duration: 6000 });
+    else window.alert(message);
+  }
+
   function isConfigured() {
     return !!(
       window.STB_SUPABASE_URL &&
@@ -84,7 +95,10 @@
   // ---------- username availability + claiming ----------
   STB.checkUsernameAvailable = function (username) {
     var c = getClient();
-    if (!c) return Promise.resolve(false);
+    // Returning a bare `false` here used to be read by login.html as "no .available flag"
+    // and rendered as "That username is taken." -- so on a deployment where sync wasn't
+    // configured yet, every username anyone typed looked unavailable.
+    if (!c) return Promise.resolve({ available: false, reason: "Accounts aren't configured on this deployment yet." });
     var normalized = String(username || "").trim().toLowerCase();
     if (!/^[a-z0-9_]{3,20}$/.test(normalized)) {
       return Promise.resolve({ available: false, reason: "3-20 characters: letters, numbers, underscore only." });
@@ -291,6 +305,56 @@
     if (c && realtimeChannel) { c.removeChannel(realtimeChannel); realtimeChannel = null; }
   }
 
+  // ---- applying a remote board ----
+  // Two-device edits are still last-write-wins (the whole board is one JSON blob), but a
+  // remote update used to be applied the instant it arrived -- including in the middle of
+  // a sentence. Everything typed since the last render then vanished when the board was
+  // rebuilt, which looked like the app had eaten the text. So an update that lands while
+  // the caret is in a field is held back and applied once the user leaves the field (or
+  // after a short grace period, in case they never do).
+  var pendingRemoteData = null;
+  var pendingRemoteTimer = null;
+
+  function isTypingNow() {
+    var el = document.activeElement;
+    if (!el || !el.tagName) return false;
+    var tag = el.tagName.toUpperCase();
+    if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
+    return document.body.contains(el);
+  }
+
+  function applyRemoteBoard(data) {
+    applyingRemoteUpdate = true;
+    try {
+      STB.state = STB.normalizeAndRollover(data);
+      STB.saveState();
+      STB.render();
+    } finally {
+      applyingRemoteUpdate = false;
+    }
+  }
+
+  function flushPendingRemote() {
+    if (pendingRemoteData === null) return;
+    if (isTypingNow()) return;
+    var data = pendingRemoteData;
+    pendingRemoteData = null;
+    if (pendingRemoteTimer) { clearTimeout(pendingRemoteTimer); pendingRemoteTimer = null; }
+    applyRemoteBoard(data);
+  }
+
+  function queueRemoteBoard(data) {
+    if (!isTypingNow()) { applyRemoteBoard(data); return; }
+    pendingRemoteData = data;
+    if (pendingRemoteTimer) clearTimeout(pendingRemoteTimer);
+    pendingRemoteTimer = setTimeout(flushPendingRemote, 20000);
+  }
+
+  document.addEventListener("focusout", function () {
+    // Wait a tick: focusout fires before focus lands on whatever comes next.
+    setTimeout(flushPendingRemote, 0);
+  });
+
   function startRealtime(userId) {
     var c = getClient();
     if (!c) return;
@@ -302,11 +366,7 @@
         { event: "UPDATE", schema: "public", table: "boards", filter: "user_id=eq." + userId },
         function (payload) {
           if (!payload.new || !payload.new.data) return;
-          applyingRemoteUpdate = true;
-          STB.state = STB.normalizeAndRollover(payload.new.data);
-          STB.saveState();
-          STB.render();
-          applyingRemoteUpdate = false;
+          queueRemoteBoard(payload.new.data);
         }
       )
       .subscribe();
@@ -325,13 +385,30 @@
       });
   }
 
+  function reportSyncState(state, detail) {
+    if (STB.setSyncStatus) STB.setSyncStatus(state, detail);
+  }
+
   function pushToCloud() {
     var c = getClient();
     if (!c || !currentUser) return;
+    reportSyncState("saving");
     c.from("boards")
       .upsert({ user_id: currentUser.id, data: STB.state, updated_at: new Date().toISOString() })
       .then(function (res) {
-        if (res.error) console.error("Sync push failed", res.error);
+        if (!res.error) { reportSyncState("saved"); return; }
+        console.error("Sync push failed", res.error);
+        // 401/403 here almost always means the trial lapsed (the RLS policy blocks writes)
+        // or the session went stale -- both of which used to be completely invisible.
+        var code = res.error.code || "";
+        var status = res.status || 0;
+        if (/^PGRST30[13]$/.test(code) || status === 401 || status === 403) {
+          reportSyncState("readonly", "Your changes couldn't be saved to your account. If your trial has ended, upgrade to keep editing.");
+        } else if (!navigator.onLine) {
+          reportSyncState("offline");
+        } else {
+          reportSyncState("error");
+        }
       });
   }
 
@@ -508,7 +585,7 @@
   function submitNewPassword() {
     var password = document.getElementById("stb-recovery-password").value;
     var msg = document.getElementById("stb-recovery-msg");
-    if (!password || password.length < 6) { msg.textContent = "Choose a password with at least 6 characters."; return; }
+    if (!password || password.length < 8) { msg.textContent = "Choose a password with at least 8 characters."; return; }
     msg.textContent = "Saving\u2026";
     STB.updatePassword(password).then(function (res) {
       msg.textContent = res.error ? res.error.message : "Password updated.";
@@ -557,7 +634,7 @@
             }).catch(function (e) {
               bannerBtn.disabled = false;
               bannerBtn.textContent = upgradeLabel();
-              alert((e && e.message) || "Could not start checkout.");
+              showError((e && e.message) || "Could not start checkout.");
             });
           });
         }
@@ -643,7 +720,7 @@
           }).catch(function (e) {
             upgradeBtn.disabled = false;
             upgradeBtn.textContent = upgradeLabel();
-            alert((e && e.message) || "Could not start checkout.");
+            showError((e && e.message) || "Could not start checkout.");
           });
         });
       }
@@ -654,12 +731,12 @@
           cancelBtn.disabled = true;
           cancelBtn.textContent = "Cancelling\u2026";
           STB.cancelSubscription().then(function (body) {
-            alert(body.message || "Your subscription is cancelled.");
+            showInfo(body.message || "Your subscription is cancelled.");
             cancelBtn.textContent = "Cancelled";
           }).catch(function (e) {
             cancelBtn.disabled = false;
             cancelBtn.textContent = "Cancel plan";
-            alert((e && e.message) || "Could not cancel right now.");
+            showError((e && e.message) || "Could not cancel right now.");
           });
         });
       }

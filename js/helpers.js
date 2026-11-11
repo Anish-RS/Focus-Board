@@ -137,13 +137,23 @@
   STB.rollover = function (data) {
     var today = STB.todayKey();
     if (data.date === today) return data;
-    var yesterdayWeekday = new Date(data.date).getDay();
+    // A stored date that can't be parsed (hand-edited storage, a very old schema, a bad
+    // sync) used to make getDay() return NaN. Nothing matched the weekday filter, the
+    // history was written with a 0% day, and the streak silently reset. Skip the tally
+    // entirely in that case rather than record a day that never happened.
+    var previousDate = new Date(data.date);
+    var dateIsUsable = !isNaN(previousDate.getTime());
+    var yesterdayWeekday = dateIsUsable ? previousDate.getDay() : null;
     var yesterdayVisible = data.notes.filter(function (n) {
       return n.days.length === 0 || n.days.indexOf(yesterdayWeekday) !== -1;
     });
     var stats = STB.computeStats(yesterdayVisible);
-    var newHistory = (data.history || []).concat([{ date: data.date, percent: stats.percent }]).slice(-7);
-    var newStreak = stats.total > 0 && stats.percent === 100 ? (data.streak || 0) + 1 : 0;
+    var newHistory = dateIsUsable
+      ? (data.history || []).concat([{ date: data.date, percent: stats.percent }]).slice(-7)
+      : (data.history || []).slice(-7);
+    var newStreak = dateIsUsable
+      ? (stats.total > 0 && stats.percent === 100 ? (data.streak || 0) + 1 : 0)
+      : (data.streak || 0);
 
     var rolledNotes = [];
     data.notes.forEach(function (n) {

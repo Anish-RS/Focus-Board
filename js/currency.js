@@ -90,6 +90,9 @@
   }
 
   function refresh() {
+    // Same guard as js/config-loader.js: in an environment without fetch, the bare call
+    // used to throw and abort the rest of this script.
+    if (typeof fetch !== "function") return;
     var currency = detectCurrency();
     if (!currency) return; // unrecognized region (or India) -- INR-only is correct here
     var cached = readCache();

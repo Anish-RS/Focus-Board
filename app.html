@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Nudgeboard</title>
 <meta name="description" content="A cork board of sticky notes with weekly recurring routines and daily tasks that carry over when unfinished." />
+<meta name="color-scheme" content="light" />
 
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#2B2620" />
@@ -14,21 +15,24 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Sticky Board" />
 <meta name="mobile-web-app-capable" content="yes" />
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="preload" href="fonts/worksans-latin.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="fonts/fonts.css" />
 <link rel="stylesheet" href="styles.css" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="vendor/supabase-js-2.119.0.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
+<a class="stb-skip-link" href="#stb-board">Skip to the board</a>
+
 <div class="stb-root" id="stb-root">
   <div class="stb-auth" id="stb-auth"></div>
   <header class="stb-header">
-    <div>
+    <div class="stb-header-titles">
       <h1 class="stb-title">Today's board</h1>
-      <p class="stb-date" id="stb-date"></p>
+      <p class="stb-date-wrap">
+        <span class="stb-date" id="stb-date"></span>
+        <span class="stb-sync-status" id="stb-sync-status"><span class="stb-sync-dot" aria-hidden="true"></span><span>Saved</span></span>
+      </p>
     </div>
     <div class="stb-header-actions">
       <button class="stb-reminder-btn" id="stb-reminder-btn" type="button"></button>
@@ -38,15 +42,17 @@
     </div>
   </header>
 
-  <div class="stb-readonly-banner" id="stb-readonly-banner"></div>
+  <div class="stb-readonly-banner" id="stb-readonly-banner" role="status"></div>
 
   <div id="stb-ios-tip"></div>
 
-  <div class="stb-main">
-    <div class="stb-board" id="stb-board"></div>
-    <aside class="stb-clipboard" id="stb-clipboard"></aside>
+  <div class="stb-main" role="main">
+    <div class="stb-board" id="stb-board" tabindex="-1"></div>
+    <aside class="stb-clipboard" id="stb-clipboard" aria-label="Today's progress"></aside>
   </div>
 </div>
+
+<div class="stb-toasts" id="stb-toasts" role="status" aria-live="polite"></div>
 
 <script src="js/constants.js"></script>
 <script src="js/helpers.js"></script>
@@ -55,6 +61,10 @@
 <script src="js/popout.js"></script>
 <script src="js/events.js"></script>
 <script src="js/reminders.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/undo.js"></script>
+<script src="js/shortcuts.js"></script>
+<script src="js/sync-status.js"></script>
 <script src="js/config-loader.js"></script>
 <script src="js/currency.js"></script>
 <script src="js/sync.js"></script>

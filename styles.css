@@ -847,3 +847,461 @@ body {
   opacity: 1;
   margin-top: 14px;
 }
+
+/* ==========================================================================
+   v2 UI/UX polish layer
+   Appended deliberately so every rule here builds on (and can override) the
+   original sheet without rewriting it. The goals, in order:
+     1. Keyboard users can see where they are (the old sheet removed every
+        focus outline and put nothing back).
+     2. Destructive and background actions tell you what happened (toasts).
+     3. Touch targets are actually tappable (checkbox was 17px square).
+     4. Motion respects prefers-reduced-motion, like the marketing page does.
+   ========================================================================== */
+
+:root {
+  --stb-ink: #2B2620;
+  --stb-ink-soft: #6B6152;
+  --stb-cream: #FBF8F1;
+  --stb-line: #E3DCC8;
+  --stb-ok: #3A4B24;
+  --stb-warn: #6B4E12;
+  --stb-danger: #6B322A;
+  --stb-info: #20424C;
+  --stb-radius: 8px;
+  --stb-shadow-card: 0 8px 16px rgba(0,0,0,0.22), 0 1px 3px rgba(0,0,0,0.15);
+  --stb-shadow-card-hover: 0 14px 26px rgba(0,0,0,0.28), 0 2px 5px rgba(0,0,0,0.18);
+  --stb-shadow-lift: 0 20px 40px rgba(0,0,0,0.35), 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* ---------- 1. focus visibility ---------- */
+.stb-root :focus-visible,
+.stb-modal :focus-visible,
+.stb-toast :focus-visible,
+.stb-alarm-card :focus-visible {
+  outline: 2px solid var(--stb-ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Cards sit on the cork, where a dark ring is low contrast: give them cream. */
+.stb-note :focus-visible,
+.stb-doc :focus-visible,
+.stb-clipboard :focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.stb-add-btn:focus-visible,
+.stb-install-btn:focus-visible,
+.stb-reminder-btn:focus-visible {
+  outline: 2px solid var(--stb-cream);
+  outline-offset: 2px;
+}
+.stb-item-input:focus-visible,
+.stb-doc-text:focus-visible,
+.stb-note-title:focus-visible,
+.stb-additem-input:focus-visible {
+  outline: none; /* text fields already show a caret + underline change */
+}
+
+/* ---------- 2. skip link ---------- */
+.stb-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 4000;
+  background: var(--stb-ink);
+  color: var(--stb-cream);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.stb-skip-link:focus {
+  left: 16px;
+}
+
+/* ---------- 3. header: title + save status ---------- */
+.stb-header-titles { min-width: 0; }
+.stb-date-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 6px 0 0 2px;
+}
+.stb-date-wrap .stb-date { margin: 0; }
+
+.stb-sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: rgba(251,248,241,0.92);
+  background: rgba(0,0,0,0.18);
+  border-radius: 20px;
+  padding: 3px 9px 3px 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.stb-sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #C9D6B8;
+  flex: none;
+  transition: background 0.2s ease;
+}
+.stb-sync-status.is-saving .stb-sync-dot { background: #F5E6A8; animation: stb-pulse 1.1s ease-in-out infinite; }
+.stb-sync-status.is-error,
+.stb-sync-status.is-readonly { background: #6B322A; color: #FBF8F1; }
+.stb-sync-status.is-error .stb-sync-dot,
+.stb-sync-status.is-readonly .stb-sync-dot { background: #E8C5C0; }
+.stb-sync-status.is-offline { background: rgba(0,0,0,0.32); }
+.stb-sync-status.is-offline .stb-sync-dot { background: #B9D3DD; }
+.stb-sync-status.is-local { background: rgba(0,0,0,0.12); color: rgba(251,248,241,0.75); }
+.stb-sync-status.is-local .stb-sync-dot { background: rgba(251,248,241,0.55); }
+@keyframes stb-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.82); }
+}
+
+/* ---------- 4. toasts ---------- */
+.stb-toasts {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 1500;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+  width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.stb-toast {
+  pointer-events: auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--stb-ink);
+  color: var(--stb-cream);
+  border-radius: 10px;
+  padding: 12px 12px 12px 16px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.stb-toast.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+.stb-toast.is-leaving { opacity: 0; transform: translateY(8px) scale(0.98); }
+.stb-toast--success { background: #33421F; }
+.stb-toast--warn { background: #6B322A; }
+.stb-toast-text { flex: 1; min-width: 0; }
+.stb-toast-action {
+  flex: none;
+  background: rgba(251,248,241,0.14);
+  color: var(--stb-cream);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.stb-toast-action:hover { background: rgba(251,248,241,0.26); }
+.stb-toast-close {
+  flex: none;
+  background: none;
+  border: none;
+  color: var(--stb-cream);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+.stb-toast-close:hover { opacity: 1; }
+
+/* ---------- 5. shortcuts / help dialog ---------- */
+.stb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 14, 8, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2200;
+  padding: 20px;
+  animation: stb-alarm-fade-in 0.2s ease;
+}
+.stb-modal {
+  background: var(--stb-cream);
+  color: var(--stb-ink);
+  border-radius: 14px;
+  padding: 26px 24px 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--stb-shadow-lift);
+  font-family: 'Work Sans', sans-serif;
+  animation: stb-alarm-pop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.stb-modal-title {
+  font-family: 'Caveat', cursive;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+.stb-shortcut-list { list-style: none; margin: 0; padding: 0; }
+.stb-shortcut-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--stb-line);
+  font-size: 13.5px;
+}
+.stb-shortcut-list li:last-child { border-bottom: none; }
+.stb-shortcut-keys { display: flex; gap: 4px; flex: none; }
+kbd {
+  display: inline-block;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 5px 7px;
+  min-width: 22px;
+  text-align: center;
+  color: var(--stb-ink);
+  background: #EFE9DA;
+  border: 1px solid #D7CEB8;
+  border-bottom-width: 2px;
+  border-radius: 5px;
+}
+.stb-modal-close {
+  width: 100%;
+  margin-top: 18px;
+  background: var(--stb-ink);
+  color: var(--stb-cream);
+  border: none;
+  border-radius: 7px;
+  padding: 11px 16px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.stb-modal-close:hover { background: #453d32; }
+
+/* ---------- 6. cards: affordance + feedback ---------- */
+.stb-note,
+.stb-doc {
+  box-shadow: var(--stb-shadow-card);
+  transition: box-shadow 0.18s ease, transform 0.12s ease;
+}
+.stb-note:hover,
+.stb-doc:hover { box-shadow: var(--stb-shadow-card-hover); }
+.stb-note.is-dragging,
+.stb-doc.is-dragging {
+  box-shadow: var(--stb-shadow-lift);
+  transition: box-shadow 0.12s ease;
+}
+.stb-note-actions > button {
+  opacity: 0.35;
+  border-radius: 4px;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.stb-note:hover .stb-note-actions > button,
+.stb-doc:hover .stb-note-actions > button,
+.stb-note-actions > button:focus-visible { opacity: 0.8; }
+.stb-note-actions > button:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.08);
+}
+.stb-checkbox {
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.stb-checkbox:active { transform: scale(0.88); }
+.stb-item { border-radius: 4px; }
+.stb-item-delete,
+.stb-item-reminder {
+  transition: opacity 0.15s ease;
+}
+.stb-item:hover .stb-item-delete,
+.stb-item:hover .stb-item-reminder { opacity: 0.6; }
+.stb-swatch {
+  transition: transform 0.12s ease;
+}
+.stb-swatch:hover { transform: scale(1.18); }
+
+/* ---------- 7. empty state ---------- */
+.stb-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.stb-empty-title {
+  font-family: 'Caveat', cursive;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--stb-cream);
+  margin-bottom: 2px;
+}
+.stb-empty p { max-width: 42ch; }
+.stb-empty-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 16px;
+}
+.stb-empty button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 0;
+}
+.stb-empty button.stb-empty-secondary {
+  background: rgba(251,248,241,0.16);
+  color: var(--stb-cream);
+  border: 1px solid rgba(251,248,241,0.4);
+}
+.stb-empty button.stb-empty-secondary:hover { background: rgba(251,248,241,0.26); }
+.stb-empty-hint {
+  margin-top: 18px;
+  font-size: 12px;
+  color: rgba(251,248,241,0.7);
+}
+.stb-empty-hint kbd {
+  background: rgba(251,248,241,0.16);
+  border-color: rgba(251,248,241,0.32);
+  color: var(--stb-cream);
+  padding: 3px 5px;
+  font-size: 10px;
+}
+
+/* ---------- 8. board sizing that respects small viewports ---------- */
+.stb-board {
+  height: clamp(420px, 62vh, 760px);
+}
+@supports (height: 1dvh) {
+  .stb-board { height: clamp(420px, 62dvh, 760px); }
+}
+@media (max-width: 819px) {
+  .stb-board { height: clamp(380px, 58dvh, 680px); }
+}
+
+/* ---------- 9. touch devices: bigger targets, visible controls ---------- */
+@media (hover: none), (pointer: coarse) {
+  .stb-checkbox { width: 22px; height: 22px; border-radius: 6px; }
+  .stb-item-delete,
+  .stb-item-reminder { opacity: 0.55; padding: 6px; }
+  .stb-note-actions > button { opacity: 0.5; padding: 5px; }
+  .stb-swatch { width: 18px; height: 18px; }
+  .stb-note-footer { row-gap: 8px; }
+  .stb-repeat-btn, .stb-reminder-btn { padding: 5px 9px; font-size: 11px; }
+  .stb-day-chip { width: 28px; height: 28px; font-size: 11px; }
+  .stb-day-done { height: 28px; padding: 0 12px; }
+  .stb-item-input { font-size: 15px; } /* also stops iOS zoom-on-focus */
+  .stb-additem-input { font-size: 15px; }
+  .stb-note-title { font-size: 23px; }
+}
+
+/* Stack the header controls into a tidy 2-up grid on phones instead of four
+   full-width buttons, which pushed the actual board below the fold. */
+@media (max-width: 680px) {
+  .stb-root { padding: 14px; border-radius: 10px; }
+  .stb-header { gap: 14px; margin-bottom: 14px; }
+  .stb-header-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stb-header-actions .stb-add-btn,
+  .stb-header-actions .stb-install-btn,
+  .stb-header-actions .stb-reminder-btn {
+    width: auto;
+    flex: 1 1 calc(50% - 4px);
+    justify-content: center;
+    padding: 11px 12px;
+    font-size: 13px;
+  }
+  .stb-trial-badge { font-size: 11.5px; }
+  .stb-clipboard { padding: 30px 16px 20px; }
+}
+
+/* ---------- 10. clipboard / stats column ---------- */
+.stb-stat-line { font-variant-numeric: tabular-nums; }
+.stb-carried-line {
+  font-size: 12px;
+  color: #8a6a2f;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.stb-streak { font-weight: 600; }
+.stb-week-bars { align-items: flex-end; }
+.stb-bar { transition: height 0.4s ease; }
+.stb-reveal-btn { transition: background 0.15s ease; }
+
+/* ---------- 11. respect reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .stb-toast,
+  .stb-toast.is-visible,
+  .stb-toast.is-leaving {
+    transition: opacity 0.01s linear;
+    transform: none;
+  }
+  .stb-alarm-card,
+  .stb-modal,
+  .stb-alarm-overlay,
+  .stb-modal-overlay {
+    animation: none;
+  }
+  .stb-alarm-bell,
+  .stb-sync-status.is-saving .stb-sync-dot {
+    animation: none;
+  }
+  .stb-note,
+  .stb-doc,
+  .stb-bar,
+  .stb-swatch,
+  .stb-checkbox {
+    transition: none;
+  }
+}
+
+/* ---------- 12. print: the board is a useful paper checklist ---------- */
+@media print {
+  .stb-root { background: #fff; padding: 0; }
+  .stb-header-actions,
+  .stb-auth,
+  .stb-sync-status,
+  .stb-readonly-banner,
+  .stb-clipboard,
+  .stb-toasts,
+  .stb-note-actions,
+  .stb-additem-input,
+  .stb-swatches,
+  .stb-skip-link { display: none !important; }
+  .stb-board { height: auto; overflow: visible; background: none; box-shadow: none; }
+  .stb-note, .stb-doc {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    margin-bottom: 12px;
+    break-inside: avoid;
+  }
+  .stb-title { color: #000; }
+}

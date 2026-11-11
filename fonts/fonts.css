@@ -1,0 +1,10 @@
+/* Self-hosted webfonts (latin subset, variable).
+   Why self-hosted: it removes two third-party origins from every page load, keeps the
+   fonts working offline through the service worker, and means a Google Fonts outage
+   can't make the board render in a fallback font. Downloaded from Google Fonts under
+   the SIL Open Font License; re-download with the command in README if you need to
+   update a family. */
+
+@font-face{font-family:'Caveat';font-style:normal;font-weight:400 700;font-display:swap;src:url('caveat-latin.woff2') format('woff2');}
+@font-face{font-family:'Fraunces';font-style:normal;font-weight:100 900;font-display:swap;src:url('fraunces-latin.woff2') format('woff2');}
+@font-face{font-family:'Work Sans';font-style:normal;font-weight:100 900;font-display:swap;src:url('worksans-latin.woff2') format('woff2');}

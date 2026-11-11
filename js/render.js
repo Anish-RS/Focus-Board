@@ -1,28 +1,54 @@
 (function (STB) {
   "use strict";
 
+  // Board data can come back from the cloud, from an older version of this app, or from a
+  // hand-edited row. Every value below ends up inside either a style="" attribute or a
+  // title=""/value="" attribute, so it is treated as untrusted for formatting purposes:
+  // anything destined for CSS is coerced to a number, anything destined for an attribute is
+  // escaped. Two real bugs this closes -- STB.PALETTE[badIndex] used to throw and blank the
+  // whole board, and an unescaped reminderTime could break out of its title attribute.
+  function num(value, fallback) {
+    var n = Number(value);
+    return isFinite(n) ? n : fallback;
+  }
+  function paletteFor(color) {
+    return STB.PALETTE[num(color, 0)] || STB.PALETTE[0];
+  }
+  function safeTime(value) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value || "")) ? String(value) : "";
+  }
+  function cardActionsHidden(opts) { return !!(opts && opts.hideActions); }
+
   function noteHTML(note, opts) {
     opts = opts || {};
-    var pal = STB.PALETTE[note.color];
+    var pal = paletteFor(note.color);
     var ICON = STB.ICON;
-    var recurring = note.days.length > 0;
+    var recurring = (note.days || []).length > 0;
     var isPickerOpen = STB.openDayPickerId === note.id;
     var isCopied = STB.copiedId === note.id;
     var isDragging = STB.activeDragId === note.id;
-    var style = "background:" + pal.bg + "; left:" + note.x + "px; top:" + note.y + "px; transform:rotate(" + note.rotation + "deg); z-index:" + (isDragging ? STB.MAX_Z_INDEX : (note.zIndex || 1)) + (note.width ? "; width:" + note.width + "px;" : "") + ";";
+    var noteWidth = num(note.width, 0);
+    var style =
+      "background:" + pal.bg +
+      "; left:" + num(note.x, 30) + "px" +
+      "; top:" + num(note.y, 30) + "px" +
+      "; transform:rotate(" + num(note.rotation, 0) + "deg)" +
+      "; z-index:" + (isDragging ? STB.MAX_Z_INDEX : num(note.zIndex, 1)) +
+      (noteWidth > 0 ? "; width:" + noteWidth + "px;" : ";") +
+      ";";
 
-    var itemsHTML = note.items.map(function (it) {
+    var itemsHTML = (note.items || []).map(function (it) {
       var cbStyle = it.done ? "background:" + pal.ink + ";border-color:" + pal.ink + ";" : "border-color:" + pal.ink + ";";
       var carriedDot = it.carried
         ? '<span class="stb-carried-dot" style="background:' + pal.ink + ';" title="Carried over from yesterday, still pending"></span>'
         : "";
       var itemReminderBtn =
-        '<button class="stb-item-reminder' + (it.reminderTime ? " has-reminder" : "") + '" style="color:' + pal.ink + ';" data-action="toggle-item-reminder" data-card-id="' + note.id + '" data-item-id="' + it.id + '" title="' + (it.reminderTime ? "Reminder at " + it.reminderTime + " -- click to change" : "Set a time to be reminded about this task") + '" aria-label="Set a reminder for this task">' + ICON.bell(10) + "</button>";
+        '<button class="stb-item-reminder' + (it.reminderTime ? " has-reminder" : "") + '" style="color:' + pal.ink + ';" data-action="toggle-item-reminder" data-card-id="' + note.id + '" data-item-id="' + it.id + '" title="' + (it.reminderTime ? "Reminder at " + safeTime(it.reminderTime) + " -- click to change" : "Set a time to be reminded about this task") + '" aria-label="Set a reminder for this task">' + ICON.bell(10) + "</button>";
       var itemReminderRow = "";
       if (STB.openItemReminderId === it.id) {
         itemReminderRow =
           '<div class="stb-item-reminder-row">' +
-          '<input type="time" class="stb-reminder-input" data-role="item-reminder-time" data-card-id="' + note.id + '" data-item-id="' + it.id + '" value="' + (it.reminderTime || "") + '" style="color:' + pal.ink + ';" />' +
+          '<input type="time" class="stb-reminder-input" data-role="item-reminder-time" data-card-id="' + note.id + '" data-item-id="' + it.id + '" value="' + safeTime(it.reminderTime) + '" style="color:' + pal.ink + ';" />' +
           (it.reminderTime
             ? '<button class="stb-reminder-clear" data-action="clear-item-reminder" data-card-id="' + note.id + '" data-item-id="' + it.id + '" style="color:' + pal.ink + ';" title="Remove reminder" aria-label="Remove reminder">' + ICON.x(11) + "</button>"
             : "") +
@@ -44,13 +70,13 @@
     }).join("");
 
     var dayLabel = recurring
-      ? note.days.slice().sort(function (a, b) { return a - b; }).map(function (d) { return STB.DAY_LETTERS[d]; }).join(" ")
+      ? (note.days || []).slice().sort(function (a, b) { return a - b; }).map(function (d) { return STB.DAY_LETTERS[d]; }).join(" ")
       : "Just today";
 
     var pickerHTML = "";
     if (isPickerOpen) {
       var chips = STB.DAY_LETTERS.map(function (d, i) {
-        var on = note.days.indexOf(i) !== -1;
+        var on = (note.days || []).indexOf(i) !== -1;
         var chipStyle = on ? "background:" + pal.ink + ";border-color:" + pal.ink + ";color:" + pal.bg + ";" : "border-color:" + pal.ink + ";color:" + pal.ink + ";";
         return '<button class="stb-day-chip" title="' + STB.DAY_NAMES[i] + '" style="' + chipStyle + '" data-action="toggle-day" data-card-id="' + note.id + '" data-day-index="' + i + '">' + d + "</button>";
       }).join("");
@@ -65,7 +91,7 @@
     if (isReminderPickerOpen) {
       reminderPickerHTML =
         '<div class="stb-reminder-row">' +
-        '<input type="time" class="stb-reminder-input" data-role="reminder-time" data-card-id="' + note.id + '" value="' + (note.reminderTime || "") + '" style="color:' + pal.ink + ';" />' +
+        '<input type="time" class="stb-reminder-input" data-role="reminder-time" data-card-id="' + note.id + '" value="' + safeTime(note.reminderTime) + '" style="color:' + pal.ink + ';" />' +
         (note.reminderTime
           ? '<button class="stb-reminder-clear" data-action="clear-reminder" data-card-id="' + note.id + '" style="color:' + pal.ink + ';" title="Remove reminder" aria-label="Remove reminder">' + ICON.x(11) + "</button>"
           : "") +
@@ -98,7 +124,7 @@
       '<div class="stb-note-footer">' +
       '<div class="stb-schedule-group">' +
       '<button class="stb-repeat-btn" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-picker" data-card-id="' + note.id + '">' + ICON.repeat(11) + " " + dayLabel + "</button>" +
-      '<button class="stb-reminder-btn" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-reminder-picker" data-card-id="' + note.id + '" title="' + (note.reminderTime ? "Reminder at " + note.reminderTime + " -- click to change" : "Set a time to be reminded about this note") + '">' + ICON.bell(11) + (note.reminderTime ? " " + note.reminderTime : "") + "</button>" +
+      '<button class="stb-reminder-btn" style="color:' + pal.ink + ";border-color:" + pal.ink + ';" data-action="toggle-reminder-picker" data-card-id="' + note.id + '" title="' + (note.reminderTime ? "Reminder at " + safeTime(note.reminderTime) + " -- click to change" : "Set a time to be reminded about this note") + '">' + ICON.bell(11) + (note.reminderTime ? " " + safeTime(note.reminderTime) : "") + "</button>" +
       "</div>" +
       '<div class="stb-swatches">' + swatchesHTML + "</div>" +
       "</div>" +
@@ -110,12 +136,20 @@
 
   function docHTML(doc, opts) {
     opts = opts || {};
-    var pal = STB.PALETTE[doc.color];
+    var pal = paletteFor(doc.color);
     var ICON = STB.ICON;
     var isCopied = STB.copiedId === doc.id;
     var isDragging = STB.activeDragId === doc.id;
-    var sizeStyle = (doc.width ? "width:" + doc.width + "px;" : "") + (doc.height ? "height:" + doc.height + "px;" : "");
-    var style = "background:" + pal.bg + "; left:" + doc.x + "px; top:" + doc.y + "px; transform:rotate(" + doc.rotation + "deg); z-index:" + (isDragging ? STB.MAX_Z_INDEX : (doc.zIndex || 1)) + ";" + sizeStyle;
+    var docW = num(doc.width, 0);
+    var docH = num(doc.height, 0);
+    var sizeStyle = (docW > 0 ? "width:" + docW + "px;" : "") + (docH > 0 ? "height:" + docH + "px;" : "");
+    var style =
+      "background:" + pal.bg +
+      "; left:" + num(doc.x, 30) + "px" +
+      "; top:" + num(doc.y, 30) + "px" +
+      "; transform:rotate(" + num(doc.rotation, 0) + "deg)" +
+      "; z-index:" + (isDragging ? STB.MAX_Z_INDEX : num(doc.zIndex, 1)) +
+      ";" + sizeStyle;
 
     var swatchesHTML = STB.PALETTE.map(function (p, idx) {
       var shadow = idx === doc.color ? "0 0 0 2px " + p.ink : "none";
@@ -153,9 +187,9 @@
   }
 
   function placeholderHTML(item, kind) {
-    var pal = STB.PALETTE[item.color];
+    var pal = paletteFor(item.color);
     var w = kind === "doc" ? STB.DOC_W : STB.NOTE_W;
-    var style = "background:" + pal.bg + "; left:" + item.x + "px; top:" + item.y + "px; width:" + w + "px; border:2px dashed " + pal.ink + "; opacity:0.7;";
+    var style = "background:" + pal.bg + "; left:" + num(item.x, 30) + "px; top:" + num(item.y, 30) + "px; width:" + w + "px; border:2px dashed " + pal.ink + "; opacity:0.7;";
     return (
       '<div class="stb-placeholder" data-action="focus-popout" data-card-id="' + item.id + '" style="' + style + '">' +
       '<div class="stb-placeholder-title" style="color:' + pal.ink + ';">' + STB.escapeAttr(STB.autoTitleFor(kind, item)) + "</div>" +
@@ -228,8 +262,15 @@
     var docs = STB.state.documents.filter(function (d) { return !d.archived; });
     if (visible.length === 0 && docs.length === 0) {
       board.innerHTML =
-        '<div class="stb-empty"><p>The board\'s empty. Pin a task, or start a running-notes page for something you\'re studying.</p>' +
-        '<button data-action="add-note">+ New note</button></div>';
+        '<div class="stb-empty">' +
+        '<p class="stb-empty-title">The board\'s empty.</p>' +
+        "<p>Pin a task, or start a running-notes page for something you\'re studying.</p>" +
+        '<div class="stb-empty-actions">' +
+        '<button data-action="add-note">' + STB.ICON.plus(14) + " New note</button>" +
+        '<button data-action="add-doc" class="stb-empty-secondary">' + STB.ICON.plus(14) + " New document</button>" +
+        "</div>" +
+        '<p class="stb-empty-hint">Tip: press <kbd>N</kbd> for a note, <kbd>?</kbd> for shortcuts</p>' +
+        "</div>";
     } else {
       var noteMarkup = visible.map(function (n) {
         return STB.poppedOutWindows[n.id] ? placeholderHTML(n, "note") : noteHTML(n);
@@ -292,18 +333,18 @@
       '<h2 class="stb-clipboard-heading">Dedication</h2>' +
       '<p class="stb-clipboard-date">' + STB.formattedDate() + "</p>" +
       savedSectionHTML +
-      '<div class="stb-ring-wrap"><svg width="118" height="118" viewBox="0 0 120 120">' +
+      '<div class="stb-ring-wrap"><svg width="118" height="118" viewBox="0 0 120 120" role="img" aria-label="' + stats.completed + " of " + stats.total + ' tasks done today, ' + stats.percent + ' percent">' +
       '<circle cx="60" cy="60" r="' + STB.RING_R + '" fill="none" stroke="#E3DCC8" stroke-width="10" />' +
       '<circle cx="60" cy="60" r="' + STB.RING_R + '" fill="none" stroke="#2F4858" stroke-width="10" stroke-linecap="round" stroke-dasharray="' + STB.RING_C + '" stroke-dashoffset="' + offset + '" transform="rotate(-90 60 60)" style="transition: stroke-dashoffset 0.6s ease;" />' +
       '<text x="60" y="57" text-anchor="middle" font-size="22" font-weight="700" fill="#2B2620" font-family="Work Sans, sans-serif">' + stats.percent + "%</text>" +
       '<text x="60" y="74" text-anchor="middle" font-size="9" fill="#6B6152" font-family="Work Sans, sans-serif">done today</text>' +
       "</svg></div>" +
-      '<p class="stb-stat-line">' + stats.completed + " of " + stats.total + " pinned task" + (stats.total === 1 ? "" : "s") + " done</p>" +
+      '<p class="stb-stat-line" aria-live="polite">' + stats.completed + " of " + stats.total + " pinned task" + (stats.total === 1 ? "" : "s") + " done</p>" +
       (carriedPending > 0 ? '<p class="stb-carried-line">' + carriedPending + " carried over from yesterday</p>" : "") +
       streakHTML +
       '<p class="stb-week-label">Last few days</p>' +
-      '<div class="stb-week-bars">' + barsHTML + "</div>" +
-      '<button class="stb-reveal-btn' + (STB.showSummary ? " is-open" : "") + '" id="stb-reveal-btn">' + (STB.showSummary ? "Hide summary" : "Read my summary") + " " + STB.ICON.chevronDown(15) + "</button>" +
+      '<div class="stb-week-bars" aria-hidden="true">' + barsHTML + "</div>" +
+      '<button type="button" class="stb-reveal-btn' + (STB.showSummary ? " is-open" : "") + '" id="stb-reveal-btn" aria-expanded="' + (STB.showSummary ? "true" : "false") + '">' + (STB.showSummary ? "Hide summary" : "Read my summary") + " " + STB.ICON.chevronDown(15) + "</button>" +
       '<div class="stb-narrative' + (STB.showSummary ? " is-open" : "") + '"><p>' + narrative + "</p></div>";
 
     document.getElementById("stb-reveal-btn").addEventListener("click", function () {
