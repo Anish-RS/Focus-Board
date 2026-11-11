@@ -1305,3 +1305,133 @@ kbd {
   }
   .stb-title { color: #000; }
 }
+
+/* ---------- 13. "Nudgeboard for Windows" card (?desktop=1) ----------
+   Shown only when someone arrives from the landing page's desktop section. The action it
+   offers depends on state: sign in (no session), upgrade (signed in, unpaid), or download
+   (paid). The paid check itself happens server-side -- this is just the affordance. */
+.stb-desktop-card {
+  background: #FBF8F1;
+  color: #2B2620;
+  border-radius: 8px;
+  padding: 18px 20px 16px;
+  margin-bottom: 16px;
+  border-left: 4px solid #C9D6B8;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+}
+.stb-desktop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.stb-desktop-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #3A4B24;
+}
+.stb-desktop-close {
+  border: none;
+  background: transparent;
+  color: rgba(43, 38, 32, 0.45);
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.stb-desktop-close:hover { background: rgba(43, 38, 32, 0.08); color: #2B2620; }
+.stb-desktop-title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 21px;
+  font-weight: 600;
+  margin: 2px 0 6px;
+}
+.stb-desktop-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: rgba(43, 38, 32, 0.78);
+  margin: 0 0 12px;
+  max-width: 62ch;
+}
+.stb-desktop-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.stb-desktop-btn {
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 6px;
+  border: none;
+  background: #2B2620;
+  color: #FBF8F1;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.stb-desktop-btn:hover { background: #3d362e; }
+.stb-desktop-btn:disabled { opacity: 0.6; cursor: default; }
+.stb-desktop-btn--ghost {
+  background: transparent;
+  color: rgba(43, 38, 32, 0.7);
+  border: 1px solid rgba(43, 38, 32, 0.22);
+}
+.stb-desktop-btn--ghost:hover { background: rgba(43, 38, 32, 0.06); color: #2B2620; }
+.stb-desktop-fine {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(43, 38, 32, 0.55);
+  margin: 10px 0 0;
+}
+
+/* ---------- 14. solo mode (?solo=<cardId>) ----------
+   One card, filling the window -- what the desktop build shows inside each frameless note
+   window. Everything that belongs to the app as a whole is hidden; the card itself is
+   positioned by a per-window stylesheet from js/solo-mode.js, because its id is dynamic. */
+html.stb-solo-mode,
+html.stb-solo-mode body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #FBF8F1;
+}
+.stb-solo-mode .stb-root {
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  min-height: 0;
+  border-radius: 0;
+  background: none;
+  background-image: none;
+}
+.stb-solo-mode .stb-header,
+.stb-solo-mode .stb-clipboard,
+.stb-solo-mode .stb-desktop-card,
+.stb-solo-mode .stb-readonly-banner,
+.stb-solo-mode #stb-ios-tip,
+.stb-solo-mode .stb-auth,
+.stb-solo-mode .stb-skip-link,
+.stb-solo-mode .stb-toasts,
+.stb-solo-mode .stb-empty {
+  display: none !important;
+}
+.stb-solo-mode .stb-main {
+  display: block;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+.stb-solo-mode .stb-board {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+  overflow: hidden;
+}

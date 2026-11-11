@@ -660,6 +660,66 @@
     .note-c{ top:190px; }
   }
 </style>
+<style>
+  /* ---------- desktop app section ---------- */
+  .desktop-app{ padding:84px 0; }
+  .desktop-panel{
+    display:grid; grid-template-columns:1.12fr .88fr; gap:44px; align-items:center;
+    background:var(--cream); border-radius:6px; padding:44px 44px 40px;
+    box-shadow:0 18px 44px rgba(43,38,32,0.16);
+  }
+  .desktop-copy h2{
+    font-family:'Fraunces', Georgia, serif; font-weight:600; font-size:34px; line-height:1.14;
+    color:var(--ink); margin:0 0 13px;
+  }
+  .desktop-copy p{ font-size:15.5px; line-height:1.62; color:rgba(43,38,32,0.78); margin:0 0 16px; }
+  .desktop-copy em{ font-style:italic; color:rgba(43,38,32,0.62); }
+  .desktop-points{ list-style:none; padding:0; margin:0 0 24px; display:grid; gap:9px; }
+  .desktop-points li{
+    position:relative; padding-left:24px; font-size:14.5px; line-height:1.45;
+    color:rgba(43,38,32,0.84);
+  }
+  .desktop-points li::before{
+    content:""; position:absolute; left:1px; top:6px; width:10px; height:10px;
+    border-radius:2px; background:var(--sage); box-shadow:inset 0 0 0 1px rgba(58,75,36,0.25);
+  }
+  .desktop-points kbd{
+    font-family:'Work Sans', sans-serif; font-size:12px; font-weight:600;
+    background:var(--paper); border:1px solid rgba(43,38,32,0.18); border-bottom-width:2px;
+    border-radius:4px; padding:1px 5px; color:rgba(43,38,32,0.8);
+  }
+  .desktop-actions{ margin-bottom:0; }
+  .desktop-fine{
+    font-size:12.5px !important; line-height:1.55; color:rgba(43,38,32,0.6) !important;
+    margin:16px 0 0 !important; max-width:46ch;
+  }
+  .desktop-fine strong{ color:rgba(43,38,32,0.82); font-weight:600; }
+
+  .desktop-visual{ position:relative; height:268px; }
+  .dv-note{
+    position:absolute; width:152px; height:152px; border-radius:4px; padding:15px 14px;
+    box-shadow:0 14px 28px rgba(43,38,32,0.24), 0 2px 6px rgba(43,38,32,0.12);
+  }
+  .dv-note--butter{ background:var(--butter); left:2%; top:12px; transform:rotate(-4deg); }
+  .dv-note--sky{ background:var(--sky); right:0; top:34px; transform:rotate(3.5deg); }
+  .dv-note--blush{ background:var(--blush); left:33%; bottom:2px; transform:rotate(-1.5deg); }
+  .dv-pin{
+    position:absolute; top:-6px; left:50%; margin-left:-5px; width:10px; height:10px;
+    border-radius:50%; background:#6B322A; box-shadow:0 2px 5px rgba(0,0,0,0.4);
+  }
+  .dv-line{
+    display:block; height:6px; border-radius:3px; background:rgba(43,38,32,0.2); margin-top:28px;
+  }
+  .dv-line.dv-short{ width:62%; margin-top:12px; }
+
+  @media (max-width:860px){
+    .desktop-app{ padding:60px 0; }
+    .desktop-panel{ grid-template-columns:1fr; gap:30px; padding:32px 24px 30px; }
+    .desktop-visual{ height:210px; order:-1; }
+    .desktop-copy h2{ font-size:27px; }
+    .dv-note{ width:124px; height:124px; }
+  }
+</style>
 </head>
 <body>
 
@@ -869,6 +929,37 @@
       <div class="feature-item">
         <span class="feature-check"><svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="#3A4B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         <div class="feature-text"><h3>Popout notes</h3><p>Pull a note into its own window if you want it always on top.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="desktop-app" id="desktop">
+  <div class="wrap">
+    <div class="desktop-panel reveal">
+      <div class="desktop-copy">
+        <span class="eyebrow">Desktop app</span>
+        <h2>Your notes, as real windows</h2>
+        <p>The Windows app turns every popped-out note into its own free-floating window &mdash; no
+          browser tabs, no address bar, no <em>about:blank</em> strip along the top. Keep the board in
+          one window and the notes you're actually using in others, sitting on top of whatever else
+          you're doing.</p>
+        <ul class="desktop-points">
+          <li>Frameless windows that float above other apps</li>
+          <li>As many popped-out notes at once as you want</li>
+          <li>Add a note from anywhere with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></li>
+        </ul>
+        <div class="desktop-actions">
+          <a class="btn-primary" href="./app.html?desktop=1">Get the Windows app<span class="arr">&rarr;</span></a>
+        </div>
+        <p class="desktop-fine"><strong>Included with the paid plan.</strong> Sign in and the download
+          unlocks if your account is paid &mdash; on the 30-day trial the browser version is still fully
+          yours. Windows 10/11, 64-bit.</p>
+      </div>
+      <div class="desktop-visual" aria-hidden="true">
+        <div class="dv-note dv-note--butter"><span class="dv-pin"></span><span class="dv-line"></span><span class="dv-line dv-short"></span></div>
+        <div class="dv-note dv-note--sky"><span class="dv-pin"></span><span class="dv-line"></span><span class="dv-line dv-short"></span></div>
+        <div class="dv-note dv-note--blush"><span class="dv-pin"></span><span class="dv-line"></span></div>
       </div>
     </div>
   </div>

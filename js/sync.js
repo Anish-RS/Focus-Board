@@ -57,6 +57,20 @@
 
   STB.isSyncAvailable = isConfigured;
   STB.getClient = getClient;
+
+  // Used by js/desktop-app.js to authenticate the installer download. getSession() also
+  // refreshes an expired access token, so a long-open tab doesn't fail the download with a
+  // 401 from a token that quietly timed out an hour ago.
+  STB.getAccessToken = function () {
+    var c = getClient();
+    if (!c) return Promise.resolve(null);
+    return c.auth
+      .getSession()
+      .then(function (res) {
+        return (res && res.data && res.data.session && res.data.session.access_token) || null;
+      })
+      .catch(function () { return null; });
+  };
   STB.getCurrentUser = function () { return currentUser; };
   STB.getCurrentProfile = function () { return currentProfile; };
 
@@ -667,6 +681,11 @@
         banner.classList.remove("is-visible");
       }
     }
+
+    // The desktop-download card (?desktop=1) shows a different action depending on whether
+    // the visitor is signed in and paying, so it has to follow the same auth updates this
+    // function does.
+    if (typeof STB.renderDesktopCard === "function") STB.renderDesktopCard();
   }
 
   // Minimal header widget for app.html: shows the username + trial status + sign out.

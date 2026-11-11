@@ -90,6 +90,19 @@
     var found = STB.findCard(id);
     if (!found) return;
 
+    // A native shell (the Tauri desktop build) cannot turn window.open into a real OS window,
+    // so it injects this hook instead. It opens a proper frameless always-on-top window that
+    // loads this same app in solo mode, scoped to the one card. In a browser the hook is
+    // absent and nothing below changes.
+    if (typeof window.__NUDGEBOARD_OPEN_NOTE__ === "function") {
+      try {
+        window.__NUDGEBOARD_OPEN_NOTE__(id, found.kind);
+        return;
+      } catch (e) {
+        /* fall through to the browser path */
+      }
+    }
+
     // Only running-notes documents get true always-on-top Picture-in-Picture, since that's
     // the case that actually needs to float above other apps while you watch/read something.
     // Browsers only permit one such always-on-top window system-wide at a time.
