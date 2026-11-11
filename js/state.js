@@ -82,11 +82,29 @@
   // two overlapping cards fall back to DOM/array order once a drag ends,
   // which can make a card you just moved to the front suddenly slip behind
   // another one the moment you let go.
+  STB.nextZIndex = function () {
+    STB.state.nextZIndex = (STB.state.nextZIndex || 2) + 1;
+    return STB.state.nextZIndex;
+  };
+
   STB.bringToFront = function (id) {
     var found = STB.findCard(id);
     if (!found) return;
-    STB.state.nextZIndex = (STB.state.nextZIndex || 2) + 1;
-    found.item.zIndex = STB.state.nextZIndex;
+    found.item.zIndex = STB.nextZIndex();
+  };
+
+  // Scroll a card into view and put the caret in its title. Without this, a card placed
+  // outside the visible part of a scrolled board was created correctly but showed nothing
+  // where the user was looking.
+  STB.revealCard = function (id) {
+    if (!id) return;
+    requestAnimationFrame(function () {
+      var el = document.querySelector('.stb-note[data-card-id="' + id + '"], .stb-doc[data-card-id="' + id + '"]');
+      if (!el) return;
+      try { el.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
+      var title = el.querySelector('[data-role="title"]');
+      if (title) { try { title.focus({ preventScroll: true }); } catch (e) {} }
+    });
   };
 
   // ---- note actions ----
@@ -100,17 +118,20 @@
     var board = document.getElementById("stb-board");
     var rect = board.getBoundingClientRect();
     var canvasW = Math.max(rect.width, STB.MIN_CANVAS_W);
-    var pos = STB.nextGridPosition(STB.state.notes.length, STB.NOTE_W, STB.NOTE_H_ESTIMATE, canvasW);
+    var pos = STB.nextFreePosition(STB.NOTE_W, STB.NOTE_H_ESTIMATE, canvasW);
     var color = (STB.state.notes.length + STB.state.documents.length) % STB.PALETTE.length;
     var newNote = {
       id: STB.uid(), title: "", color: color,
       rotation: (Math.random() * 6 - 3).toFixed(1),
       x: pos.x,
       y: pos.y,
+      zIndex: STB.nextZIndex(),
       days: [],
       items: [{ id: STB.uid(), text: "", done: false, carried: false }],
     };
     STB.commitNotes(STB.state.notes.concat([newNote]));
+    STB.revealCard(newNote.id);
+    return newNote.id;
   };
 
   STB.deleteNote = function (id) {
@@ -233,17 +254,19 @@
     var board = document.getElementById("stb-board");
     var rect = board.getBoundingClientRect();
     var canvasW = Math.max(rect.width, STB.MIN_CANVAS_W);
-    var activeDocCount = STB.state.documents.filter(function (d) { return !d.archived; }).length;
-    var pos = STB.nextGridPosition(activeDocCount, STB.DOC_W, STB.DOC_H_ESTIMATE, canvasW);
+    var pos = STB.nextFreePosition(STB.DOC_W, STB.DOC_H_ESTIMATE, canvasW);
     var color = (STB.state.notes.length + STB.state.documents.length) % STB.PALETTE.length;
     var newDoc = {
       id: STB.uid(), title: "", text: "", color: color,
       rotation: (Math.random() * 4 - 2).toFixed(1),
       x: pos.x,
       y: pos.y,
+      zIndex: STB.nextZIndex(),
       archived: false,
     };
     STB.commitDocs(STB.state.documents.concat([newDoc]));
+    STB.revealCard(newDoc.id);
+    return newDoc.id;
   };
 
   STB.deleteDocument = function (id) {
@@ -281,11 +304,17 @@
     var board = document.getElementById("stb-board");
     var rect = board.getBoundingClientRect();
     var canvasW = Math.max(rect.width, STB.MIN_CANVAS_W);
-    var activeDocCount = STB.state.documents.filter(function (d) { return !d.archived; }).length;
-    var pos = STB.nextGridPosition(activeDocCount, STB.DOC_W, STB.DOC_H_ESTIMATE, canvasW);
+    // Put it back where it was saved from, unless something else has taken that spot
+    // since -- then take the first free cell instead.
+    var w = Number(target.width) || STB.DOC_W;
+    var h = Number(target.height) || STB.DOC_H_ESTIMATE;
+    var pos = STB.isPositionFree(Number(target.x) || 0, Number(target.y) || 0, w, h)
+      ? { x: Number(target.x) || 0, y: Number(target.y) || 0 }
+      : STB.nextFreePosition(w, h, canvasW);
     STB.commitDocs(STB.state.documents.map(function (d) {
-      return d.id === id ? Object.assign({}, d, { archived: false, x: pos.x, y: pos.y }) : d;
+      return d.id === id ? Object.assign({}, d, { archived: false, x: pos.x, y: pos.y, zIndex: STB.nextZIndex() }) : d;
     }));
+    STB.revealCard(id);
   };
 
   // ---- copy to clipboard (works for either card kind) ----

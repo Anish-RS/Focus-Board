@@ -134,6 +134,70 @@
     return { x: 30 + col * (itemW + 20), y: 30 + row * (itemH + 20) };
   };
 
+  // ---- placement ----
+  // Every card currently on the board, as a rectangle. Archived documents are excluded
+  // because they aren't on the board.
+  STB.occupiedRects = function () {
+    if (!STB.state) return [];
+    var rects = [];
+    (STB.state.notes || []).forEach(function (n) {
+      rects.push({
+        x: Number(n.x) || 0,
+        y: Number(n.y) || 0,
+        w: Number(n.width) || STB.NOTE_W,
+        h: STB.NOTE_H_ESTIMATE,
+      });
+    });
+    (STB.state.documents || []).forEach(function (d) {
+      if (d.archived) return;
+      rects.push({
+        x: Number(d.x) || 0,
+        y: Number(d.y) || 0,
+        w: Number(d.width) || STB.DOC_W,
+        h: Number(d.height) || STB.DOC_H_ESTIMATE,
+      });
+    });
+    return rects;
+  };
+
+  var SLOT_PAD = 14;
+
+  function freeAmong(rects, x, y, w, h) {
+    for (var i = 0; i < rects.length; i++) {
+      var r = rects[i];
+      if (
+        x < r.x + r.w + SLOT_PAD &&
+        x + w + SLOT_PAD > r.x &&
+        y < r.y + r.h + SLOT_PAD &&
+        y + h + SLOT_PAD > r.y
+      ) return false;
+    }
+    return true;
+  }
+
+  STB.isPositionFree = function (x, y, w, h) {
+    return freeAmong(STB.occupiedRects(), x, y, w, h);
+  };
+
+  // The old code placed a new card at "grid cell number <how many cards exist>", which says
+  // nothing about whether that cell is already taken -- and it routinely was, because notes
+  // and documents share one grid, and because archiving a document doesn't advance the
+  // count. Combined with new cards having no z-index (so they sat at the bottom of the
+  // stack), a freshly added card could be created *completely hidden* behind an existing
+  // one. That is what made "New document" and "Restore" look like they needed two clicks:
+  // the first click worked, you just couldn't see the result.
+  STB.nextFreePosition = function (itemW, itemH, canvasW) {
+    var rects = STB.occupiedRects(); // built once, not once per candidate
+    var start = rects.length;
+    for (var step = 0; step < 240; step++) {
+      var pos = STB.nextGridPosition(start + step, itemW, itemH, canvasW);
+      if (freeAmong(rects, pos.x, pos.y, itemW, itemH)) return pos;
+    }
+    // Fully packed board: fall back to the old behaviour rather than nowhere at all. The
+    // card still goes to the front of the stack, so it is at least reachable.
+    return STB.nextGridPosition(start, itemW, itemH, canvasW);
+  };
+
   STB.rollover = function (data) {
     var today = STB.todayKey();
     if (data.date === today) return data;
