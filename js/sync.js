@@ -389,26 +389,51 @@
     if (STB.setSyncStatus) STB.setSyncStatus(state, detail);
   }
 
+  // Every push gets a sequence number; only the newest in-flight push may paint the
+  // result, so a slow earlier request can't overwrite a later one's outcome.
+  var pushSeq = 0;
+  var savingPaintTimer = null;
+
   function pushToCloud() {
     var c = getClient();
     if (!c || !currentUser) return;
-    reportSyncState("saving");
+    var seq = ++pushSeq;
+
+    // Only say "Saving..." if the request actually takes a moment. Most pushes land in
+    // well under 400ms and should read as a straight "Saved" -> "Saved" with no flicker.
+    clearTimeout(savingPaintTimer);
+    savingPaintTimer = setTimeout(function () {
+      if (seq === pushSeq) reportSyncState("saving");
+    }, 400);
+
+    function settle(state, detail) {
+      if (seq !== pushSeq) return; // a newer push is in flight; its result is the truth
+      clearTimeout(savingPaintTimer);
+      reportSyncState(state, detail);
+    }
+
     c.from("boards")
       .upsert({ user_id: currentUser.id, data: STB.state, updated_at: new Date().toISOString() })
       .then(function (res) {
-        if (!res.error) { reportSyncState("saved"); return; }
+        if (!res.error) { settle("saved"); return; }
         console.error("Sync push failed", res.error);
         // 401/403 here almost always means the trial lapsed (the RLS policy blocks writes)
         // or the session went stale -- both of which used to be completely invisible.
         var code = res.error.code || "";
         var status = res.status || 0;
         if (/^PGRST30[13]$/.test(code) || status === 401 || status === 403) {
-          reportSyncState("readonly", "Your changes couldn't be saved to your account. If your trial has ended, upgrade to keep editing.");
+          settle("readonly", "Your changes couldn't be saved to your account. If your trial has ended, upgrade to keep editing.");
         } else if (!navigator.onLine) {
-          reportSyncState("offline");
+          settle("offline");
         } else {
-          reportSyncState("error");
+          settle("error");
         }
+      })
+      .catch(function (err) {
+        // A dropped connection rejects the promise rather than resolving with { error },
+        // which previously left the pill sitting on "Saving..." with nothing in the log.
+        console.error("Sync push threw", err);
+        settle(navigator.onLine ? "error" : "offline");
       });
   }
 

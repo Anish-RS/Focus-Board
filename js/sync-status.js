@@ -32,11 +32,15 @@
     el.setAttribute("aria-label", "Save status: " + conf.text + (detail ? ". " + detail : ""));
   }
 
+  // Note: this used to carry a guard that ignored any "saved" arriving while the pill
+  // showed "saving" -- the intent being to stop a slow older request from overwriting a
+  // newer one's result. With no way to tell those apart, the effect was that the very
+  // first save flipped the pill to "Saving..." and it never came back. Ordering is now
+  // handled properly in js/sync.js (every push carries a sequence number and only the
+  // newest one paints), so this is a plain setter again.
   STB.setSyncStatus = function (state, detail) {
     if (!el) el = document.getElementById("stb-sync-status");
     if (!el) return;
-    // Never let a late "saved" from an older request mask a newer "saving".
-    if (state === "saved" && current === "saving") return;
     paint(state, detail);
   };
 

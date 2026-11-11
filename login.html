@@ -229,6 +229,26 @@
     box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.15);
   }
 
+  /* ---------- "checking your session" state ---------- */
+  .stb-login-checking { display: none; }
+  .stb-login-stage.is-checking .stb-login-wrap { display: none; }
+  .stb-login-stage.is-checking .stb-login-checking {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 200px; padding: 40px 30px; border-radius: 4px;
+    background: #F5E6A8; color: #2B2620;
+    font-family: 'Work Sans', sans-serif; font-size: 13.5px; font-weight: 600;
+    box-shadow: 3px 6px 18px rgba(0,0,0,0.32);
+  }
+  .stb-spinner {
+    width: 15px; height: 15px; border-radius: 50%; flex: 0 0 auto;
+    border: 2px solid rgba(43,38,32,0.22); border-top-color: #2B2620;
+    animation: stb-spin .7s linear infinite;
+  }
+  @keyframes stb-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .stb-spinner { animation: none; border-top-color: rgba(43,38,32,0.22); }
+  }
+
   .stb-login-fade { opacity: 0; transform: translateY(14px); animation: stb-fade-in .6s ease forwards; }
   .stb-login-fade.d1 { animation-delay: .1s; }
   @keyframes stb-fade-in { to { opacity: 1; transform: translateY(0); } }
@@ -250,7 +270,10 @@
   <span class="stb-doodle stb-doodle--3"><svg viewBox="0 0 46 46" fill="none"><circle cx="23" cy="23" r="17" stroke="currentColor" stroke-width="2"/><path d="M23 14v9l6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
   <span class="stb-doodle stb-doodle--4"><svg viewBox="0 0 60 60" fill="none"><path d="M12 46c4-16 6-28 18-34 10-5 20 1 20 10 0 8-8 12-16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="46" r="3" fill="currentColor"/></svg></span>
 
-  <div class="stb-login-stage">
+  <!-- is-checking hides the form until we know whether this visitor already has a
+       session. Without it, a signed-in visitor clicking "Start free trial" saw a full
+       sign-in form for a second or two before being redirected to their board. -->
+  <div class="stb-login-stage is-checking">
 
     <div class="stb-glass stb-login-fade">
       <div class="stb-glass-word">Nudgeboard</div>
@@ -267,6 +290,10 @@
     </div>
 
     <div class="stb-login-note-wrap stb-login-fade d1">
+      <div class="stb-login-checking" role="status" aria-live="polite">
+        <span class="stb-spinner" aria-hidden="true"></span>
+        <span>Checking your session&hellip;</span>
+      </div>
       <div class="stb-login-wrap">
         <span class="stb-login-pin"></span>
         <h1 id="stb-login-heading">Welcome back</h1>

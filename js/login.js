@@ -19,6 +19,19 @@
   var form = document.getElementById("stb-login-form");
   var trialNote = document.getElementById("stb-trial-note");
 
+  // ---- "is this visitor already signed in?" gate ----
+  // The form is hidden in the markup and only revealed once we know there's no session to
+  // redirect. Every path below must call revealForm() or redirect; the timeout is a
+  // safety net so a hung request can never leave someone staring at a spinner.
+  var stageEl = document.querySelector(".stb-login-stage");
+  var formRevealed = false;
+  function revealForm() {
+    if (formRevealed) return;
+    formRevealed = true;
+    if (stageEl) stageEl.classList.remove("is-checking");
+  }
+  setTimeout(revealForm, 4000);
+
   var claimForm = document.getElementById("stb-claim-form");
   var claimUsernameInput = document.getElementById("stb-claim-username");
   var claimUsernameHint = document.getElementById("stb-claim-username-hint");
@@ -166,11 +179,13 @@
   // loop forever. In that case, show the claim-username form right here instead.
   var configReady = STB.configReady && typeof STB.configReady.then === "function" ? STB.configReady : Promise.resolve();
   configReady.then(function () {
-    if (!STB.isSyncAvailable()) return;
+    // No accounts configured on this deployment (local dev, env vars missing): there is
+    // nothing to check, so show the form straight away.
+    if (!STB.isSyncAvailable()) { revealForm(); return; }
     var c = STB.getClient();
     c.auth.getSession().then(function (res) {
       var session = res.data && res.data.session;
-      if (!session) return;
+      if (!session) { revealForm(); return; }
       return c.from("profiles").select("username").eq("user_id", session.user.id).maybeSingle().then(function (profRes) {
         if (profRes.data) {
           window.location.href = "app.html";
@@ -184,10 +199,13 @@
         try { pending = window.localStorage.getItem("stb_pending_username"); } catch (e) {}
         if (pending) claimUsernameInput.value = pending;
         setMode("claim");
+        revealForm();
         if (pending) claimUsernameInput.dispatchEvent(new Event("input"));
       });
     }).catch(function (e) {
+      // A failed check must not lock anyone out of the sign-in form.
       console.error("Could not check session/profile", e);
+      revealForm();
     });
   });
 })();
