@@ -11,6 +11,10 @@
   // error, which risked them claiming a second username or thinking their account was
   // wiped. See renderAuthUI/applyLockState below for how this is used.
   var profileLoadFailed = false;
+  // Set when the automatic claim loses a race: the username was free when they signed up
+  // and taken by someone else by the time they confirmed. Distinct from profileLoadFailed
+  // ("couldn't tell") so the UI can say something true and actionable.
+  var claimConflict = false;
   var pushTimeout = null;
   var applyingRemoteUpdate = false;
   var realtimeChannel = null;
@@ -494,6 +498,7 @@
     }
     currentUser = user;
     profileLoadFailed = false;
+    claimConflict = false;
     var promise = fetchProfileWithRetry(user.id)
       .then(function (profile) {
         if (profile) return profile;
@@ -515,6 +520,18 @@
           return claimUsernameAndStartTrial(user.id, pending).then(function (profile) {
             try { window.localStorage.removeItem("stb_pending_username"); } catch (e2) {}
             return profile;
+          }).catch(function (claimErr) {
+            // Someone else confirmed the same username first. Nothing is broken and no data
+            // is at risk -- they simply need to pick again. Reporting this as a load failure
+            // ("Couldn't load your account, try refreshing") was misleading and invited a
+            // retry that could never succeed.
+            var m = String((claimErr && (claimErr.message || claimErr.details)) || "");
+            var dup = (claimErr && claimErr.code === "23505") ||
+                      /duplicate key|already exists|unique constraint/i.test(m);
+            if (!dup) throw claimErr;
+            claimConflict = true;
+            try { window.localStorage.removeItem("stb_pending_username"); } catch (e3) {}
+            return null;
           });
         }
         return null;
@@ -688,7 +705,9 @@
         banner.innerHTML = "Couldn't load your account just now \u2014 this is usually temporary. Your board is safe; try refreshing the page in a moment.";
         banner.classList.add("is-visible");
       } else if (reason === "needs_username") {
-        banner.innerHTML = "Almost done \u2014 <a href=\"login.html?step=username\">choose a username</a> to start your free trial.";
+        banner.innerHTML = claimConflict
+          ? "That username was taken while you were confirming your email \u2014 someone else claimed it first. <a href=\"login.html?step=username\">Pick another one</a> to start your free trial."
+          : "Almost done \u2014 <a href=\"login.html?step=username\">choose a username</a> to start your free trial.";
         banner.classList.add("is-visible");
       } else if (locked) {
         banner.innerHTML = 'Your free trial has ended. The board is view-only until you upgrade. <button class="stb-upgrade-btn stb-upgrade-btn--banner" id="stb-banner-upgrade-btn">' + upgradeLabel() + '</button>';

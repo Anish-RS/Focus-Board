@@ -1,5 +1,14 @@
 (function () {
   "use strict";
+
+  // A password-reset link lands here as /login.html#access_token=...&type=recovery. Supabase
+  // turns that into a real session, which the "already signed in? go to the board" gate below
+  // would happily follow -- dropping the person straight into their notes with the password
+  // never changed. Capture the intent before the hash is consumed.
+  var isRecoveryLink =
+    /(^|[#&?])type=recovery(&|$|#)/.test(window.location.hash) ||
+    /(^|[?&])type=recovery(&|$|#)/.test(window.location.search);
+
   var mode = "signin";
   var usernameOk = false;
   var usernameCheckTimer = null;
@@ -50,6 +59,60 @@
     if (stageEl) stageEl.classList.remove("is-checking");
   }
   setTimeout(revealForm, 4000);
+
+  // Shown instead of the sign-in form when arriving from a password-reset email. The session
+  // already exists (it came in the link), so all that's missing is the new password.
+  function showRecoveryPanel() {
+    if (tabs) tabs.style.display = "none";
+    if (form) form.style.display = "none";
+    if (trialNote) trialNote.style.display = "none";
+    if (heading) heading.textContent = "Choose a new password";
+    if (sub) sub.textContent = "You're signed in from the reset link. Set a new password to finish.";
+    var host = (form && form.parentNode) || document.querySelector(".stb-login-card") || document.body;
+    if (document.getElementById("stb-recovery-panel")) return;
+    var box = document.createElement("div");
+    box.id = "stb-recovery-panel";
+    box.innerHTML =
+      '<div class="stb-field">' +
+      '  <label for="stb-new-password">New password</label>' +
+      '  <input type="password" id="stb-new-password" placeholder="At least 8 characters" autocomplete="new-password" />' +
+      "</div>" +
+      '<div class="stb-field">' +
+      '  <label for="stb-new-password2">Repeat it</label>' +
+      '  <input type="password" id="stb-new-password2" autocomplete="new-password" />' +
+      "</div>" +
+      '<button type="button" class="stb-login-submit" id="stb-new-password-save">Save new password</button>' +
+      '<div class="stb-login-msg" id="stb-new-password-msg"></div>';
+    host.appendChild(box);
+    revealForm();
+
+    var pw1 = document.getElementById("stb-new-password");
+    var pw2 = document.getElementById("stb-new-password2");
+    var saveBtn = document.getElementById("stb-new-password-save");
+    var pmsg = document.getElementById("stb-new-password-msg");
+    if (pw1) pw1.focus();
+
+    saveBtn.addEventListener("click", function () {
+      var a = pw1 ? pw1.value : "";
+      var b = pw2 ? pw2.value : "";
+      if (a.length < 8) { pmsg.textContent = "Use at least 8 characters."; return; }
+      if (a !== b) { pmsg.textContent = "Those two don't match."; return; }
+      saveBtn.disabled = true;
+      pmsg.textContent = "Saving\u2026";
+      STB.updatePassword(a).then(function (res) {
+        if (res && res.error) {
+          saveBtn.disabled = false;
+          pmsg.textContent = res.error.message || "Couldn't save that password.";
+          return;
+        }
+        pmsg.textContent = "Password changed \u2014 opening your board\u2026";
+        setTimeout(function () { window.location.replace("app.html"); }, 900);
+      }).catch(function (e) {
+        saveBtn.disabled = false;
+        pmsg.textContent = (e && e.message) || "Couldn't save that password just now.";
+      });
+    });
+  }
 
   var claimForm = document.getElementById("stb-claim-form");
   var claimUsernameInput = document.getElementById("stb-claim-username");
@@ -258,6 +321,7 @@
     var c = STB.getClient();
     c.auth.getSession().then(function (res) {
       var session = res.data && res.data.session;
+      if (isRecoveryLink && session) { showRecoveryPanel(); return; }
       if (!session) { revealForm(); return; }
       return c.from("profiles").select("username").eq("user_id", session.user.id).maybeSingle().then(function (profRes) {
         if (profRes.data) {
