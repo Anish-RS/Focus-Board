@@ -316,9 +316,34 @@
         if (res.error) { msg.textContent = res.error.message; return; }
         if (res.data && res.data.session) {
           window.location.href = "app.html";
-        } else {
-          msg.textContent = "Check your email to confirm your account, then sign in.";
+          return;
         }
+        // Supabase refuses to error on an address that already has an account -- saying so
+        // outright would let anyone test whether an email is registered. The documented tell
+        // is an EMPTY identities array; a genuine new signup always has exactly one. Before
+        // this check, repeating a used address left people on "check your email" waiting for
+        // a message that was never sent, which looked exactly like broken email delivery.
+        var identities = res.data && res.data.user && res.data.user.identities;
+        if (Object.prototype.toString.call(identities) === "[object Array]" && identities.length === 0) {
+          try { window.localStorage.removeItem("stb_pending_username"); } catch (e0) {}
+          msg.innerHTML = "";
+          var already = document.createElement("span");
+          already.textContent = "That email already has an account \u2014 you can't sign up with it twice. ";
+          var toSignin = document.createElement("a");
+          toSignin.href = "#";
+          toSignin.textContent = "Sign in instead";
+          toSignin.style.cssText = "color:inherit;text-decoration:underline;font-weight:700;";
+          toSignin.addEventListener("click", function (ev) {
+            ev.preventDefault();
+            setMode("signin");
+            emailInput.value = email;
+            if (passwordInput) { passwordInput.focus(); }
+          });
+          msg.appendChild(already);
+          msg.appendChild(toSignin);
+          return;
+        }
+        msg.textContent = "Check your email to confirm your account, then sign in. If it hasn't arrived in a minute, check your spam folder.";
       }).catch(function (e2) { msg.textContent = (e2 && e2.message) || "Something went wrong."; });
       return;
     }
