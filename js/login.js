@@ -12,6 +12,25 @@
   var fieldUsername = document.getElementById("stb-field-username");
   var usernameInput = document.getElementById("stb-username");
   var usernameHint = document.getElementById("stb-username-hint");
+  // Disables a button for a set period, counting down so the wait is visible rather than the
+  // button just looking broken.
+  function cooldown(btn, seconds) {
+    var left = seconds;
+    var label = "Resend it";
+    btn.disabled = true;
+    btn.textContent = label + " in " + left + "s";
+    var timer = setInterval(function () {
+      left -= 1;
+      if (left <= 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.textContent = label;
+        return;
+      }
+      btn.textContent = label + " in " + left + "s";
+    }, 1000);
+  }
+
   var emailInput = document.getElementById("stb-email");
   var passwordInput = document.getElementById("stb-password");
   var submitBtn = document.getElementById("stb-submit-btn");
@@ -168,7 +187,61 @@
 
     msg.textContent = "Signing in\u2026";
     STB.signIn(email, password).then(function (res) {
-      if (res.error) { msg.textContent = res.error.message; return; }
+      if (res.error) {
+        var why = String(res.error.message || "");
+        // Supabase's raw text for this is "Email not confirmed", which tells the person
+        // nothing about what to do next. Say it plainly and offer to send it again.
+        if (/email not confirmed/i.test(why)) {
+          msg.innerHTML = "";
+          var line = document.createElement("span");
+          line.textContent = "Confirm your email first \u2014 open the link we sent, then sign in. ";
+
+          var again = document.createElement("button");
+          again.type = "button";
+          again.textContent = "Resend it";
+          again.style.cssText =
+            "background:none;border:0;padding:0;margin-left:4px;font:inherit;color:inherit;" +
+            "text-decoration:underline;cursor:pointer;";
+          // Supabase's built-in sender allows 2 emails an hour for the whole project, and
+          // returns 429 once that's gone. A cooldown stops people burning the allowance by
+          // clicking twice and makes the limit visible instead of a silent failure.
+          again.addEventListener("click", function () {
+            if (again.disabled) return;
+            if (typeof STB.resendConfirmation !== "function") {
+              line.textContent = "Re-sending isn't available on this deployment.";
+              return;
+            }
+            again.disabled = true;
+            again.textContent = "Sending\u2026";
+            STB.resendConfirmation(email)
+              .then(function (r) {
+                var err = r && r.error;
+                if (err && /rate limit|too many|429/i.test(String(err.message || ""))) {
+                  line.textContent = "Too many attempts \u2014 email sending is limited to a few an hour. Try again shortly.";
+                  cooldown(again, 90);
+                  return;
+                }
+                if (err) {
+                  line.textContent = "Couldn't send it: " + err.message;
+                  cooldown(again, 30);
+                  return;
+                }
+                line.textContent = "Sent \u2014 check your inbox, and your spam folder.";
+                cooldown(again, 45);
+              })
+              .catch(function () {
+                line.textContent = "Couldn't send it right now. Try again in a minute.";
+                cooldown(again, 30);
+              });
+          });
+
+          msg.appendChild(line);
+          msg.appendChild(again);
+          return;
+        }
+        msg.textContent = why;
+        return;
+      }
       window.location.href = "app.html";
     }).catch(function (e3) { msg.textContent = (e3 && e3.message) || "Something went wrong."; });
   });
@@ -197,6 +270,8 @@
         claimUserId = session.user.id;
         var pending = null;
         try { pending = window.localStorage.getItem("stb_pending_username"); } catch (e) {}
+        var meta = session.user && session.user.user_metadata;
+        if (!pending && meta && typeof meta.username === "string") pending = meta.username.trim();
         if (pending) claimUsernameInput.value = pending;
         setMode("claim");
         revealForm();

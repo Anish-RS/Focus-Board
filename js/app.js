@@ -130,7 +130,10 @@
       }
       STB.initSync().then(function (signedIn) {
         if (!signedIn) {
-          window.location.href = "login.html";
+          // replace(), not href: pushing app.html onto the history stack meant pressing Back
+          // from login.html returned to this page, which then redirected again -- a Back
+          // button that appeared to do nothing.
+          window.location.replace("login.html");
           return;
         }
         // STB.initSync() now waits for the full sign-in chain (profile load, cloud
@@ -143,6 +146,24 @@
   }
 
   document.addEventListener("DOMContentLoaded", gateAndInit);
+
+  // Back/forward cache. Pressing Back after signing out used to bring this page back from
+  // memory -- no script re-ran, so the frozen DOM still showed the signed-in board and it
+  // looked as though signing out hadn't worked. Whenever the page is restored from that
+  // cache, re-check the session and leave if it's gone.
+  window.addEventListener("pageshow", function (event) {
+    if (!event.persisted) return;
+    if (!STB.isSyncAvailable || !STB.isSyncAvailable()) return;
+    var client = STB.getClient && STB.getClient();
+    if (!client || !client.auth) return;
+    client.auth
+      .getSession()
+      .then(function (res) {
+        var session = res && res.data && res.data.session;
+        if (!session) window.location.replace("login.html");
+      })
+      .catch(function () {});
+  });
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {

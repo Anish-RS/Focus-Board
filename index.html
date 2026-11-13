@@ -668,6 +668,13 @@
     background:var(--cream); border-radius:6px; padding:44px 44px 40px;
     box-shadow:0 18px 44px rgba(43,38,32,0.16);
   }
+  .desktop-badges{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .desktop-badges .eyebrow{ margin-bottom:0; }
+  .desktop-badge{
+    font-size:10.5px; font-weight:700; letter-spacing:0.11em; text-transform:uppercase;
+    background:var(--butter); color:var(--butter-ink); border-radius:999px; padding:3px 10px 2px;
+    box-shadow:inset 0 0 0 1px rgba(107,78,18,0.18);
+  }
   .desktop-copy h2{
     font-family:'Fraunces', Georgia, serif; font-weight:600; font-size:34px; line-height:1.14;
     color:var(--ink); margin:0 0 13px;
@@ -938,7 +945,10 @@
   <div class="wrap">
     <div class="desktop-panel reveal">
       <div class="desktop-copy">
-        <span class="eyebrow">Desktop app</span>
+        <div class="desktop-badges">
+          <span class="eyebrow">Desktop app</span>
+          <span class="desktop-badge">In development</span>
+        </div>
         <h2>Your notes, as real windows</h2>
         <p>The Windows app turns every popped-out note into its own free-floating window &mdash; no
           browser tabs, no address bar, no <em>about:blank</em> strip along the top. Keep the board in
@@ -952,9 +962,9 @@
         <div class="desktop-actions">
           <a class="btn-primary" href="./app.html?desktop=1">Get the Windows app<span class="arr">&rarr;</span></a>
         </div>
-        <p class="desktop-fine"><strong>Included with the paid plan.</strong> Sign in and the download
-          unlocks if your account is paid &mdash; on the 30-day trial the browser version is still fully
-          yours. Windows 10/11, 64-bit.</p>
+        <p class="desktop-fine"><strong>In development.</strong> The Windows app is still being
+          built &mdash; paid accounts get it first when it ships, and upgrading now costs nothing extra
+          for it. On the 30-day trial the browser version is still fully yours. Windows 10/11, 64-bit.</p>
       </div>
       <div class="desktop-visual" aria-hidden="true">
         <div class="dv-note dv-note--butter"><span class="dv-pin"></span><span class="dv-line"></span><span class="dv-line dv-short"></span></div>

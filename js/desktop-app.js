@@ -75,7 +75,8 @@
         '<button class="stb-desktop-btn" type="button" data-desktop="download">Download for Windows</button>' +
         '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Not now</button>' +
         "</div>" +
-        '<p class="stb-desktop-fine">Windows 10/11 · 64-bit · ~100MB · the file is unsigned, so ' +
+        '<p class="stb-desktop-fine">In development — you will get it here first. Windows 10/11 · ' +
+        '64-bit · a few MB · the file is unsigned, so ' +
         "Windows will ask you to confirm the first time (More info → Run anyway).</p>";
     }
 

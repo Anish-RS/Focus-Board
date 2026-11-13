@@ -273,7 +273,16 @@
     return c.auth.signUp({
       email: email,
       password: password,
-      options: { emailRedirectTo: window.location.origin + "/app.html" },
+      options: {
+        emailRedirectTo: window.location.origin + "/app.html",
+        // localStorage is per-browser. With "Confirm email" on, the gap between signup and
+        // the first signed-in page is however long it takes them to open their inbox -- and
+        // they may well open it on a phone, in another browser, or in a private window. All
+        // three lose the stashed username, which stranded new accounts on "choose a
+        // username" even though they had already chosen one. User metadata travels with the
+        // account itself, so it survives all of that.
+        data: { username: username || "" },
+      },
     });
   };
 
@@ -294,6 +303,19 @@
     // mid-navigation -- leaving a half-cleared session that made the next page load bounce
     // right back in, and made "Sign out" look like it needed several tries.
     return c.auth.signOut();
+  };
+
+  // Re-sending the confirmation email, for the "I never got it" case. Only meaningful when
+  // the project requires a confirmed address (Supabase Dashboard -> Authentication ->
+  // Sign In / Providers -> Email -> "Confirm email").
+  STB.resendConfirmation = function (email) {
+    var c = getClient();
+    if (!c) return Promise.reject(new Error("Accounts aren't set up yet."));
+    return c.auth.resend({
+      type: "signup",
+      email: email,
+      options: { emailRedirectTo: window.location.origin + "/app.html" },
+    });
   };
 
   STB.sendPasswordReset = function (email) {
@@ -480,6 +502,11 @@
         // wrong and they need to be prompted to pick one on app.html.
         var pending = null;
         try { pending = window.localStorage.getItem("stb_pending_username"); } catch (e) {}
+        // The browser that signed up may not be the one that clicked the confirmation link,
+        // so fall back to the username recorded on the account at signup time.
+        if (!pending && user && user.user_metadata && typeof user.user_metadata.username === "string") {
+          pending = user.user_metadata.username.trim();
+        }
         if (pending) {
           // Only clear the pending flag once the claim actually succeeds. Clearing it
           // first (as before) meant a failed claim -- taken username, network blip,
@@ -601,7 +628,10 @@
         // a side effect buried inside renderAuthUI (which used to fire unpredictably from
         // any of its many callers -- the retry button, the upgrade button, password
         // recovery -- any time currentUser happened to be falsy).
-        window.location.href = "login.html";
+        // replace(), not href: with href, app.html stayed in the history stack behind
+        // login.html, so pressing Back restored the signed-in board from the back/forward
+        // cache. Replacing the entry means Back goes wherever you came from instead.
+        window.location.replace("login.html");
       }
     });
     return c.auth.getSession().then(function (res) {
