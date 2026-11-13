@@ -9,6 +9,26 @@
     /(^|[#&?])type=recovery(&|$|#)/.test(window.location.hash) ||
     /(^|[?&])type=recovery(&|$|#)/.test(window.location.search);
 
+  // A link that was already used, or is older than the OTP expiry, comes back as
+  // #error=access_denied&error_code=otp_expired&error_description=... -- often on the
+  // marketing page, which forwards it here. Either way, say what happened instead of
+  // silently showing a sign-in form.
+  var linkError = (function () {
+    var raw = String(window.location.hash || "").replace(/^#/, "");
+    if (!raw) return null;
+    var parts = {};
+    raw.split("&").forEach(function (kv) {
+      var i = kv.indexOf("=");
+      if (i > 0) {
+        try {
+          parts[decodeURIComponent(kv.slice(0, i))] =
+            decodeURIComponent(kv.slice(i + 1).replace(/\+/g, " "));
+        } catch (e) {}
+      }
+    });
+    return parts.error || parts.error_code ? parts : null;
+  })();
+
   var mode = "signin";
   var usernameOk = false;
   var usernameCheckTimer = null;
@@ -59,6 +79,61 @@
     if (stageEl) stageEl.classList.remove("is-checking");
   }
   setTimeout(revealForm, 4000);
+
+  // Shown when a reset/confirmation link arrives dead: already used, or past its expiry.
+  function showLinkErrorPanel(err) {
+    var expired = /expired/i.test(String(err.error_code || err.error || "")) ||
+                  /expired/i.test(String(err.error_description || ""));
+    if (tabs) tabs.style.display = "none";
+    if (form) form.style.display = "none";
+    if (trialNote) trialNote.style.display = "none";
+    if (heading) heading.textContent = expired ? "That link has expired" : "That link didn\u2019t work";
+    if (sub) {
+      sub.textContent = "Reset links work once and last an hour. Enter your email and we\u2019ll send a fresh one.";
+    }
+    var host = (form && form.parentNode) || document.querySelector(".stb-login-card") || document.body;
+    if (document.getElementById("stb-link-error-panel")) return;
+    var box = document.createElement("div");
+    box.id = "stb-link-error-panel";
+    box.innerHTML =
+      '<div class="stb-field">' +
+      '  <label for="stb-link-email">Email</label>' +
+      '  <input type="email" id="stb-link-email" autocomplete="email" placeholder="you@example.com" />' +
+      "</div>" +
+      '<button type="button" class="stb-login-submit" id="stb-link-resend">Send a new link</button>' +
+      '<div class="stb-login-msg" id="stb-link-msg"></div>' +
+      '<p style="margin-top:10px;font-size:13px;"><a href="login.html">Back to sign in</a></p>';
+    host.appendChild(box);
+    revealForm();
+
+    var input = document.getElementById("stb-link-email");
+    var btn = document.getElementById("stb-link-resend");
+    var out = document.getElementById("stb-link-msg");
+    if (input) input.focus();
+    btn.addEventListener("click", function () {
+      var email = (input && input.value ? input.value : "").trim();
+      if (!email || email.indexOf("@") < 1) { out.textContent = "Type the email you signed up with."; return; }
+      btn.disabled = true;
+      btn.textContent = "Sending\u2026";
+      STB.sendPasswordReset(email).then(function (res) {
+        if (res && res.error) {
+          btn.disabled = false;
+          btn.textContent = "Send a new link";
+          out.textContent = /rate limit|too many/i.test(String(res.error.message || ""))
+            ? "Too many attempts \u2014 wait a minute, then try again."
+            : res.error.message;
+          return;
+        }
+        out.textContent = "Sent \u2014 open the newest email (check spam too). The link works once.";
+        btn.textContent = "Sent";
+        setTimeout(function () { btn.disabled = false; btn.textContent = "Send another"; }, 45000);
+      }).catch(function () {
+        btn.disabled = false;
+        btn.textContent = "Send a new link";
+        out.textContent = "Couldn\u2019t send it just now. Try again in a minute.";
+      });
+    });
+  }
 
   // Shown instead of the sign-in form when arriving from a password-reset email. The session
   // already exists (it came in the link), so all that's missing is the new password.
@@ -321,7 +396,9 @@
     var c = STB.getClient();
     c.auth.getSession().then(function (res) {
       var session = res.data && res.data.session;
+      if (linkError) { showLinkErrorPanel(linkError); return; }
       if (isRecoveryLink && session) { showRecoveryPanel(); return; }
+      if (isRecoveryLink && !session) { showLinkErrorPanel({ error_code: "otp_expired" }); return; }
       if (!session) { revealForm(); return; }
       return c.from("profiles").select("username").eq("user_id", session.user.id).maybeSingle().then(function (profRes) {
         if (profRes.data) {
