@@ -1435,3 +1435,76 @@ html.stb-solo-mode body {
   background: none;
   overflow: hidden;
 }
+
+/* ---------- 10. the app fills the window ---------- */
+/* Reported as: zoom out on a big screen and the board sits centred with brown all round
+   it, while the bottom of the page is left hanging. The board used to be a 62dvh box
+   centred in a max-width column. Now the corkboard *is* the window: it takes the full
+   width and height, and the page itself never scrolls -- the board scrolls inside itself,
+   which is what a board should do. Zooming in or out simply re-fits it, because every one
+   of these is a percentage of the viewport rather than a fixed pixel box.
+   Scoped above 820px: on a phone the page still scrolls, which is the correct behaviour
+   for a screen that small. */
+@media (min-width: 820px) {
+  :root:not(.stb-solo-mode) body.stb-app-page {
+    padding: 0;
+    overflow: hidden;
+  }
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-root {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-root > .stb-header,
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-root > .stb-auth,
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-root > .stb-readonly-banner {
+    flex: none;
+  }
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    align-items: stretch;
+  }
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-board {
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  :root:not(.stb-solo-mode) body.stb-app-page .stb-clipboard {
+    max-height: 100%;
+    overflow-y: auto;
+    flex: none;
+  }
+}
+
+/* The board's own scrollbar, in the board's own colours: the default grey trough was the
+   other half of "the bottom is getting weird". */
+.stb-board {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(43,38,32,0.35) transparent;
+}
+.stb-board::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.stb-board::-webkit-scrollbar-track {
+  background: transparent;
+}
+.stb-board::-webkit-scrollbar-thumb {
+  background: rgba(43,38,32,0.28);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.stb-board::-webkit-scrollbar-thumb:hover {
+  background: rgba(43,38,32,0.45);
+  background-clip: content-box;
+}

@@ -186,16 +186,99 @@
   // stack), a freshly added card could be created *completely hidden* behind an existing
   // one. That is what made "New document" and "Restore" look like they needed two clicks:
   // the first click worked, you just couldn't see the result.
-  STB.nextFreePosition = function (itemW, itemH, canvasW) {
-    var rects = STB.occupiedRects(); // built once, not once per candidate
-    var start = rects.length;
-    for (var step = 0; step < 240; step++) {
-      var pos = STB.nextGridPosition(start + step, itemW, itemH, canvasW);
-      if (freeAmong(rects, pos.x, pos.y, itemW, itemH)) return pos;
+  // ---- where the user can actually see ----
+  // The board is a scrolling viewport, so "a free spot" and "a spot you can see" are two
+  // different questions. A card placed at y=900 on a 700px-tall board is perfectly free
+  // and completely invisible, which is why every new note used to land below the fold
+  // while the top of the board sat empty.
+  STB.boardViewport = function () {
+    var b = document.getElementById("stb-board");
+    var vw = 0, vh = 0, left = 0, top = 0;
+    if (b) {
+      left = b.scrollLeft || 0;
+      top = b.scrollTop || 0;
+      vw = b.clientWidth || b.offsetWidth || 0;
+      vh = b.clientHeight || b.offsetHeight || 0;
     }
-    // Fully packed board: fall back to the old behaviour rather than nowhere at all. The
-    // card still goes to the front of the stack, so it is at least reachable.
-    return STB.nextGridPosition(start, itemW, itemH, canvasW);
+    if (!vw) vw = (typeof window !== "undefined" && window.innerWidth) || 1024;
+    if (!vh) vh = (typeof window !== "undefined" && window.innerHeight) || 768;
+    return { left: left, top: top, width: vw, height: vh };
+  };
+
+  // The card that was touched or added most recently -- where the eye already is.
+  STB.newestCardRect = function () {
+    if (!STB.state) return null;
+    var best = null;
+    function consider(x, y, w, h, z) {
+      if (best && !(z > best.z)) return;
+      best = { x: x, y: y, w: w, h: h, z: z };
+    }
+    (STB.state.notes || []).forEach(function (n) {
+      consider(Number(n.x) || 0, Number(n.y) || 0, Number(n.width) || STB.NOTE_W,
+        STB.NOTE_H_ESTIMATE, Number(n.zIndex) || 0);
+    });
+    (STB.state.documents || []).forEach(function (d) {
+      if (d.archived) return;
+      consider(Number(d.x) || 0, Number(d.y) || 0, Number(d.width) || STB.DOC_W,
+        Number(d.height) || STB.DOC_H_ESTIMATE, Number(d.zIndex) || 0);
+    });
+    return best;
+  };
+
+  var VIEW_PAD = 30;   // the margin the old grid started from, kept so a fresh board
+                       // still opens with its first note at 30,30
+  var CASCADE_X = 28;  // each card in a stack steps right...
+  var CASCADE_Y = 26;  // ...and down, so the card underneath still shows its top edge
+
+  // Completely hidden by one single card on top of it (as opposed to partly overlapped).
+  function isBuried(rects, x, y, w, h) {
+    for (var i = 0; i < rects.length; i++) {
+      var r = rects[i];
+      if (r.x <= x && r.y <= y && r.x + r.w >= x + w && r.y + r.h >= y + h) return true;
+    }
+    return false;
+  }
+
+  STB.nextFreePosition = function (itemW, itemH, canvasW) {
+    var rects = STB.occupiedRects();
+    var view = STB.boardViewport();
+    var vw = Math.max(Number(view.width) || 0, itemW + VIEW_PAD * 2, Number(canvasW) || 0);
+    var vh = Math.max(Number(view.height) || 0, itemH + VIEW_PAD * 2);
+    var left = view.left, top = view.top;
+
+    // 1. A tidy spot inside what is on screen right now. Scrolling counts: if the user has
+    //    scrolled down, "what is on screen" starts at scrollTop, not at zero.
+    var cols = Math.max(1, Math.floor((vw - VIEW_PAD) / (itemW + 20)));
+    var rows = Math.max(1, Math.floor((vh - VIEW_PAD) / (itemH + 20)));
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        var gx = left + VIEW_PAD + col * (itemW + 20);
+        var gy = top + VIEW_PAD + row * (itemH + 20);
+        if (freeAmong(rects, gx, gy, itemW, itemH)) return { x: gx, y: gy };
+      }
+    }
+
+    // 2. Every tidy slot is taken. Rather than fling the card off the bottom of the board,
+    //    stack it on the newest one in cascade steps: overlapping, but every card keeps a
+    //    strip of itself showing, and the stack never leaves the visible area.
+    var anchor = STB.newestCardRect();
+    var startX = left + VIEW_PAD;
+    var startY = top + VIEW_PAD;
+    if (anchor) {
+      startX = Math.max(left + VIEW_PAD, Math.min(anchor.x + CASCADE_X, left + vw - itemW));
+      startY = Math.max(top + VIEW_PAD, Math.min(anchor.y + CASCADE_Y, top + vh - itemH));
+    }
+    var perRow = Math.max(1, Math.floor((vw - itemW - VIEW_PAD) / CASCADE_X));
+    for (var k = 0; k < 80; k++) {
+      var cx = startX + (k % perRow) * CASCADE_X;
+      var cy = startY + Math.floor(k / perRow) * CASCADE_Y;
+      if (cx + itemW > left + vw || cy + itemH > top + vh) break;
+      if (!isBuried(rects, cx, cy, itemW, itemH)) return { x: cx, y: cy };
+    }
+
+    // 3. Nothing sensible left even for a stack -- the front of the visible area is still a
+    //    better answer than somewhere the user has to go looking for.
+    return { x: left + VIEW_PAD, y: top + VIEW_PAD };
   };
 
   STB.rollover = function (data) {
