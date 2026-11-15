@@ -54,7 +54,7 @@
   }
   p{ line-height:1.6; margin:0; }
   a{ color:inherit; }
-  .wrap{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .wrap{ max-width:1200px; margin:0 auto; padding:0 28px; }
 
   /* ---------- scroll-reveal ---------- */
   .reveal{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
@@ -337,7 +337,7 @@
   .trial-card .btn-primary{ margin-top:20px; width:100%; text-align:center; }
 
   /* ---------- feedback ---------- */
-  .feedback{
+  .feedback{ position:relative; overflow:hidden;
     background:var(--ink);
     padding:90px 0;
     display:flex; justify-content:center;
@@ -493,6 +493,52 @@
   .feedback-idea a{ color:#f6efe2; text-decoration:underline; text-underline-offset:2px; font-weight:600; }
   .feedback-idea a:hover{ color:#fff; }
 
+  /* ---------- decorative stickers: fills the wide empty margins on desktop ---------- */
+  .deco{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; }
+  .deco > span{ position:absolute; display:block; }
+  .deco-note{
+    width:106px; height:104px; border-radius:3px;
+    box-shadow:0 10px 18px rgba(0,0,0,0.22), inset 0 -18px 26px rgba(0,0,0,0.04);
+    background-image:linear-gradient(180deg, rgba(255,255,255,0.35), rgba(255,255,255,0) 55%);
+  }
+  .deco-note::before{
+    content:""; position:absolute; left:50%; top:-6px; width:13px; height:13px; margin-left:-6px;
+    border-radius:50%; background:radial-gradient(circle at 34% 30%, #f0857c, #b3352c 70%);
+    box-shadow:0 3px 6px rgba(0,0,0,0.35);
+  }
+  .deco-note::after{
+    content:""; position:absolute; left:14px; right:14px; top:34px; height:5px; border-radius:3px;
+    background:rgba(0,0,0,0.10); box-shadow:0 15px 0 rgba(0,0,0,0.10), 0 30px 0 rgba(0,0,0,0.07);
+  }
+  .deco--butter{ background-color:#f6dfa2; }
+  .deco--sky{ background-color:#bfdbe6; }
+  .deco--blush{ background-color:#f2c8c3; }
+  .deco--mint{ background-color:#cfe0bd; }
+  .deco-tape{
+    width:118px; height:26px; background:rgba(255,255,255,0.44);
+    box-shadow:0 4px 10px rgba(0,0,0,0.12);
+  }
+  .deco-ring{
+    width:74px; height:74px; border-radius:50%;
+    border:3px solid rgba(120,80,40,0.28); box-shadow:inset 0 0 0 2px rgba(120,80,40,0.10);
+    transform:rotate(-12deg) scale(1,0.92);
+  }
+  .deco-check{ width:58px; height:58px; opacity:0.5; }
+  .deco-check path{ fill:none; stroke:rgba(251,248,241,0.7); stroke-width:3.2; stroke-linecap:round; stroke-linejoin:round; }
+  .deco-star{ width:44px; height:44px; opacity:0.55; }
+  .deco-star path{ fill:none; stroke:rgba(251,248,241,0.75); stroke-width:2.6; stroke-linecap:round; }
+  .deco-float{ animation:decoFloat 9s ease-in-out infinite; }
+  .deco-float--slow{ animation-duration:13s; animation-delay:-3s; }
+  @keyframes decoFloat{
+    0%,100%{ transform:translateY(0) rotate(var(--r,0deg)); }
+    50%{ transform:translateY(-9px) rotate(calc(var(--r,0deg) + 2deg)); }
+  }
+  @media (prefers-reduced-motion: reduce){ .deco-float{ animation:none; } }
+  /* Only worth showing where there is actually margin to fill. */
+  .final-cta > .wrap, .feedback > .wrap{ position:relative; z-index:1; }
+  @media (max-width:1180px){ .deco{ display:none; } }
+
+
   @media (max-width: 860px){
     .hero-inner{ grid-template-columns:1fr; padding:44px 0 56px; }
     .hero-notes{ height:230px; margin-top:16px; }
@@ -508,7 +554,7 @@
 
   /* ---------- site footer ---------- */
   .site-footer{ background:#2B2620; color:#d9d0bd; padding:56px 0 0; font-family:'Work Sans',system-ui,sans-serif; }
-  .site-footer .sf-inner{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .site-footer .sf-inner{ max-width:1200px; margin:0 auto; padding:0 28px; }
   .site-footer .sf-grid{ display:grid; grid-template-columns:1.7fr 1fr 1fr 1.3fr; gap:40px; padding-bottom:40px; }
   .site-footer .sf-brand{ font-family:'Fraunces',serif; font-size:26px; color:#FBF8F1; margin:0 0 10px; }
   .site-footer p{ margin:0; font-size:14px; line-height:1.65; color:#b9b09c; }
@@ -1027,6 +1073,12 @@
 </section>
 
 <section class="final-cta">
+    <div class="deco" aria-hidden="true">
+      <span class="deco-note deco--butter deco-float" style="left:max(14px, calc(50% - 560px)); top:20%; --r:-8deg; transform:rotate(-8deg); opacity:.95;"></span>
+      <span class="deco-note deco--sky deco-float deco-float--slow" style="right:max(14px, calc(50% - 560px)); top:16%; --r:6deg; transform:rotate(6deg); opacity:.92;"></span>
+      <span class="deco-ring deco-float deco-float--slow" style="right:max(150px, calc(50% - 470px)); bottom:14%; opacity:.8;"></span>
+      <span class="deco-tape deco-float" style="left:max(60px, calc(50% - 505px)); bottom:16%; --r:-6deg; transform:rotate(-6deg); opacity:.7;"></span>
+    </div>
   <div class="wrap reveal">
     <h2>Pin your first note today.</h2>
     <p>30 days free. No card. A board that waits for you when life gets in the way.</p>
@@ -1035,6 +1087,12 @@
 </section>
 
 <section class="feedback">
+    <div class="deco" aria-hidden="true">
+      <span class="deco-note deco--blush deco-float" style="left:max(14px, calc(50% - 545px)); top:18%; --r:-7deg; transform:rotate(-7deg); opacity:.95;"></span>
+      <span class="deco-note deco--mint deco-float deco-float--slow" style="right:max(14px, calc(50% - 545px)); top:24%; --r:9deg; transform:rotate(9deg) scale(.92); opacity:.95;"></span>
+      <span class="deco-check deco-float" style="left:max(70px, calc(50% - 480px)); bottom:20%; transform:rotate(-6deg);"></span>
+      <span class="deco-star deco-float deco-float--slow" style="right:max(90px, calc(50% - 470px)); bottom:24%; transform:rotate(12deg);"></span>
+    </div>
   <div class="wrap feedback-inner">
     <div class="feedback-idea reveal">
       <h2>Have an idea? We&rsquo;d love to hear it.</h2>
