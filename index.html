@@ -38,7 +38,7 @@
     --lav:#D3C5DE; --lav-ink:#4A2F59;
   }
   *{ box-sizing:border-box; }
-  html{ scroll-behavior:smooth; }
+  html{ scroll-behavior:smooth; scroll-padding-top:96px; }  /* [UXPM 2] sticky nav height */
   body{
     margin:0;
     font-family:'Work Sans', sans-serif;
@@ -54,7 +54,17 @@
   }
   p{ line-height:1.6; margin:0; }
   a{ color:inherit; }
+  body{ overflow-wrap:break-word; }
+  .feedback-idea a, .site-footer a{ overflow-wrap:anywhere; }
   .wrap{ max-width:1200px; margin:0 auto; padding:0 28px; }
+
+  /* [UXPM 28 / 102] one visible focus ring, never removed without a replacement */
+  :focus-visible{
+    outline:3px solid var(--ink); outline-offset:3px; border-radius:5px;
+  }
+  .final-cta :focus-visible, .feedback :focus-visible,
+  .site-footer :focus-visible{ outline-color:var(--cream); }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
 
   /* ---------- scroll-reveal ---------- */
   .reveal{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
@@ -417,7 +427,7 @@
   .glass-stats{ display:flex; gap:26px; flex-wrap:wrap; }
   .glass-stat{ text-align:center; }
   .glass-stat b{ display:block; font-family:'Fraunces', serif; font-size:22px; font-weight:600; }
-  .glass-stat span{ font-size:11.5px; opacity:0.8; letter-spacing:0.02em; }
+  .glass-stat span{ font-size:12.5px; opacity:0.85; letter-spacing:0.02em; }
 
   @media (max-width:700px){
     .glass-card{ flex-direction:column; align-items:flex-start; text-align:left; }
@@ -443,7 +453,7 @@
   .chrome-dot{ width:9px; height:9px; border-radius:50%; }
   .chrome-dot.r{ background:#e2453f; } .chrome-dot.y{ background:#e8b93f; } .chrome-dot.g{ background:#5fae5f; }
   .chrome-url{
-    margin-left:10px; font-size:11.5px; color:rgba(251,248,241,0.55);
+    margin-left:10px; font-size:12.5px; color:rgba(251,248,241,0.72);
     background:rgba(251,248,241,0.07); padding:3px 10px; border-radius:10px;
   }
   .showcase-board{
@@ -460,7 +470,7 @@
   }
   .showcase-user{ color:var(--cream); font-size:13px; font-weight:600; }
   .showcase-trial{
-    background:rgba(0,0,0,0.2); color:var(--cream); font-size:11.5px; font-weight:600;
+    background:rgba(0,0,0,0.22); color:var(--cream); font-size:12.5px; font-weight:600;
     padding:4px 10px; border-radius:6px;
   }
   .showcase-notes{ display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; }
@@ -586,6 +596,12 @@
     background:linear-gradient(90deg,#e2453f,#e8b93f,#5fae5f); transition:width .1s linear; }
 
   /* sticky glass nav */
+  .skip-link{
+    position:absolute; left:-9999px; top:0; z-index:999;
+    background:var(--ink); color:var(--cream); padding:12px 20px; border-radius:0 0 8px 0;
+    font-size:14px; font-weight:600; text-decoration:none;
+  }
+  .skip-link:focus{ left:0; }
   .topnav{ position:sticky; top:0; z-index:50;
     background:rgba(244,238,223,.72);
     backdrop-filter:blur(14px) saturate(160%); -webkit-backdrop-filter:blur(14px) saturate(160%);
@@ -629,7 +645,7 @@
   @keyframes pulse{ 0%{ box-shadow:0 0 0 0 rgba(58,75,36,.5);} 70%{ box-shadow:0 0 0 8px rgba(58,75,36,0);} 100%{ box-shadow:0 0 0 0 rgba(58,75,36,0);} }
   .hero-proof{ margin-top:22px; display:flex; flex-wrap:wrap; gap:8px 18px; font-size:13px; font-weight:600; color:#3a2f20; }
   .hero-proof span::before{ content:"\2713"; display:inline-block; margin-right:6px; width:18px; height:18px; line-height:18px; text-align:center;
-    border-radius:50%; background:rgba(251,248,241,.85); color:#3A4B24; font-size:11px; }
+    border-radius:50%; background:rgba(251,248,241,.9); color:#3A4B24; font-size:12px; }
   .hero-notes{ height:360px; }
   .note-c{ background:var(--sage); color:var(--sage-ink); top:200px; left:0; transform:rotate(-2deg); z-index:3; width:200px !important;
     animation:settle-c .6s .28s ease-out both; }
@@ -674,7 +690,7 @@
 
   /* pricing card */
   .trial-card{ border-radius:2px; }
-  .ribbon{ position:absolute; top:18px; right:-10px; background:#e2453f; color:#fff; font-size:11.5px; font-weight:700;
+  .ribbon{ position:absolute; top:18px; right:-10px; background:#e2453f; color:#fff; font-size:12.5px; font-weight:700;
     padding:5px 14px; letter-spacing:.04em; box-shadow:0 3px 8px rgba(0,0,0,.25); }
   .ribbon::after{ content:""; position:absolute; right:0; bottom:-6px; border-style:solid; border-width:6px 0 0 10px; border-color:#8c2420 transparent transparent transparent; }
 
@@ -722,7 +738,7 @@
   .desktop-badges{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
   .desktop-badges .eyebrow{ margin-bottom:0; }
   .desktop-badge{
-    font-size:10.5px; font-weight:700; letter-spacing:0.11em; text-transform:uppercase;
+    font-size:12px; font-weight:700; letter-spacing:0.10em; text-transform:uppercase;
     background:var(--butter); color:var(--butter-ink); border-radius:999px; padding:3px 10px 2px;
     box-shadow:inset 0 0 0 1px rgba(107,78,18,0.18);
   }
@@ -788,6 +804,7 @@
 <body>
 
 <div class="progress" id="progress"></div>
+<a class="skip-link" href="#main">Skip to content</a>
 <div class="topnav" id="topnav">
 <nav class="wrap">
   <a class="wordmark" href="#top"><span class="logo-dot"></span>Nudgeboard</a>
@@ -842,7 +859,7 @@
   </div>
 </header>
 
-<section class="stats">
+<section class="stats" id="main">
   <div class="wrap stats-row">
     <div class="stat reveal"><b>30</b><span>days free, full access</span></div>
     <div class="stat reveal reveal-1"><b>0</b><span>cards to start</span></div>

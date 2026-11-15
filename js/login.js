@@ -241,7 +241,7 @@
         STB.checkUsernameAvailable(val).then(function (res) {
           if (res.available) {
             setOk(true);
-            hintEl.textContent = "Available.";
+            hintEl.textContent = "\u2713 Available.";
             hintEl.className = "stb-field-hint is-good";
           } else {
             setOk(false);
