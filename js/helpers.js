@@ -140,7 +140,11 @@
   STB.occupiedRects = function () {
     if (!STB.state) return [];
     var rects = [];
-    (STB.state.notes || []).forEach(function (n) {
+    // Only the notes on today's board. A note scheduled for another weekday is invisible,
+    // so letting it hold a slot made the empty middle of the board look taken and pushed
+    // every new card out to whatever patch was left over -- the right-hand corner.
+    var notes = STB.getVisibleNotes ? STB.getVisibleNotes() : (STB.state.notes || []);
+    notes.forEach(function (n) {
       rects.push({
         x: Number(n.x) || 0,
         y: Number(n.y) || 0,
@@ -239,6 +243,9 @@
     return false;
   }
 
+  // New and restored cards go in the middle of what the user can see. Every position the
+  // card could take inside the visible area is ranked by how close it is to that middle,
+  // so the result is the centre-most spot that isn't already taken.
   STB.nextFreePosition = function (itemW, itemH, canvasW) {
     var rects = STB.occupiedRects();
     var view = STB.boardViewport();
@@ -246,39 +253,34 @@
     var vh = Math.max(Number(view.height) || 0, itemH + VIEW_PAD * 2);
     var left = view.left, top = view.top;
 
-    // 1. A tidy spot inside what is on screen right now. Scrolling counts: if the user has
-    //    scrolled down, "what is on screen" starts at scrollTop, not at zero.
-    var cols = Math.max(1, Math.floor((vw - VIEW_PAD) / (itemW + 20)));
-    var rows = Math.max(1, Math.floor((vh - VIEW_PAD) / (itemH + 20)));
-    for (var row = 0; row < rows; row++) {
-      for (var col = 0; col < cols; col++) {
-        var gx = left + VIEW_PAD + col * (itemW + 20);
-        var gy = top + VIEW_PAD + row * (itemH + 20);
-        if (freeAmong(rects, gx, gy, itemW, itemH)) return { x: gx, y: gy };
+    var midX = left + (vw - itemW) / 2;
+    var midY = top + (vh - itemH) / 2;
+
+    var spots = [];
+    var maxX = left + vw - itemW - VIEW_PAD;
+    var maxY = top + vh - itemH - VIEW_PAD;
+    for (var y = top + VIEW_PAD; y <= maxY; y += CASCADE_Y) {
+      for (var x = left + VIEW_PAD; x <= maxX; x += CASCADE_X) {
+        spots.push({ x: x, y: y, d: Math.abs(x - midX) + Math.abs(y - midY) });
       }
     }
+    if (!spots.length) spots.push({ x: Math.round(midX), y: Math.round(midY), d: 0 });
+    spots.sort(function (a, b) { return a.d - b.d; });
 
-    // 2. Every tidy slot is taken. Rather than fling the card off the bottom of the board,
-    //    stack it on the newest one in cascade steps: overlapping, but every card keeps a
-    //    strip of itself showing, and the stack never leaves the visible area.
-    var anchor = STB.newestCardRect();
-    var startX = left + VIEW_PAD;
-    var startY = top + VIEW_PAD;
-    if (anchor) {
-      startX = Math.max(left + VIEW_PAD, Math.min(anchor.x + CASCADE_X, left + vw - itemW));
-      startY = Math.max(top + VIEW_PAD, Math.min(anchor.y + CASCADE_Y, top + vh - itemH));
+    // 1. the centre-most spot that touches nothing
+    for (var i = 0; i < spots.length; i++) {
+      if (freeAmong(rects, spots[i].x, spots[i].y, itemW, itemH)) {
+        return { x: spots[i].x, y: spots[i].y };
+      }
     }
-    var perRow = Math.max(1, Math.floor((vw - itemW - VIEW_PAD) / CASCADE_X));
-    for (var k = 0; k < 80; k++) {
-      var cx = startX + (k % perRow) * CASCADE_X;
-      var cy = startY + Math.floor(k / perRow) * CASCADE_Y;
-      if (cx + itemW > left + vw || cy + itemH > top + vh) break;
-      if (!isBuried(rects, cx, cy, itemW, itemH)) return { x: cx, y: cy };
+    // 2. board is full: centre-most spot that isn't completely hidden by another card,
+    //    so the stack stays in the middle and every card keeps a strip showing
+    for (var j = 0; j < spots.length; j++) {
+      if (!isBuried(rects, spots[j].x, spots[j].y, itemW, itemH)) {
+        return { x: spots[j].x, y: spots[j].y };
+      }
     }
-
-    // 3. Nothing sensible left even for a stack -- the front of the visible area is still a
-    //    better answer than somewhere the user has to go looking for.
-    return { x: left + VIEW_PAD, y: top + VIEW_PAD };
+    return { x: Math.round(midX), y: Math.round(midY) };
   };
 
   STB.rollover = function (data) {

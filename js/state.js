@@ -304,13 +304,12 @@
     var board = document.getElementById("stb-board");
     var rect = board.getBoundingClientRect();
     var canvasW = Math.max(rect.width, STB.MIN_CANVAS_W);
-    // Put it back where it was saved from, unless something else has taken that spot
-    // since -- then take the first free cell instead.
+    // Back in the middle of what the user is looking at, the same way a new card lands.
+    // Returning it to the exact spot it was saved from meant a doc could reappear in a
+    // corner, or outside the visible area entirely, and look like nothing had happened.
     var w = Number(target.width) || STB.DOC_W;
     var h = Number(target.height) || STB.DOC_H_ESTIMATE;
-    var pos = STB.isPositionFree(Number(target.x) || 0, Number(target.y) || 0, w, h)
-      ? { x: Number(target.x) || 0, y: Number(target.y) || 0 }
-      : STB.nextFreePosition(w, h, canvasW);
+    var pos = STB.nextFreePosition(w, h, canvasW);
     STB.commitDocs(STB.state.documents.map(function (d) {
       return d.id === id ? Object.assign({}, d, { archived: false, x: pos.x, y: pos.y, zIndex: STB.nextZIndex() }) : d;
     }));
