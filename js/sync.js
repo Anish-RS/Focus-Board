@@ -395,6 +395,55 @@
     setTimeout(flushPendingRemote, 0);
   });
 
+  // ---- the tab's own write, coming back at it ----
+  // pushToCloud() upserts the whole board, and Realtime then broadcasts that UPDATE to
+  // every subscriber of "boards-<user>" -- including the tab that just wrote it. Applying
+  // that echo as though another device had sent it silently undid whatever had happened
+  // since the push left: a note deleted in that window reappeared (which is why the x
+  // looked like it needed two or three clicks), and restoring a second saved note put the
+  // first one back in the saved list.
+  //
+  // The column is jsonb, which does not preserve key order, so the payload that comes back
+  // is never byte-identical to what was sent -- comparison has to be on a canonical form.
+  var recentPushes = [];
+  var MAX_RECENT_PUSHES = 8;
+
+  function canonical(value) {
+    if (value === null || typeof value !== "object") return JSON.stringify(value) || "null";
+    if (Object.prototype.toString.call(value) === "[object Array]") {
+      var items = [];
+      for (var j = 0; j < value.length; j++) items.push(canonical(value[j]));
+      return "[" + items.join(",") + "]";
+    }
+    var keys = Object.keys(value).sort();
+    var parts = [];
+    for (var i = 0; i < keys.length; i++) {
+      if (value[keys[i]] === undefined) continue;
+      parts.push(JSON.stringify(keys[i]) + ":" + canonical(value[keys[i]]));
+    }
+    return "{" + parts.join(",") + "}";
+  }
+
+  function rememberPush(data) {
+    var sig;
+    try { sig = canonical(data); } catch (e) { return; }
+    recentPushes.push(sig);
+    if (recentPushes.length > MAX_RECENT_PUSHES) recentPushes.shift();
+  }
+
+  function isOwnEcho(data) {
+    var sig;
+    try { sig = canonical(data); } catch (e) { return false; }
+    return recentPushes.indexOf(sig) !== -1;
+  }
+
+  // Rebuilding the board for data identical to what is already on screen throws away the
+  // node under the pointer, and a click whose button disappears between press and release
+  // never fires at all -- a second reason a single click could appear to do nothing.
+  function isAlreadyOnScreen(data) {
+    try { return canonical(data) === canonical(STB.state); } catch (e) { return false; }
+  }
+
   function startRealtime(userId) {
     var c = getClient();
     if (!c) return;
@@ -406,6 +455,9 @@
         { event: "UPDATE", schema: "public", table: "boards", filter: "user_id=eq." + userId },
         function (payload) {
           if (!payload.new || !payload.new.data) return;
+          // Our own write echoed back, or a board identical to the one on screen: there is
+          // nothing to apply, and re-rendering for it is what ate the click.
+          if (isOwnEcho(payload.new.data) || isAlreadyOnScreen(payload.new.data)) return;
           queueRemoteBoard(payload.new.data);
         }
       )
@@ -451,6 +503,8 @@
       clearTimeout(savingPaintTimer);
       reportSyncState(state, detail);
     }
+
+    rememberPush(STB.state);
 
     c.from("boards")
       .upsert({ user_id: currentUser.id, data: STB.state, updated_at: new Date().toISOString() })
