@@ -487,6 +487,11 @@
   .feedback-inner{ display:flex; flex-direction:column; align-items:center; gap:18px; }
   .feedback .note{ margin:0; }
   .feedback-sub{ color:rgba(251,248,241,0.75); font-size:13.5px; max-width:44ch; text-align:center; }
+  .feedback-idea{ max-width:56ch; text-align:center; color:#f6efe2; }
+  .feedback-idea h2{ font-size:clamp(21px,2.4vw,26px); margin-bottom:12px; }
+  .feedback-idea p{ font-size:14.5px; line-height:1.65; color:rgba(251,248,241,0.86); margin-top:10px; }
+  .feedback-idea a{ color:#f6efe2; text-decoration:underline; text-underline-offset:2px; font-weight:600; }
+  .feedback-idea a:hover{ color:#fff; }
 
   @media (max-width: 860px){
     .hero-inner{ grid-template-columns:1fr; padding:44px 0 56px; }
@@ -1031,6 +1036,13 @@
 
 <section class="feedback">
   <div class="wrap feedback-inner">
+    <div class="feedback-idea reveal">
+      <h2>Have an idea? We&rsquo;d love to hear it.</h2>
+      <p>The best improvements come from the people who use Nudgeboard every day. Got a feature
+        request, a bug to report, or a small thing you wish worked differently? We&rsquo;re all ears.</p>
+      <p>Drop us an email at <a href="mailto:focusboard.support@gmail.com">focusboard.support@gmail.com</a>.
+        We read every message, and the ideas that keep coming up are the ones we build next.</p>
+    </div>
     <div class="note reveal">
       <span class="pin"></span>
       <h2>This board's still being built.</h2>
@@ -1038,8 +1050,6 @@
       <a class="btn-primary" href="./feedback.html">Read &amp; post feedback</a>
       <div class="fold"></div>
     </div>
-    <p class="feedback-sub">Every post is visible to everyone. When something gets fixed or answered, the reply goes right there too.</p>
-    <p class="feedback-sub">Rather not post in public? Email <a href="mailto:focusboard.support@gmail.com">focusboard.support@gmail.com</a> &mdash; ideas, bugs and &ldquo;can it also do&hellip;&rdquo; all get read, and the ones that keep coming up get built.</p>
   </div>
 </section>
 
