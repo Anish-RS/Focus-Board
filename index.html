@@ -696,6 +696,12 @@
     border-radius:4px; padding:1px 5px; color:rgba(43,38,32,0.8);
   }
   .desktop-actions{ margin-bottom:0; }
+  .desktop-coming{
+    display:inline-flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600;
+    color:#5c5142; background:rgba(255,255,255,0.55); border:1px dashed rgba(43,38,32,0.28);
+    border-radius:999px; padding:9px 16px;
+  }
+  .desktop-coming::before{ content:""; width:7px; height:7px; border-radius:50%; background:#c8a24a; }
   .desktop-fine{
     font-size:12.5px !important; line-height:1.55; color:rgba(43,38,32,0.6) !important;
     margin:16px 0 0 !important; max-width:46ch;
@@ -735,7 +741,7 @@
 <nav class="wrap">
   <a class="wordmark" href="#top"><span class="logo-dot"></span>Nudgeboard</a>
   <div class="nav-right">
-    <div class="nav-links"><a href="#how">How it works</a><a href="#desktop" class="nav-desktop-link">Download</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
+    <div class="nav-links"><a href="#how">How it works</a><a href="#desktop" class="nav-desktop-link">Desktop app</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
     <a class="link-quiet" href="./feedback.html" style="font-size:13px;">Feedback</a>
     <span class="nav-trial-pill">30-day free trial</span>
     <a class="nav-cta" href="./login.html?signup=1">Start free trial</a>
@@ -916,11 +922,12 @@
           <li>Add a note from anywhere with <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></li>
         </ul>
         <div class="desktop-actions">
-          <a class="btn-primary" href="./app.html?desktop=1">Get the Windows app<span class="arr">&rarr;</span></a>
+          <span class="desktop-coming">Not available yet &mdash; we&rsquo;ll email you when it is</span>
         </div>
-        <p class="desktop-fine"><strong>In development.</strong> The Windows app is still being
-          built &mdash; paid accounts get it first when it ships, and upgrading now costs nothing extra
-          for it. On the 30-day trial the browser version is still fully yours. Windows 10/11, 64-bit.</p>
+        <p class="desktop-fine"><strong>In development &mdash; not downloadable yet.</strong> When it
+          ships it comes with a paid subscription, at no extra cost on top of what you already pay.
+          Subscribe and we&rsquo;ll email you the day it&rsquo;s ready; there&rsquo;s nothing to check back for.
+          On the 30-day trial the browser version is still fully yours. Windows 10/11, 64-bit.</p>
       </div>
       <div class="desktop-visual" aria-hidden="true">
         <div class="dv-note dv-note--butter"><span class="dv-pin"></span><span class="dv-line"></span><span class="dv-line dv-short"></span></div>
@@ -1032,6 +1039,7 @@
       <div class="fold"></div>
     </div>
     <p class="feedback-sub">Every post is visible to everyone. When something gets fixed or answered, the reply goes right there too.</p>
+    <p class="feedback-sub">Rather not post in public? Email <a href="mailto:focusboard.support@gmail.com">focusboard.support@gmail.com</a> &mdash; ideas, bugs and &ldquo;can it also do&hellip;&rdquo; all get read, and the ones that keep coming up get built.</p>
   </div>
 </section>
 

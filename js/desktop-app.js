@@ -49,35 +49,40 @@
     var st = trial();
     var paid = !!(st && st.isPaid);
 
+    // Nothing here offers a download while the build is unreleased: the button used to lead
+    // to "the installer hasn't been uploaded yet", which reads as a broken product. The card
+    // now explains what the app will be, what it will cost, and when it will arrive.
     var body;
     if (!signedIn) {
       body =
         '<p class="stb-desktop-text">The Windows app gives every popped-out note its own ' +
-        "floating window: no browser tabs, no address bar, always on top. It's included with " +
-        "the paid plan.</p>" +
+        "floating window: no browser tabs, no address bar, always on top. It isn't released " +
+        "yet — when it is, it comes with a paid subscription at no extra cost.</p>" +
         '<div class="stb-desktop-actions">' +
-        '<a class="stb-desktop-btn" href="./login.html?next=app.html%3Fdesktop%3D1">Sign in to download</a>' +
-        '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Not now</button>' +
-        "</div>";
+        '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Got it</button>' +
+        "</div>" +
+        '<p class="stb-desktop-fine">Subscribe and we will email you the day it is ready. ' +
+        "Windows 10/11, 64-bit.</p>";
     } else if (!paid) {
       body =
-        '<p class="stb-desktop-text">The Windows app is included with the paid plan. Your ' +
-        "trial still covers the browser version — upgrade whenever you want the desktop one.</p>" +
+        '<p class="stb-desktop-text">The Windows app is part of the paid plan and is still ' +
+        "being built. Your trial covers the browser version — upgrade whenever you want it, " +
+        "and the desktop app arrives with your subscription when it ships.</p>" +
         '<div class="stb-desktop-actions">' +
-        '<button class="stb-desktop-btn" type="button" data-desktop="upgrade">Upgrade to unlock it</button>' +
-        '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Not now</button>' +
-        "</div>";
+        '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Got it</button>' +
+        "</div>" +
+        '<p class="stb-desktop-fine">Nothing extra to pay for it later. We will email you ' +
+        "when it is ready.</p>";
     } else {
       body =
-        '<p class="stb-desktop-text">Every popped-out note becomes its own floating window — ' +
-        "no browser chrome, always on top while you work or watch something.</p>" +
+        '<p class="stb-desktop-text">Your subscription covers the Windows app — every ' +
+        "popped-out note in its own floating window, always on top, no browser chrome. " +
+        "It is still in development.</p>" +
         '<div class="stb-desktop-actions">' +
-        '<button class="stb-desktop-btn" type="button" data-desktop="download">Download for Windows</button>' +
-        '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Not now</button>' +
+        '<button class="stb-desktop-btn stb-desktop-btn--ghost" type="button" data-desktop="dismiss">Got it</button>' +
         "</div>" +
-        '<p class="stb-desktop-fine">In development — you will get it here first. Windows 10/11 · ' +
-        '64-bit · a few MB · the file is unsigned, so ' +
-        "Windows will ask you to confirm the first time (More info → Run anyway).</p>";
+        '<p class="stb-desktop-fine">No download yet — we will email you the day it ships, ' +
+        "and it costs you nothing extra. Windows 10/11, 64-bit.</p>";
     }
 
     cardEl = document.createElement("div");
