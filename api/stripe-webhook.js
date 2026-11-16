@@ -19,13 +19,11 @@
 //                                key (NOT the anon key -- this one bypasses RLS, so it must
 //                                only ever be used here on the server, never in the browser)
 //
-// The profiles table needs two columns for any of this to stick:
-//   alter table public.profiles add column if not exists stripe_customer_id text;
-//   alter table public.profiles add column if not exists stripe_subscription_id text;
-//   create index if not exists profiles_stripe_customer_idx
-//     on public.profiles (stripe_customer_id);
-// (see STRIPE-SETUP.md -- the webhook still records the payment without them, but it cannot
-//  then match a later cancellation back to the account.)
+// The profiles table needs the provider-neutral billing columns for any of this to stick --
+// run billing-migration.sql once. They are NOT named after Stripe because the same three
+// columns serve Paddle: billing_provider says which one holds the id.
+// (Without them the webhook still records the payment, but it cannot match a later
+//  cancellation back to the account.)
 
 const Stripe = require("stripe");
 
@@ -68,7 +66,7 @@ async function writePaymentState(filter, full, minimal) {
   var attempt = await patchProfile(filter, full);
   if (attempt.ok) return attempt;
   console.error("Stripe webhook: PATCH failed", attempt.status, attempt.text,
-    "-- retrying without the stripe_* columns. Run the SQL in STRIPE-SETUP.md.");
+    "-- retrying without the billing_* columns. Run billing-migration.sql.");
   return patchProfile(filter, minimal);
 }
 
@@ -123,8 +121,11 @@ module.exports = async (req, res) => {
       if (userId) {
         var full = { is_paid: true };
         var minimal = { is_paid: true };
-        if (session.customer) { full.stripe_customer_id = session.customer; }
-        if (session.subscription) { full.stripe_subscription_id = session.subscription; }
+        if (session.customer) { full.billing_customer_id = session.customer; }
+        if (session.subscription) { full.billing_subscription_id = session.subscription; }
+        // Recorded so cancel-subscription.js knows which provider's API to call later.
+        full.billing_provider = "stripe";
+        minimal.billing_provider = "stripe";
         if (periodEnd) { full.paid_until = periodEnd; minimal.paid_until = periodEnd; }
         await writePaymentState("user_id=eq." + encodeURIComponent(userId), full, minimal);
       }
@@ -138,19 +139,20 @@ module.exports = async (req, res) => {
       var liveMinimal = { is_paid: paid };
       var endsAt = isoFromUnix(liveSub.current_period_end);
       if (endsAt) { liveFull.paid_until = endsAt; liveMinimal.paid_until = endsAt; }
-      if (liveSub.customer) { liveFull.stripe_customer_id = liveSub.customer; }
-      if (liveSub.id) { liveFull.stripe_subscription_id = liveSub.id; }
+      liveFull.billing_provider = "stripe";
+      if (liveSub.customer) { liveFull.billing_customer_id = liveSub.customer; }
+      if (liveSub.id) { liveFull.billing_subscription_id = liveSub.id; }
       // Match on the metadata user id when it is there (it survives a customer column that
       // was never written), otherwise by customer.
       var metaUserId = liveSub.metadata && liveSub.metadata.supabase_user_id;
       var filter = metaUserId
         ? "user_id=eq." + encodeURIComponent(metaUserId)
-        : "stripe_customer_id=eq." + encodeURIComponent(liveSub.customer);
+        : "billing_customer_id=eq." + encodeURIComponent(liveSub.customer);
       await writePaymentState(filter, liveFull, liveMinimal);
     } else if (event.type === "customer.subscription.deleted") {
       var goneSub = event.data.object;
       await writePaymentState(
-        "stripe_customer_id=eq." + encodeURIComponent(goneSub.customer),
+        "billing_customer_id=eq." + encodeURIComponent(goneSub.customer),
         { is_paid: false },
         { is_paid: false }
       );

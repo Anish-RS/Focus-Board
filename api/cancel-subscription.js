@@ -57,8 +57,9 @@ module.exports = async (req, res) => {
   // 2. Find that user's own subscription id (service role bypasses RLS; the filter is the
   //    verified user id, so a caller can only ever cancel their own subscription).
   var subscriptionId;
-  var stripeSubscriptionId;
-  var stripeCustomerId;
+  var billingSubscriptionId;
+  var billingCustomerId;
+  var billingProvider;
   var adminHeaders = {
     apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     Authorization: "Bearer " + process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -68,7 +69,7 @@ module.exports = async (req, res) => {
     // the migration yet must still be able to cancel Razorpay subscriptions.
     var profRes = await fetch(
       process.env.SUPABASE_URL + "/rest/v1/profiles?user_id=eq." + encodeURIComponent(user.id) +
-        "&select=razorpay_subscription_id,stripe_subscription_id,stripe_customer_id",
+        "&select=razorpay_subscription_id,billing_subscription_id,billing_customer_id,billing_provider",
       { headers: adminHeaders }
     );
     var rows = await profRes.json();
@@ -82,18 +83,29 @@ module.exports = async (req, res) => {
     }
     var row = rows && rows[0];
     subscriptionId = row && row.razorpay_subscription_id;
-    stripeSubscriptionId = row && row.stripe_subscription_id;
-    stripeCustomerId = row && row.stripe_customer_id;
+    billingSubscriptionId = row && row.billing_subscription_id;
+    billingCustomerId = row && row.billing_customer_id;
+    billingProvider = row && row.billing_provider;
   } catch (e) {
     console.error("cancel-subscription: profile lookup failed", e);
     res.status(500).json({ error: "Could not look up your subscription." });
     return;
   }
 
-  // ---- Stripe customers ----
+  // ---- international customers (Stripe today, Paddle when it's live) ----
   // Cancel at the end of the period, same promise as the Razorpay path: you keep what you
-  // have paid for, and customer.subscription.deleted flips is_paid when it actually ends.
-  if (!subscriptionId && stripeSubscriptionId) {
+  // have paid for, and the provider's own webhook flips is_paid when it actually ends.
+  if (!subscriptionId && billingSubscriptionId && billingProvider === "paddle") {
+    // Written ahead of the switch so the button can never mis-cancel a Stripe customer as
+    // though they were a Paddle one. Paddle's cancel endpoint is PATCH /subscriptions/{id}
+    // with scheduled_change; wired up when the account is approved.
+    res.status(501).json({
+      error: "Cancelling a Paddle subscription from inside the app isn't wired up yet. Email us and we'll cancel it for you today.",
+    });
+    return;
+  }
+
+  if (!subscriptionId && billingSubscriptionId) {
     if (!process.env.STRIPE_SECRET_KEY) {
       res.status(500).json({ error: "Payments aren't fully configured on this deployment yet." });
       return;
@@ -101,7 +113,7 @@ module.exports = async (req, res) => {
     try {
       var Stripe = require("stripe");
       var stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-      var updated = await stripe.subscriptions.update(stripeSubscriptionId, { cancel_at_period_end: true });
+      var updated = await stripe.subscriptions.update(billingSubscriptionId, { cancel_at_period_end: true });
       res.status(200).json({
         ok: true,
         status: updated.status,
@@ -120,7 +132,7 @@ module.exports = async (req, res) => {
     // A Stripe customer whose subscription id never got written (migration just run, or a
     // webhook that landed before the columns existed) can still be sent to the real thing.
     res.status(404).json({
-      error: stripeCustomerId
+      error: billingCustomerId
         ? "We couldn't find the subscription on this account automatically. Reply to any Nudgeboard email and we'll cancel it for you."
         : "No active subscription found on this account.",
     });
