@@ -713,7 +713,7 @@ body {
   margin: 0;
 }
 .stb-clipboard-date {
-  font-size: 12px;
+  font-size: 12.5px;
   color: #6B6152;
   margin: 2px 0 16px 0;
 }
@@ -723,7 +723,7 @@ body {
   border-bottom: 1px dashed #E3DCC8;
 }
 .stb-saved-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -781,7 +781,7 @@ body {
 }
 .stb-carried-line {
   text-align: center;
-  font-size: 12px;
+  font-size: 12.5px;
   color: #9C5B2E;
   font-weight: 600;
   margin: 0 0 14px 0;
@@ -1479,6 +1479,9 @@ html.stb-solo-mode body {
     min-height: 0;
   }
   :root:not(.stb-solo-mode) body.stb-app-page .stb-clipboard {
+    /* Sized by its content, not stretched to the floor of the window: pulling it to full
+       height left a sheet of empty ruled paper under the summary button. */
+    align-self: flex-start;
     max-height: 100%;
     overflow-y: auto;
     flex: none;
@@ -1563,4 +1566,80 @@ html.stb-solo-mode body {
 @media (max-width: 680px) {
   /* full-width like the other header buttons on a phone */
   .stb-clear-btn { width: 100%; justify-content: center; }
+}
+
+/* ---------- 12. one standard size for every control in the app chrome ---------- */
+/* Reported as: "make the size of the two [header and side panel] standard, they play a key
+   role". They were five different heights, three radii and four type sizes sitting in one
+   row, which is what made the header look assembled rather than designed.
+   Size, radius, type and spacing are now identical. Colour is deliberately NOT: a dashed
+   prompt still reads as optional, purple is still "install", green is still "document" and
+   ink is still the primary action -- hierarchy survives, the rhythm is fixed. */
+.stb-header-actions > button,
+#stb-auth > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#stb-auth > button {
+  /* second row, same height: the account block is two lines tall and these sit beside it */
+  font-size: 12.5px;
+  padding: 0 13px;
+}
+.stb-header-actions > button svg,
+#stb-auth > button svg { flex: none; }
+
+/* The username was the same size as the buttons next to it. It is the identity line, so it
+   gets a different face and real size. Fraunces is already loaded for the board's headings. */
+.stb-account-name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  gap: 6px;
+}
+.stb-account-meta {
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+.stb-verified {
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+}
+
+/* The side panel keeps the same rhythm as the header: one control height, one caption size. */
+.stb-clipboard button {
+  font-family: 'Work Sans', sans-serif;
+}
+
+@media (max-width: 680px) {
+  /* full-width stack on a phone: the standard height still applies, the width does not */
+  .stb-header-actions > button,
+  #stb-auth > button { width: 100%; }
+  .stb-account-name { font-size: 17px; }
+}
+
+/* The browser's "install this web app" button is not the Windows app. While that is still in
+   development it should not be the loudest thing in the header -- it keeps its place, loses
+   the purple. (Set it back to #7A4B6B here if you'd rather it shout.) */
+.stb-install-btn {
+  background: rgba(43, 38, 32, 0.22);
+  border: 1px solid rgba(251, 248, 241, 0.22);
+  color: rgba(251, 248, 241, 0.9);
+  box-shadow: none;
+}
+.stb-install-btn:hover {
+  background: rgba(43, 38, 32, 0.34);
+  border-color: rgba(251, 248, 241, 0.4);
 }

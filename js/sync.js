@@ -905,12 +905,18 @@
     return ends ? "Trial ends " + ends : "Trial";
   }
 
-  // A paid account carries a tick beside the name -- so "is this person paying?" is
-  // answerable at a glance instead of by reading a trial badge.
+  // A paid account carries a seal beside the name, so "is this person paying?" is answerable
+  // at a glance instead of by reading a trial badge. The shape is the recognisable
+  // scalloped verified seal; the colours are the board's own paper and ink rather than the
+  // usual corporate blue, so it looks drawn for this product instead of pasted in.
   var VERIFIED_TICK =
-    '<svg class="stb-verified" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-    '<circle cx="12" cy="12" r="11" fill="#3A4B24"/>' +
-    '<polyline points="7 12.5 10.5 16 17 8.5" fill="none" stroke="#FBF8F1" stroke-width="2.4" ' +
+    '<svg class="stb-verified" width="17" height="17" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
+    '<path d="M8.00 1.40 A2.12 2.12 0 0 1 11.30 2.28 A2.12 2.12 0 0 1 13.72 4.70 A2.12 2.12 0 0 1 14.60 8.00 ' +
+    'A2.12 2.12 0 0 1 13.72 11.30 A2.12 2.12 0 0 1 11.30 13.72 A2.12 2.12 0 0 1 8.00 14.60 ' +
+    'A2.12 2.12 0 0 1 4.70 13.72 A2.12 2.12 0 0 1 2.28 11.30 A2.12 2.12 0 0 1 1.40 8.00 ' +
+    'A2.12 2.12 0 0 1 2.28 4.70 A2.12 2.12 0 0 1 4.70 2.28 A2.12 2.12 0 0 1 8.00 1.40 Z" ' +
+    'fill="#FBF8F1" stroke="#2B2620" stroke-width="0.7" stroke-linejoin="round"/>' +
+    '<polyline points="4.9 8.2 7.0 10.3 11.2 5.9" fill="none" stroke="#2B2620" stroke-width="1.7" ' +
     'stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   STB.renderAuthUI = function () {
