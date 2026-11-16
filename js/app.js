@@ -61,6 +61,23 @@
       addBtn.innerHTML = STB.ICON.plus(16) + " New note";
       addBtn.addEventListener("click", STB.addNote);
 
+      // Clearing the whole board: one button instead of deleting card by card. Confirmed
+      // first (it is the only action here that can empty a screen), and undoable after.
+      var clearBtn = document.getElementById("stb-clear-btn");
+      if (clearBtn) {
+        clearBtn.addEventListener("click", function () {
+          var notes = (STB.state.notes || []).length;
+          var docs = (STB.state.documents || []).filter(function (d) { return !d.archived; }).length;
+          var total = notes + docs;
+          if (!total) {
+            if (STB.toast) STB.toast("The board is already empty.", { duration: 2500 });
+            return;
+          }
+          if (!window.confirm("Clear all " + total + " card" + (total === 1 ? "" : "s") + " from the board?\n\nDocuments you have saved stay in the Saved list, and you can undo this for a few seconds afterwards.")) return;
+          STB.clearBoard();
+        });
+      }
+
       var addDocBtn = document.getElementById("stb-add-doc-btn");
       if (addDocBtn) {
         addDocBtn.innerHTML = STB.ICON.plus(16) + " New document";

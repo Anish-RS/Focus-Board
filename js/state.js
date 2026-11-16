@@ -291,6 +291,32 @@
     STB.commitDocs(STB.state.documents.map(function (d) { return d.id === id ? Object.assign({}, d, { color: color }) : d; }));
   };
 
+  // Wipe the board in one go. Notes and every card sitting on the cork go; documents the
+  // user has *saved* stay in the Saved list, because "clear the board" is about the mess in
+  // front of them, not about throwing away work they deliberately put away.
+  STB.clearBoard = function () {
+    var onBoardNotes = (STB.state.notes || []).length;
+    var onBoardDocs = (STB.state.documents || []).filter(function (d) { return !d.archived; }).length;
+    var total = onBoardNotes + onBoardDocs;
+    if (!total) {
+      if (STB.toast) STB.toast("The board is already empty.", { duration: 2500 });
+      return 0;
+    }
+    function wipe() {
+      STB.state.notes = [];
+      STB.commitDocs(STB.state.documents.filter(function (d) { return d.archived; }));
+    }
+    // Reversible for a few seconds through the same undo stack every other destructive
+    // action uses -- deleting a whole board by accident is the one mistake that would
+    // really hurt.
+    if (STB.withUndo) {
+      STB.withUndo("board", total + " card" + (total === 1 ? "" : "s") + " cleared", wipe);
+    } else {
+      wipe();
+    }
+    return total;
+  };
+
   // Saving a document keeps everything inside the app: no file leaves the browser.
   // It just archives the card off the board and into the sidebar's "Saved notes" list.
   STB.archiveDocument = function (id) {

@@ -10,6 +10,36 @@
 
   STB.PRICE_INR = 249;
 
+  // India is billed in INR through Razorpay. Everywhere else is billed in USD through
+  // Stripe, at a price set for that market -- not at a converted estimate of the rupee
+  // price, which reads as "too cheap to be real" to a US buyer as often as it reads as a
+  // bargain. And a converted estimate is not what the card gets charged, which is worse.
+  STB.PRICE_INTL = { currency: "USD", amount: 4, yearly: 36 };
+
+  function visitorRegion() {
+    try {
+      var locale = navigator.language || navigator.userLanguage || "en-IN";
+      var region = locale.split("-")[1];
+      return region ? region.toUpperCase() : "IN";
+    } catch (e) {
+      return "IN";
+    }
+  }
+
+  // Which checkout a visitor gets. India -> Razorpay in INR, everyone else -> Stripe in USD.
+  STB.paymentRegion = function () {
+    return visitorRegion() === "IN" ? "in" : "intl";
+  };
+
+  // What the price actually is for this visitor, ready to drop into a label.
+  STB.priceLabel = function () {
+    if (STB.paymentRegion() === "in") return "\u20b9" + STB.PRICE_INR;
+    return "$" + STB.PRICE_INTL.amount;
+  };
+  STB.priceLabelPerMonth = function () {
+    return STB.priceLabel() + "/mo";
+  };
+
   // Small region -> currency table covering the most common regions. Not exhaustive --
   // anywhere not listed here (including India itself) just shows the INR price with no
   // conversion, which is the correct/simplest thing for a region we're not confident about.
@@ -79,7 +109,15 @@
   };
 
   function updateDom() {
-    var suffix = STB.getPriceSuffix();
+    // The headline price itself: \u20b9249 in India, $4 everywhere else. The static markup
+    // ships the rupee price, so with no JS (or an unrecognised region) nothing is wrong --
+    // it is just the Indian price.
+    var priceNodes = document.querySelectorAll("[data-stb-price]");
+    for (var p = 0; p < priceNodes.length; p++) priceNodes[p].textContent = STB.priceLabel();
+
+    // The bracketed native-currency estimate only makes sense next to a rupee price. For an
+    // international visitor the price already IS in dollars, so it would be noise.
+    var suffix = STB.paymentRegion() === "in" ? STB.getPriceSuffix() : "";
     var nodes = document.querySelectorAll("[data-stb-price-native]");
     for (var i = 0; i < nodes.length; i++) nodes[i].textContent = suffix;
     // app.html's upgrade buttons/banner are rendered dynamically by sync.js -- if that's
@@ -108,9 +146,14 @@
       .catch(function () { /* silent -- the plain INR price is accurate on its own */ });
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", refresh);
-  } else {
+  function start() {
+    updateDom();   // price first, straight away -- no waiting on a rate lookup
     refresh();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
+    start();
   }
 })(window);

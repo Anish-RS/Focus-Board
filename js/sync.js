@@ -105,10 +105,50 @@
   // Shared label for every "Upgrade" button/banner so the native-currency estimate (once
   // currency.js has one) shows up everywhere consistently, without repeating the string.
   function upgradeLabel() {
+    // Outside India the price is not a converted estimate -- it is the dollar figure Stripe
+    // will charge, so show that on its own.
+    if (typeof STB.paymentRegion === "function" && STB.paymentRegion() === "intl") {
+      var usd = (STB.PRICE_INTL && STB.PRICE_INTL.amount) || 4;
+      return "Upgrade \u00b7 $" + usd + "/mo";
+    }
     var suffix = (typeof STB.getPriceSuffix === "function") ? STB.getPriceSuffix() : "";
     return "Upgrade \u00b7 \u20b9" + STB.PRICE_INR + "/mo" + suffix;
   }
   STB.PRICE_INR = STB.PRICE_INR || 249; // currency.js also sets this; kept here too in case it isn't loaded on a page
+
+  // ---------- returning from Stripe Checkout ----------
+  // Stripe redirects the browser back the instant payment succeeds, but the webhook that
+  // actually flips is_paid runs on the server and can land a second or two later. Showing
+  // "trial expired" to somebody who has just paid is the worst possible first impression, so
+  // poll the profile briefly instead of taking one reading.
+  function isCheckoutReturn() {
+    try { return /(?:^|[?&])checkout=success(?:&|$)/.test(window.location.search); } catch (e) { return false; }
+  }
+
+  function waitForPaidProfile(attemptsLeft) {
+    if (typeof attemptsLeft !== "number") attemptsLeft = 12;
+    if (!currentUser) return Promise.resolve(false);
+    return fetchProfile(currentUser.id)
+      .then(function (profile) {
+        if (profile && profile.is_paid) {
+          STB.renderAuthUI();
+          if (STB.toast) STB.toast("Payment received \u2014 your subscription is active.", { tone: "success", duration: 6000 });
+          try { window.history.replaceState({}, "", window.location.pathname); } catch (e) {}
+          return true;
+        }
+        if (attemptsLeft <= 0) return false;
+        return new Promise(function (r) { setTimeout(r, 1500); }).then(function () {
+          return waitForPaidProfile(attemptsLeft - 1);
+        });
+      })
+      .catch(function () {
+        // A transient profile read failure must not end the wait early.
+        if (attemptsLeft <= 0) return false;
+        return new Promise(function (r) { setTimeout(r, 1500); }).then(function () {
+          return waitForPaidProfile(attemptsLeft - 1);
+        });
+      });
+  }
 
   // ---------- username availability + claiming ----------
   STB.checkUsernameAvailable = function (username) {
@@ -198,17 +238,59 @@
     });
   };
 
+  // ---------- checkout, routed by where the visitor is ----------
+  // Razorpay bills in INR and INR only. For a card holder in Ohio or Manchester that is, at
+  // best, a conversion fee they never agreed to and, at worst, a decline. So the provider is
+  // chosen by region: India -> Razorpay (unchanged), everywhere else -> Stripe Checkout in
+  // USD. Both end in the same place: a webhook, server-side, sets is_paid. The browser is
+  // never trusted to say it has paid.
+  function startStripeCheckout(token) {
+    return fetch("/api/create-checkout-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    })
+      .then(function (r) {
+        return r.json().then(function (body) { return { ok: r.ok, body: body || {} }; },
+          function () { return { ok: false, body: {} }; });
+      })
+      .then(function (out) {
+        if (out.ok && out.body.url) {
+          window.location.href = out.body.url;
+          return { redirecting: true };
+        }
+        // No international provider configured yet (no Stripe keys), so this visitor would
+        // be charged an INR price after being shown a dollar one. Say so plainly and let
+        // them decide, instead of quietly converting them into a ₹249 customer.
+        var proceed = true;
+        try {
+          proceed = window.confirm(
+            "Card payments in your region are still being set up.\n\n" +
+            "You can subscribe now \u2014 our Indian payment provider will charge \u20b9" +
+            STB.PRICE_INR + " (about $3) and your bank may add a conversion fee.\n\nContinue?"
+          );
+        } catch (e) { proceed = true; }
+        if (!proceed) throw new Error("No charge was made.");
+        return startRazorpayCheckout(token);
+      });
+  }
+
   STB.startCheckout = function () {
     var c = getClient();
     if (!c || !currentUser) return Promise.reject(new Error("Sign in first."));
-    var token;
     return c.auth.getSession().then(function (res) {
-      token = res.data && res.data.session && res.data.session.access_token;
+      var token = res.data && res.data.session && res.data.session.access_token;
       if (!token) throw new Error("Your session has expired -- sign in again.");
-      return fetch("/api/create-subscription", {
-        method: "POST",
-        headers: { Authorization: "Bearer " + token },
-      });
+      if (typeof STB.paymentRegion === "function" && STB.paymentRegion() === "intl") {
+        return startStripeCheckout(token);
+      }
+      return startRazorpayCheckout(token);
+    });
+  };
+
+  function startRazorpayCheckout(token) {
+    return fetch("/api/create-subscription", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + token },
     }).then(function (r) { return r.json(); }).then(function (body) {
       if (body.error) throw new Error(body.error);
       if (typeof window.Razorpay === "undefined") {
@@ -241,7 +323,7 @@
         rzp.open();
       });
     });
-  };
+  }
 
   function fetchProfile(userId) {
     var c = getClient();
@@ -637,6 +719,7 @@
         STB.saveState(); // also re-stamps local ownership to this user's id (see state.js)
         STB.render();
         startRealtime(user.id);
+        if (isCheckoutReturn()) waitForPaidProfile();
       })
       .catch(function (e) {
         console.error("Could not load your synced board", e);
@@ -793,6 +876,43 @@
 
   // Minimal header widget for app.html: shows the username + trial status + sign out.
   // The actual sign-in/sign-up forms live on the dedicated login.html page now.
+  // "26 days left" made people do arithmetic to answer "when?". A date answers it directly.
+  // Note the wording differs by state on purpose: a paying subscriber's access does not
+  // expire, it renews, and calling that "expires" would be a lie the first time it renews.
+  function formatDate(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    try {
+      return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    } catch (e) {
+      return d.toDateString();
+    }
+  }
+
+  function accountMetaLine(trial) {
+    if (profileLoadFailed) return "Couldn\u2019t load your account";
+    if (!currentProfile) return "Finish setup: choose a username";
+    if (trial.isPaid) {
+      var renews = formatDate(currentProfile.paid_until);
+      return renews ? "Renews " + renews : "Full access";
+    }
+    if (trial.expired) {
+      var ended = formatDate(currentProfile.trial_ends_at);
+      return ended ? "Trial ended " + ended + " \u00b7 view only" : "Trial ended \u00b7 view only";
+    }
+    var ends = formatDate(currentProfile.trial_ends_at);
+    return ends ? "Trial ends " + ends : "Trial";
+  }
+
+  // A paid account carries a tick beside the name -- so "is this person paying?" is
+  // answerable at a glance instead of by reading a trial badge.
+  var VERIFIED_TICK =
+    '<svg class="stb-verified" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
+    '<circle cx="12" cy="12" r="11" fill="#3A4B24"/>' +
+    '<polyline points="7 12.5 10.5 16 17 8.5" fill="none" stroke="#FBF8F1" stroke-width="2.4" ' +
+    'stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
   STB.renderAuthUI = function () {
     var el = document.getElementById("stb-auth");
     if (!el) return;
@@ -816,7 +936,6 @@
 
     if (currentUser) {
       var trial = STB.getTrialStatus();
-      var trialHtml = "";
       var upgradeHtml = "";
       var locked = false;
       var reason = null;
@@ -824,25 +943,18 @@
         // A fetch failure, not a confirmed "no profile" -- see the comment on
         // profileLoadFailed above. Offer a retry instead of the "choose a username"
         // prompt, which would be wrong (and confusing) for an already-registered user.
-        trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Couldn\u2019t load your account</span>';
         upgradeHtml = '<button class="stb-upgrade-btn" id="stb-retry-profile-btn">Retry</button>';
         locked = true;
         reason = "load_failed";
       } else if (!currentProfile) {
-        trialHtml = '<span class="stb-trial-badge stb-trial-badge--needsname">Finish setup: choose a username</span>';
         locked = true;
         reason = "needs_username";
       } else if (trial.isPaid) {
-        trialHtml = trial.renewsInDays != null
-          ? '<span class="stb-trial-badge">Full access \u00b7 ' + trial.renewsInDays + " day" + (trial.renewsInDays === 1 ? "" : "s") + " left</span>"
-          : '<span class="stb-trial-badge">Full access</span>';
         upgradeHtml = '<button class="stb-auth-signout" id="stb-cancel-btn">Cancel plan</button>';
       } else if (trial.expired) {
-        trialHtml = '<span class="stb-trial-badge stb-trial-badge--expired">Trial ended \u00b7 view only</span>';
         locked = true;
         upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">' + upgradeLabel() + '</button>';
       } else {
-        trialHtml = '<span class="stb-trial-badge">' + trial.daysLeft + " day" + (trial.daysLeft === 1 ? "" : "s") + " left in trial</span>";
         upgradeHtml = '<button class="stb-upgrade-btn" id="stb-upgrade-btn">' + upgradeLabel() + '</button>';
       }
       // Only fall back to the email-derived name when we've genuinely confirmed there's
@@ -851,9 +963,15 @@
       var displayName = currentProfile
         ? currentProfile.username
         : (profileLoadFailed ? "Account" : currentUser.email.split("@")[0]);
+      // Syncing is not a feature to advertise -- it happens by default, and the "Saved"
+      // pill under the board title already reports its state honestly. So the account chip
+      // is now just: who you are, whether you pay, and when that runs out.
+      var showTick = !!(currentProfile && trial.isPaid);
       el.innerHTML =
-        '<span class="stb-auth-email">' + STB.escapeAttr(displayName) + " \u00b7 synced</span>" +
-        trialHtml +
+        '<span class="stb-account">' +
+          '<span class="stb-account-name">' + STB.escapeAttr(displayName) + (showTick ? VERIFIED_TICK : "") + "</span>" +
+          '<span class="stb-account-meta">' + accountMetaLine(trial) + "</span>" +
+        "</span>" +
         upgradeHtml +
         '<button class="stb-auth-signout" id="stb-signout-btn">Sign out</button>';
       document.getElementById("stb-signout-btn").addEventListener("click", function () { STB.signOut(); });
