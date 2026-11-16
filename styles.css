@@ -1644,45 +1644,60 @@ html.stb-solo-mode body {
   border-color: rgba(251, 248, 241, 0.4);
 }
 
-/* ---------- 13. one header band instead of two ---------- */
-/* The account chip used to sit on its own row above the title, which left a wide empty
-   stripe across the middle of the header and made the whole thing twice as tall as it
-   needed to be. Everything now shares one row: title left, who you are in the middle,
-   actions right. On a narrow window the row breaks into stacked blocks, in that order. */
+/* ---------- 13. header: title left, you top-right, actions underneath ---------- */
+/* Two things were wrong before. The account chip sat in the middle of the header with a
+   dead stripe of cork either side of it, and when the window was narrow the button labels
+   spilled out of their boxes because the row was being squeezed instead of reflowing.
+   Now the title owns the left, and everything personal lives in a right-hand column with
+   the name at the top corner and the buttons directly beneath it. */
 .stb-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 10px 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
   margin-bottom: 14px;
 }
-.stb-header-titles { min-width: 0; }
+.stb-header-titles {
+  min-width: 0;
+  flex: 1 1 260px;
+}
+.stb-header-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  max-width: 100%;
+}
 .stb-auth {
   margin: 0;
   justify-content: flex-end;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
-.stb-header-actions { justify-content: flex-end; }
+.stb-header-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  max-width: 100%;
+  gap: 8px;
+}
 
-/* Nothing in the header shrinks. Resizing the window (or zooming) reflows the row and keeps
-   every control at its standard size -- it never squeezes a button into a smaller one. */
+/* Standard size, whatever the window is doing: the controls never shrink and the labels
+   never break out of their buttons. When there is no room the rows wrap instead. */
 .stb-header-actions > button,
-#stb-auth > button,
-.stb-account { flex: 0 0 auto; }
-
-@media (max-width: 1080px) {
-  /* name and date drop under the title, buttons stay right */
-  .stb-header { grid-template-columns: minmax(0, 1fr) auto; }
-  .stb-auth { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
-  .stb-header-actions { grid-column: 2; grid-row: 1 / span 2; }
+.stb-account {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
-@media (max-width: 760px) {
-  .stb-header { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .stb-header-actions,
-  .stb-auth {
-    grid-column: 1;
-    grid-row: auto;
-    justify-content: flex-start;
+#stb-auth > button { flex: 0 0 auto; }
+
+@media (max-width: 860px) {
+  /* the right column becomes a full-width block under the title, reading left to right */
+  .stb-header-side {
+    align-items: flex-start;
+    margin-left: 0;
     width: 100%;
   }
+  .stb-auth,
+  .stb-header-actions { justify-content: flex-start; }
 }
