@@ -1644,13 +1644,10 @@ html.stb-solo-mode body {
   border-color: rgba(251, 248, 241, 0.4);
 }
 
-/* ---------- 13. header: you bottom-left, the board's name top-right ---------- */
-/* Two things were wrong. The buttons were being squeezed instead of reflowing, so their
-   labels spilled over each other on a narrower window. And the header itself broke into
-   extra rows as the window shrank, which pushed the board around -- resizing the window
-   should only ever change the size of the board, never the pieces around it.
-   So: the chip and its buttons sit in one left-hand column, the board's name sits in the
-   top-right corner, and nothing in here wraps. */
+/* ---------- 13. header: the board's name left, you top-right ---------- */
+/* Arrangement: title on the left, the account chip in the right-hand corner with its
+   buttons directly under it. Nothing in here re-wraps or shrinks as the window changes --
+   resizing the window only ever changes the size of the board (see section 14). */
 .stb-header {
   display: flex;
   align-items: flex-start;
@@ -1659,28 +1656,26 @@ html.stb-solo-mode body {
   gap: 24px;
   margin-bottom: 14px;
 }
+.stb-header-titles {
+  min-width: 0;
+  flex: 1 1 260px;
+  text-align: left;
+}
 .stb-header-side {
-  order: -1;                 /* chip and buttons on the left */
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 10px;
-  margin-right: auto;
+  margin-left: auto;
   max-width: 100%;
 }
-.stb-header-titles {
-  margin-left: auto;
-  text-align: right;
-  flex: 0 0 auto;
-}
-.stb-title { margin-left: auto; }
 .stb-auth {
   margin: 0;
-  justify-content: flex-start;
+  justify-content: flex-end;
   flex-wrap: wrap;
 }
 .stb-header-actions {
-  justify-content: flex-start;
+  justify-content: flex-end;
   flex-wrap: wrap;
   max-width: 100%;
   gap: 8px;
@@ -1696,20 +1691,19 @@ html.stb-solo-mode body {
 }
 
 @media (max-width: 819px) {
-  /* on a phone there is no room for a single row, so it stacks -- that breakpoint is the
-     one place the header is allowed to change shape */
+  /* the one place the header is allowed to change shape: a phone screen */
   .stb-header { flex-wrap: wrap; gap: 12px; }
-  .stb-header-titles { order: -1; text-align: left; margin-left: 0; flex: 1 1 100%; }
-  .stb-title { margin-left: 0; }
-  .stb-header-side { width: 100%; }
+  .stb-header-side { align-items: flex-start; margin-left: 0; width: 100%; }
+  .stb-auth,
+  .stb-header-actions { justify-content: flex-start; }
 }
 
 /* ---------- 14. only the board responds to the window ---------- */
-/* The rule the whole app now follows: the corkboard is the one thing that grows and
-   shrinks with the window. The header, its buttons, the account chip and the Dedication
-   card keep the exact size and shape they have at 100%. When the window is too narrow to
-   hold the header row without squeezing it, the page scrolls sideways instead -- nothing
-   reflows, nothing shrinks, nothing turns into a second row. */
+/* The rule the whole app follows: the corkboard is the one thing that grows and shrinks
+   with the window. The header, its buttons, the account chip and the Dedication card keep
+   the exact size and shape they have at 100%. When the window is too narrow to hold the
+   header row without squeezing it, the page scrolls sideways instead -- nothing reflows,
+   nothing shrinks, nothing turns into a second row. */
 @media (min-width: 820px) {
   :root:not(.stb-solo-mode) body.stb-app-page {
     overflow-x: auto;
