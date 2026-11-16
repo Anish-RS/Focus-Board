@@ -259,7 +259,7 @@ body {
   color: rgba(251,248,241,0.85);
   margin: 4px 0 0 2px;
 }
-.stb-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.stb-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
 .stb-add-btn, .stb-install-btn {
   display: flex;
   align-items: center;
@@ -1642,4 +1642,47 @@ html.stb-solo-mode body {
 .stb-install-btn:hover {
   background: rgba(43, 38, 32, 0.34);
   border-color: rgba(251, 248, 241, 0.4);
+}
+
+/* ---------- 13. one header band instead of two ---------- */
+/* The account chip used to sit on its own row above the title, which left a wide empty
+   stripe across the middle of the header and made the whole thing twice as tall as it
+   needed to be. Everything now shares one row: title left, who you are in the middle,
+   actions right. On a narrow window the row breaks into stacked blocks, in that order. */
+.stb-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px 20px;
+  margin-bottom: 14px;
+}
+.stb-header-titles { min-width: 0; }
+.stb-auth {
+  margin: 0;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+.stb-header-actions { justify-content: flex-end; }
+
+/* Nothing in the header shrinks. Resizing the window (or zooming) reflows the row and keeps
+   every control at its standard size -- it never squeezes a button into a smaller one. */
+.stb-header-actions > button,
+#stb-auth > button,
+.stb-account { flex: 0 0 auto; }
+
+@media (max-width: 1080px) {
+  /* name and date drop under the title, buttons stay right */
+  .stb-header { grid-template-columns: minmax(0, 1fr) auto; }
+  .stb-auth { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; }
+  .stb-header-actions { grid-column: 2; grid-row: 1 / span 2; }
+}
+@media (max-width: 760px) {
+  .stb-header { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .stb-header-actions,
+  .stb-auth {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+    width: 100%;
+  }
 }

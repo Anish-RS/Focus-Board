@@ -909,14 +909,14 @@
   // at a glance instead of by reading a trial badge. The shape is the recognisable
   // scalloped verified seal; the colours are the board's own paper and ink rather than the
   // usual corporate blue, so it looks drawn for this product instead of pasted in.
+  // The badge is a board pin, not a corporate blue tick: a pin head in the same red as the
+  // pins holding the notes up, a highlight where the light catches it, and the tick in
+  // cream inside. It belongs to this board rather than sitting on top of it.
   var VERIFIED_TICK =
     '<svg class="stb-verified" width="17" height="17" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
-    '<path d="M8.00 1.40 A2.12 2.12 0 0 1 11.30 2.28 A2.12 2.12 0 0 1 13.72 4.70 A2.12 2.12 0 0 1 14.60 8.00 ' +
-    'A2.12 2.12 0 0 1 13.72 11.30 A2.12 2.12 0 0 1 11.30 13.72 A2.12 2.12 0 0 1 8.00 14.60 ' +
-    'A2.12 2.12 0 0 1 4.70 13.72 A2.12 2.12 0 0 1 2.28 11.30 A2.12 2.12 0 0 1 1.40 8.00 ' +
-    'A2.12 2.12 0 0 1 2.28 4.70 A2.12 2.12 0 0 1 4.70 2.28 A2.12 2.12 0 0 1 8.00 1.40 Z" ' +
-    'fill="#FBF8F1" stroke="#2B2620" stroke-width="0.7" stroke-linejoin="round"/>' +
-    '<polyline points="4.9 8.2 7.0 10.3 11.2 5.9" fill="none" stroke="#2B2620" stroke-width="1.7" ' +
+    '<circle cx="8" cy="8.4" r="6.4" fill="#E2453F" stroke="#8A2B27" stroke-width="0.7"/>' +
+    '<ellipse cx="5.9" cy="5.7" rx="2.3" ry="1.7" fill="#FFFFFF" opacity="0.38"/>' +
+    '<polyline points="4.9 8.5 7.0 10.6 11.2 6.2" fill="none" stroke="#FBF8F1" stroke-width="1.8" ' +
     'stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   STB.renderAuthUI = function () {
