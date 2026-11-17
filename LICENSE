@@ -1,0 +1,60 @@
+Copyright (c) 2026 Anish R S. All rights reserved.
+
+NUDGEBOARD — PROPRIETARY SOFTWARE LICENCE
+
+This repository and everything in it — the source code, the pages, the styling, the
+logo, the icon set, the screenshots, the demo video and its narration, the copy and
+the name "Nudgeboard" — are the property of the copyright holder above. No licence is
+granted except the one written below.
+
+1. WHAT YOU MAY DO
+
+   You may read this repository, and you may keep a copy of it for the sole purpose of
+   reviewing it as a prospective customer, contributor or journalist.
+
+2. WHAT YOU MAY NOT DO
+
+   Without written permission from the copyright holder, you may not:
+
+   a) copy, reproduce or mirror this code, in whole or in part;
+   b) distribute, publish, sublicense, rent, sell or otherwise make it available to
+      anyone else;
+   c) deploy it, or a modified version of it, as your own product or service;
+   d) create derivative works from it, including translating it, rebranding it, or
+      lifting its interface, its copy or its visual design into another product;
+   e) use the name "Nudgeboard", the logo or the icon set in connection with anything
+      that is not this product;
+   f) remove this notice.
+
+3. NO TRADE MARK
+
+   "Nudgeboard" is an unregistered trade mark of the copyright holder. Nothing here
+   gives you a right to use it.
+
+4. THIRD-PARTY WORK
+
+   The following are not owned by the copyright holder and are used under their own
+   licences. Their terms win over anything in this file:
+
+   - Fonts: Work Sans, Fraunces and Caveat — SIL Open Font License 1.1.
+   - supabase-js, vendored in vendor/ — MIT License.
+   - Music: "Life of Riley" by Kevin MacLeod (incompetech.com) — Creative Commons
+     Attribution 4.0. This is why the credit line appears under the video on the
+     landing page. It is a condition of the licence: the credit must stay visible
+     wherever the video is published.
+
+5. PRESS AND REVIEWS
+
+   You may reproduce a screenshot or the demo video, unmodified, in an article,
+   review or video about this product, as long as the product is named and linked.
+
+6. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+   PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+   ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+7. CONTACT
+
+   For permission, licensing or anything unclear: focusboard.support@gmail.com

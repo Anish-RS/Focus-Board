@@ -18,3 +18,49 @@
   window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
   top.addEventListener('click', function(){ window.scrollTo({top:0, behavior:'smooth'}); });
 })();
+
+// Click a preview still and it opens full size. Esc, a click anywhere, or the back
+// gesture closes it. Inline script is blocked by the CSP, which is why this lives here.
+(function(){
+  var stills = document.querySelectorAll(".showcase-stills img");
+  if (!stills.length) return;
+  var box = null, opener = null;
+
+  function close(){
+    if (!box) return;
+    box.remove();
+    box = null;
+    document.body.style.overflow = "";
+    if (opener) opener.focus();
+    opener = null;
+  }
+
+  function open(img){
+    opener = img;
+    box = document.createElement("div");
+    box.className = "lightbox";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    box.setAttribute("aria-label", img.alt || "Preview image, full size");
+    var big = document.createElement("img");
+    big.src = img.currentSrc || img.src;
+    big.alt = img.alt || "";
+    box.appendChild(big);
+    box.addEventListener("click", close);
+    document.body.appendChild(box);
+    document.body.style.overflow = "hidden";
+  }
+
+  Array.prototype.forEach.call(stills, function(img){
+    img.tabIndex = 0;
+    img.setAttribute("role", "button");
+    img.addEventListener("click", function(){ open(img); });
+    img.addEventListener("keydown", function(e){
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(img); }
+    });
+  });
+
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape") close();
+  });
+})();
