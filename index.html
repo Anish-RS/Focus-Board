@@ -479,6 +479,14 @@
   .showcase-notes .note:nth-child(2){ transform:rotate(1.5deg); margin-top:14px; }
   .showcase-notes .note:nth-child(3){ transform:rotate(-1deg); }
   @media (max-width:700px){ .showcase-notes{ grid-template-columns:1fr; } .showcase-notes .note{ margin-top:0 !important; transform:none !important; } }
+  .showcase-media{ padding:0 0 4px; }
+  .showcase-video{ display:block; width:100%; height:auto; background:#2B2620; border-radius:0; }
+  .showcase-caption{ margin:12px 20px 0; font-size:13.5px; color:#6B6152; line-height:1.5; }
+  .showcase-credit{ font-size:12px; color:#8A8070; }
+  .showcase-stills{ list-style:none; margin:18px 0 0; padding:0 20px 20px; display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+  .showcase-stills img{ display:block; width:100%; height:auto; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.18); }
+  .showcase-stills li{ margin:0; }
+  @media (max-width:820px){ .showcase-stills{ grid-template-columns:1fr; } }
 
   /* ---------- typographic quote strip (breaks up plain paper sections) ---------- */
   .quote-strip{
@@ -611,6 +619,8 @@
   .wordmark{ display:inline-flex; align-items:center; gap:9px; }
   .wordmark .logo-dot{ width:22px; height:22px; background:var(--butter); border:1.5px solid var(--butter-ink);
     border-radius:3px; transform:rotate(-8deg); position:relative; box-shadow:2px 3px 0 rgba(0,0,0,.12); }
+  .wordmark .logo-mark{ width:24px; height:24px; display:inline-block; vertical-align:-6px;
+    margin-right:9px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
   .wordmark .logo-dot::after{ content:""; position:absolute; top:-4px; left:50%; width:7px; height:7px; margin-left:-3.5px;
     border-radius:50%; background:#e2453f; }
   .nav-links{ display:flex; gap:22px; margin-right:6px; }
@@ -808,7 +818,7 @@
 <a class="skip-link" href="#main">Skip to content</a>
 <div class="topnav" id="topnav">
 <nav class="wrap">
-  <a class="wordmark" href="#top"><span class="logo-dot"></span>Nudgeboard</a>
+  <a class="wordmark" href="#top"><img class="logo-mark" src="media/logo-mark.png" alt="" width="24" height="24">Nudgeboard</a>
   <div class="nav-right">
     <div class="nav-links"><a href="#how">How it works</a><a href="#desktop" class="nav-desktop-link">Desktop app</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
     <a class="link-quiet" href="./feedback.html" style="font-size:13px;">Feedback</a>
@@ -932,41 +942,28 @@
     <div class="showcase-head reveal">
       <span class="eyebrow">Preview</span>
       <h2>What your board actually looks like</h2>
-      <p>No tour needed — here's a real board, mid-week, with two tasks already carried over from yesterday.</p>
+      <p>Your day is not a list you scroll past. Nudgeboard is a board instead — every note in sight. Add a note when something lands, tick it off when it's done, and the Dedication panel scores what you actually finished. Solo on one device, or synced across all of them.</p>
     </div>
     <div class="showcase-frame reveal reveal-1">
       <div class="chrome-bar">
         <span class="chrome-dot r"></span><span class="chrome-dot y"></span><span class="chrome-dot g"></span>
         <span class="chrome-url">nudgeboard.vercel.app/app.html</span>
       </div>
-      <div class="showcase-board">
-        <div class="showcase-topbar">
-          <span class="showcase-user">sam_92 &middot; synced</span>
-          <span class="showcase-trial">18 days left in trial</span>
-        </div>
-        <div class="showcase-notes">
-          <div class="note" style="background:var(--butter); color:var(--butter-ink);">
-            <span class="pin"></span>
-            <div class="note-title">Morning</div>
-            <div class="task-row done"><span class="check done"></span><span>Check emails</span></div>
-            <div class="task-row"><span class="check"></span><span>Team standup</span></div>
-            <div class="fold"></div>
-          </div>
-          <div class="note" style="background:var(--sky); color:var(--sky-ink);">
-            <span class="pin"></span>
-            <div class="note-title">Carried from yesterday</div>
-            <div class="task-row"><span class="check"></span><span>Reply to Priya</span></div>
-            <div class="task-row"><span class="check"></span><span>Water the plants</span></div>
-            <div class="fold"></div>
-          </div>
-          <div class="note" style="background:var(--sage); color:var(--sage-ink);">
-            <span class="pin"></span>
-            <div class="note-title">Weekly &middot; Wednesday</div>
-            <div class="task-row done"><span class="check done"></span><span>Laundry</span></div>
-            <div class="task-row"><span class="check"></span><span>Gym</span></div>
-            <div class="fold"></div>
-          </div>
-        </div>
+      <div class="showcase-media">
+        <video class="showcase-video" id="showcase-video" controls playsinline preload="none"
+               poster="media/poster.png" width="1270" height="760">
+          <source src="media/demo.mp4" type="video/mp4">
+          Your browser can't play this video. <a href="media/demo.mp4">Download it instead.</a>
+        </video>
+        <p class="showcase-caption">Thirty seconds, recorded from the real app. Press play — there’s narration.<br><span class="showcase-credit">Music: “Life of Riley” by Kevin MacLeod (incompetech.com), licensed CC BY 4.0.</span></p>
+        <ul class="showcase-stills">
+          <li><img src="media/board.png" width="1270" height="760" loading="lazy"
+                   alt="The Nudgeboard app: notes pinned across a cork board, with the Dedication score in the right-hand panel."></li>
+          <li><img src="media/notes.png" width="1270" height="760" loading="lazy"
+                   alt="Three sticky notes close up, each with its own tasks, checkboxes and colour swatches."></li>
+          <li><img src="media/dedication.png" width="1270" height="760" loading="lazy"
+                   alt="The Dedication panel showing 100% done today, 8 of 8 pinned tasks done and a 4-day streak."></li>
+        </ul>
       </div>
     </div>
   </div>
