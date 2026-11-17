@@ -1,4 +1,4 @@
-const CACHE = "sticky-board-v10";
+const CACHE = "sticky-board-v11";
 const ASSETS = [
   "./",
   "./app.html",
@@ -24,9 +24,9 @@ const ASSETS = [
   "./js/sync.js",
   "./js/app.js",
   "./manifest.json",
-  "./icon-192.png",
-  "./icon-512.png",
-  "./favicon.png",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/favicon.png",
 ];
 
 self.addEventListener("install", (event) => {
