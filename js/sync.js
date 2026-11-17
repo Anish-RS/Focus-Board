@@ -111,8 +111,9 @@
       var usd = (STB.PRICE_INTL && STB.PRICE_INTL.amount) || 4;
       return "Upgrade \u00b7 $" + usd + "/mo";
     }
-    var suffix = (typeof STB.getPriceSuffix === "function") ? STB.getPriceSuffix() : "";
-    return "Upgrade \u00b7 \u20b9" + STB.PRICE_INR + "/mo" + suffix;
+    // No conversion estimate in the button itself -- "Upgrade / \u20b9249/mo (~$3.00)" does not
+    // fit a header chip, and the button only has to say one thing: what it costs.
+    return "Upgrade \u00b7 \u20b9" + STB.PRICE_INR + "/mo";
   }
   STB.PRICE_INR = STB.PRICE_INR || 249; // currency.js also sets this; kept here too in case it isn't loaded on a page
 

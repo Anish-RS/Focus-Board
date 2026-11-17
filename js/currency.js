@@ -16,7 +16,19 @@
   // bargain. And a converted estimate is not what the card gets charged, which is worse.
   STB.PRICE_INTL = { currency: "USD", amount: 4, yearly: 36 };
 
+  // Which country the visitor is in. The browser's language tag used to be the only signal,
+  // and that is wrong more often than it looks: an Indian laptop set to "English (United
+  // States)" reports en-US, so a person in Chennai was shown a $4 price and sent down the
+  // international checkout. The clock is a better witness than the language tag, so the
+  // timezone is checked first and the language tag only decides the rest.
   function visitorRegion() {
+    try {
+      var tz = "";
+      if (typeof Intl === "object" && Intl.DateTimeFormat) {
+        tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      }
+      if (/^Asia\/(Kolkata|Calcutta)$/i.test(tz)) return "IN";
+    } catch (e) { /* no Intl: fall through to the language tag */ }
     try {
       var locale = navigator.language || navigator.userLanguage || "en-IN";
       var region = locale.split("-")[1];
